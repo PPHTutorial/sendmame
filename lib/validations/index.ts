@@ -100,6 +100,7 @@ export const createTripSchema = z.object({
   pricePerKg: z.number().positive('Price per kg must be positive').optional(),
   minimumPrice: z.number().positive('Minimum price must be positive').optional(),
   maximumPrice: z.number().positive('Maximum price must be positive').optional(),
+  images: z.array(z.string().url()).default([]),
   packageTypes: z.array(z.string()).default([]),
   restrictions: z.array(z.string()).default([]),
 })
@@ -181,10 +182,14 @@ export const packageSearchSchema = z.object({
   priceMax: z.number().positive().optional(),
   category: z.string().optional(),
   maxWeight: z.number().positive().optional(),
-  isFragile: z.boolean(),
+  isFragile: z.boolean().optional(),
+  status: z.string().optional(),
+  pickupDateFrom: z.string().optional(),
+  pickupDateTo: z.string().optional(),
+  search: z.string().optional(),
   page: z.number().int().positive().default(1),
   limit: z.number().int().positive().max(100).default(20),
-  sortBy: z.enum(['createdAt', 'price', 'deliveryDate']).default('createdAt'),
+  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'offeredPrice', 'pickupDate']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 })
 
@@ -199,9 +204,16 @@ export const tripSearchSchema = z.object({
     min: z.number().positive().optional(),
     max: z.number().positive().optional(),
   }).optional(),
+  status: z.string().optional(),
+  category: z.string().optional(),
+  minimumPrice: z.number().positive().optional(),
+  maximumPrice: z.number().positive().optional(),
+  pickupDateFrom: z.string().optional(),
+  pickupDateTo: z.string().optional(),
+  search: z.string().optional(),
   page: z.number().int().positive().default(1),
   limit: z.number().int().positive().max(100).default(20),
-  sortBy: z.enum(['createdAt', 'departureDate', 'price']).default('createdAt'),
+  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'offeredPrice', 'pickupDate']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 })
 

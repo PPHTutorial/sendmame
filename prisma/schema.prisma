@@ -82,489 +82,510 @@ enum ChatType {
 
 // Core Models
 model User {
-  id                String             @id @default(cuid())
-  email             String             @unique
-  phone             String?            @unique
-  password          String?
-  firstName         String
-  lastName          String
-  avatar            String?
-  dateOfBirth       DateTime?
-  role              UserRole           @default(SENDER)
-  isActive          Boolean            @default(true)
-  isVerified        Boolean            @default(false)
-  isPhoneVerified   Boolean            @default(false)
-  isEmailVerified   Boolean            @default(false)
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  phone              String?            @unique
+  password           String?
+  firstName          String
+  lastName           String
+  avatar             String?
+  dateOfBirth        DateTime?
+  role               UserRole           @default(SENDER)
+  isActive           Boolean            @default(true)
+  isVerified         Boolean            @default(false)
+  isPhoneVerified    Boolean            @default(false)
+  isEmailVerified    Boolean            @default(false)
   verificationStatus VerificationStatus @default(PENDING)
-  twoFactorEnabled  Boolean            @default(false)
-  lastLoginAt       DateTime?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  twoFactorEnabled   Boolean            @default(false)
+  lastLoginAt        DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   // Profile information
-  profile           UserProfile?
-  
+  profile UserProfile?
+
   // KYC and verification
-  verificationDocs  VerificationDocument[]
-  
+  verificationDocs VerificationDocument[]
+
   // Relationships
-  sentPackages      Package[]          @relation("PackageSender")
-  receivedPackages  Package[]          @relation("PackageReceiver")
-  trips             Trip[]
-  
+  sentPackages     Package[] @relation("PackageSender")
+  receivedPackages Package[] @relation("PackageReceiver")
+  trips            Trip[]
+
   // Communication
-  sentMessages      Message[]          @relation("MessageSender")
-  chatParticipants  ChatParticipant[]
-  
+  sentMessages     Message[]         @relation("MessageSender")
+  chatParticipants ChatParticipant[]
+
   // Reviews and ratings
-  givenReviews      Review[]           @relation("ReviewGiver")
-  receivedReviews   Review[]           @relation("ReviewReceiver")
-  
+  givenReviews    Review[] @relation("ReviewGiver")
+  receivedReviews Review[] @relation("ReviewReceiver")
+
   // Financial
-  wallet            Wallet?
-  transactions      Transaction[]
-  paymentMethods    PaymentMethod[]
-  
+  wallet         Wallet?
+  transactions   Transaction[]
+  paymentMethods PaymentMethod[]
+
   // Notifications
-  notifications     Notification[]
-  
+  notifications Notification[]
+
   // Disputes
-  reportedDisputes  Dispute[]          @relation("DisputeReporter")
-  involvedDisputes  Dispute[]          @relation("DisputeInvolved")
-  
+  reportedDisputes Dispute[] @relation("DisputeReporter")
+  involvedDisputes Dispute[] @relation("DisputeInvolved")
+
+  // Safety confirmations
+  safetyConfirmations SafetyConfirmation[]
+
   // OAuth accounts
-  accounts          Account[]
-  sessions          Session[]
-  
+  accounts Account[]
+  sessions Session[]
+
   // Referrals
-  referralCode      String?            @unique
-  referredBy        User?              @relation("UserReferral", fields: [referredById], references: [id])
-  referredById      String?
-  referrals         User[]             @relation("UserReferral")
-  
+  referralCode String? @unique
+  referredBy   User?   @relation("UserReferral", fields: [referredById], references: [id])
+  referredById String?
+  referrals    User[]  @relation("UserReferral")
+
   @@map("users")
 }
 
 model UserProfile {
-  id                String     @id @default(cuid())
-  userId            String     @unique
-  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  profilePicture    String?
-  bio               String?
-  occupation        String?
-  languages         String[]   @default([])
-  
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  profilePicture String?
+  bio            String?
+  occupation     String?
+  languages      String[] @default([])
+
   // Location information
-  currentCity       String?
-  currentCountry    String?
-  currentLatitude   Float?
-  currentLongitude  Float?
-  
+  currentCity      String?
+  currentCountry   String?
+  currentLatitude  Float?
+  currentLongitude Float?
+
   // Preferences
-  preferredCurrency String     @default("USD")
+  preferredCurrency String  @default("USD")
   timeZone          String?
-  
+
   // Ratings
-  senderRating      Float      @default(0.0)
-  travelerRating    Float      @default(0.0)
-  totalTrips        Int        @default(0)
-  totalDeliveries   Int        @default(0)
-  successRate       Float      @default(0.0)
-  
+  senderRating    Float @default(0.0)
+  travelerRating  Float @default(0.0)
+  totalTrips      Int   @default(0)
+  totalDeliveries Int   @default(0)
+  successRate     Float @default(0.0)
+
   // Settings
-  pushNotifications Boolean    @default(true)
-  emailNotifications Boolean   @default(true)
-  smsNotifications  Boolean    @default(true)
-  
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
-  
+  pushNotifications  Boolean @default(true)
+  emailNotifications Boolean @default(true)
+  smsNotifications   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("user_profiles")
 }
 
 model VerificationDocument {
-  id            String             @id @default(cuid())
-  userId        String
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  type          String             // "passport", "driver_license", "national_id"
-  documentUrl   String
-  status        VerificationStatus @default(PENDING)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type            String // "passport", "driver_license", "national_id"
+  documentUrl     String
+  status          VerificationStatus @default(PENDING)
   rejectionReason String?
-  
-  verifiedAt    DateTime?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  
+
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
   @@map("verification_documents")
 }
 
 model Package {
-  id                String         @id @default(cuid())
-  senderId          String
-  sender            User           @relation("PackageSender", fields: [senderId], references: [id])
-  receiverId        String?
-  receiver          User?          @relation("PackageReceiver", fields: [receiverId], references: [id])
-  
+  id         String  @id @default(cuid())
+  senderId   String
+  sender     User    @relation("PackageSender", fields: [senderId], references: [id])
+  receiverId String?
+  receiver   User?   @relation("PackageReceiver", fields: [receiverId], references: [id])
+
   // Package details
   title             String
   description       String
   category          String
-  dimensions        Json           // {length, width, height, weight}
+  dimensions        Json // {length, width, height, weight}
   value             Float?
-  isFragile         Boolean        @default(false)
-  requiresSignature Boolean        @default(false)
-  
+  isFragile         Boolean @default(false)
+  requiresSignature Boolean @default(false)
+
   // Locations
-  pickupAddress     Json           // Full address object
+  pickupAddress     Json // Full address object
   pickupLatitude    Float
   pickupLongitude   Float
-  deliveryAddress   Json           // Full address object
+  deliveryAddress   Json // Full address object
   deliveryLatitude  Float
   deliveryLongitude Float
-  
+
   // Timing
-  pickupDate        DateTime
-  deliveryDate      DateTime
-  flexibleTiming    Boolean        @default(false)
-  
+  pickupDate     DateTime
+  deliveryDate   DateTime
+  flexibleTiming Boolean  @default(false)
+
   // Pricing
-  offeredPrice      Float
-  finalPrice        Float?
-  currency          String         @default("USD")
-  
+  offeredPrice Float
+  finalPrice   Float?
+  currency     String @default("USD")
+
   // Status and metadata
-  status            PackageStatus  @default(DRAFT)
-  priority          String         @default("normal") // low, normal, high, urgent
+  status              PackageStatus @default(DRAFT)
+  priority            String        @default("normal") // low, normal, high, urgent
   specialInstructions String?
-  
+
   // Matching
-  tripId            String?
-  trip              Trip?          @relation(fields: [tripId], references: [id])
-  
+  tripId String?
+  trip   Trip?   @relation(fields: [tripId], references: [id])
+
   // Communication
-  chats             Chat[]
-  
+  chats Chat[]
+
   // Tracking
-  trackingEvents    TrackingEvent[]
-  
+  trackingEvents TrackingEvent[]
+
   // Files
-  images            String[]       @default([])
-  documents         String[]       @default([])
-  
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  
+  images    String[] @default([])
+  documents String[] @default([])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("packages")
 }
 
 model Trip {
-  id                String       @id @default(cuid())
-  title             String
-  travelerId        String
-  traveler          User         @relation(fields: [travelerId], references: [id])
-  
+  id         String @id @default(cuid())
+  title      String
+  travelerId String
+  traveler   User   @relation(fields: [travelerId], references: [id])
+
   // Route information
-  originAddress     Json         // Full address object
-  originLatitude    Float
-  originLongitude   Float
-  destinationAddress Json        // Full address object
-  destinationLatitude Float
+  originAddress        Json // Full address object
+  originLatitude       Float
+  originLongitude      Float
+  destinationAddress   Json // Full address object
+  destinationLatitude  Float
   destinationLongitude Float
-  
+  images               String[] @default([])
+
   // Timing
-  departureDate     DateTime
-  arrivalDate       DateTime
-  flexibleDates     Boolean      @default(false)
-  
+  departureDate DateTime
+  arrivalDate   DateTime
+  flexibleDates Boolean  @default(false)
+
   // Capacity and limitations
-  maxWeight         Float        // in kg
-  maxDimensions     Json         // {length, width, height}
-  availableSpace    Float        // remaining capacity
-  transportMode     String       // car, plane, train, bus, etc.
-  
+  maxWeight      Float // in kg
+  maxDimensions  Json // {length, width, height}
+  availableSpace Float // remaining capacity
+  transportMode  String // car, plane, train, bus, etc.
+
   // Pricing
-  pricePerKg        Float?
-  minimumPrice      Float?
-  maximumPrice      Float?
-  
+  pricePerKg   Float?
+  minimumPrice Float?
+  maximumPrice Float?
+
   // Status
-  status            TripStatus   @default(POSTED)
-  
+  status TripStatus @default(POSTED)
+
   // Preferences
-  packageTypes      String[]     @default([]) // documents, electronics, clothing, etc.
-  restrictions      String[]     @default([]) // no liquids, no fragile, etc.
-  
+  packageTypes String[] @default([]) // documents, electronics, clothing, etc.
+  restrictions String[] @default([]) // no liquids, no fragile, etc.
+
   // Matched packages
-  packages          Package[]
-  
+  packages Package[]
+
   // Communication
-  chats             Chat[]
-  
+  chats Chat[]
+
   // Verification
-  verificationCode  String?      @unique
-  
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
-  
+  verificationCode String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("trips")
 }
 
 model Chat {
-  id            String            @id @default(cuid())
-  type          ChatType          @default(PACKAGE_NEGOTIATION)
-  
+  id   String   @id @default(cuid())
+  type ChatType @default(PACKAGE_NEGOTIATION)
+
   // Related entities
-  packageId     String?
-  package       Package?          @relation(fields: [packageId], references: [id])
-  tripId        String?
-  trip          Trip?             @relation(fields: [tripId], references: [id])
-  
+  packageId String?
+  package   Package? @relation(fields: [packageId], references: [id])
+  tripId    String?
+  trip      Trip?    @relation(fields: [tripId], references: [id])
+
   // Participants
-  participants  ChatParticipant[]
-  messages      Message[]
-  
+  participants ChatParticipant[]
+  messages     Message[]
+
   // Status
-  isActive      Boolean           @default(true)
+  isActive      Boolean   @default(true)
   lastMessageAt DateTime?
-  
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("chats")
 }
 
 model ChatParticipant {
-  id                String    @id @default(cuid())
-  chatId            String
-  chat              Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  userId            String
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  joinedAt          DateTime  @default(now())
-  lastReadAt        DateTime?
-  isAdmin           Boolean   @default(false)
-  
+  id     String @id @default(cuid())
+  chatId String
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt   DateTime  @default(now())
+  lastReadAt DateTime?
+  isAdmin    Boolean   @default(false)
+
   @@unique([chatId, userId])
   @@map("chat_participants")
 }
 
 model Message {
-  id            String    @id @default(cuid())
-  chatId        String
-  chat          Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  senderId      String
-  sender        User      @relation("MessageSender", fields: [senderId], references: [id])
-  
-  content       String
-  messageType   String    @default("text") // text, image, file, location, system
-  attachments   String[]  @default([])
-  
-  isEdited      Boolean   @default(false)
-  isDeleted     Boolean   @default(false)
-  
-  readBy        Json      @default("{}") // userId -> timestamp mapping
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
+  id       String @id @default(cuid())
+  chatId   String
+  chat     Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderId String
+  sender   User   @relation("MessageSender", fields: [senderId], references: [id])
+
+  content     String
+  messageType String   @default("text") // text, image, file, location, system
+  attachments String[] @default([])
+
+  isEdited  Boolean @default(false)
+  isDeleted Boolean @default(false)
+
+  readBy Json @default("{}") // userId -> timestamp mapping
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("messages")
 }
 
 model Review {
-  id            String   @id @default(cuid())
-  giverId       String
-  giver         User     @relation("ReviewGiver", fields: [giverId], references: [id])
-  receiverId    String
-  receiver      User     @relation("ReviewReceiver", fields: [receiverId], references: [id])
-  
-  rating        Int      // 1-5 stars
-  comment       String?
-  category      String   // "delivery", "communication", "reliability"
-  
+  id         String @id @default(cuid())
+  giverId    String
+  giver      User   @relation("ReviewGiver", fields: [giverId], references: [id])
+  receiverId String
+  receiver   User   @relation("ReviewReceiver", fields: [receiverId], references: [id])
+
+  rating   Int // 1-5 stars
+  comment  String?
+  category String // "delivery", "communication", "reliability"
+
   // Related transaction
-  packageId     String?
-  tripId        String?
-  
-  isPublic      Boolean  @default(true)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
+  packageId String?
+  tripId    String?
+
+  isPublic Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@unique([giverId, receiverId, packageId])
   @@map("reviews")
 }
 
 model Wallet {
-  id            String        @id @default(cuid())
-  userId        String        @unique
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  balance       Float         @default(0.0)
-  currency      String        @default("USD")
-  
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  balance  Float  @default(0.0)
+  currency String @default("USD")
+
   // Pending amounts
-  pendingIn     Float         @default(0.0)
-  pendingOut    Float         @default(0.0)
-  
+  pendingIn  Float @default(0.0)
+  pendingOut Float @default(0.0)
+
   // Security
-  isLocked      Boolean       @default(false)
-  lockedReason  String?
-  
-  transactions  Transaction[]
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
+  isLocked     Boolean @default(false)
+  lockedReason String?
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("wallets")
 }
 
 model Transaction {
-  id              String          @id @default(cuid())
-  userId          String
-  user            User            @relation(fields: [userId], references: [id])
-  walletId        String?
-  wallet          Wallet?         @relation(fields: [walletId], references: [id])
-  
-  type            TransactionType
-  amount          Float
-  currency        String          @default("USD")
-  
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id])
+  walletId String?
+  wallet   Wallet? @relation(fields: [walletId], references: [id])
+
+  type     TransactionType
+  amount   Float
+  currency String          @default("USD")
+
   // References
-  packageId       String?
-  tripId          String?
-  
+  packageId String?
+  tripId    String?
+
   // Payment gateway details
   paymentMethodId String?
-  paymentMethod   PaymentMethod?  @relation(fields: [paymentMethodId], references: [id])
-  gatewayId       String?         // Stripe payment intent ID, etc.
-  
-  status          PaymentStatus   @default(PENDING)
-  
+  paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
+  gatewayId       String? // Stripe payment intent ID, etc.
+
+  status PaymentStatus @default(PENDING)
+
   // Fees
-  platformFee     Float           @default(0.0)
-  gatewayFee      Float           @default(0.0)
-  netAmount       Float
-  
-  description     String?
-  metadata        Json            @default("{}")
-  
+  platformFee Float @default(0.0)
+  gatewayFee  Float @default(0.0)
+  netAmount   Float
+
+  description String?
+  metadata    Json    @default("{}")
+
   // Timestamps
-  processedAt     DateTime?
-  failedAt        DateTime?
-  refundedAt      DateTime?
-  
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  
+  processedAt DateTime?
+  failedAt    DateTime?
+  refundedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("transactions")
 }
 
 model PaymentMethod {
-  id            String        @id @default(cuid())
-  userId        String
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  type          String        // card, bank_account, mobile_money
-  provider      String        // stripe, paystack, flutterwave
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type     String // card, bank_account, mobile_money
+  provider String // stripe, paystack, flutterwave
+
   // Card details (encrypted)
-  last4         String?
-  brand         String?
-  expiryMonth   Int?
-  expiryYear    Int?
-  
+  last4       String?
+  brand       String?
+  expiryMonth Int?
+  expiryYear  Int?
+
   // Bank details
   bankName      String?
   accountNumber String?
   routingNumber String?
-  
+
   // Gateway IDs
-  gatewayId     String        // Stripe customer ID, payment method ID
-  
-  isDefault     Boolean       @default(false)
-  isActive      Boolean       @default(true)
-  
-  transactions  Transaction[]
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
+  gatewayId String // Stripe customer ID, payment method ID
+
+  isDefault Boolean @default(false)
+  isActive  Boolean @default(true)
+
+  transactions Transaction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("payment_methods")
 }
 
 model TrackingEvent {
-  id            String   @id @default(cuid())
-  packageId     String
-  package       Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  
-  event         String   // "picked_up", "in_transit", "delivered", "exception"
-  description   String
-  location      Json?    // address and coordinates
-  
-  timestamp     DateTime @default(now())
-  metadata      Json     @default("{}")
-  
+  id        String  @id @default(cuid())
+  packageId String
+  package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  event       String // "picked_up", "in_transit", "delivered", "exception"
+  description String
+  location    Json? // address and coordinates
+
+  timestamp DateTime @default(now())
+  metadata  Json     @default("{}")
+
   @@map("tracking_events")
 }
 
 model Notification {
-  id            String           @id @default(cuid())
-  userId        String
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  type          NotificationType
-  title         String
-  message       String
-  
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  type    NotificationType
+  title   String
+  message String
+
   // Related entities
-  packageId     String?
-  tripId        String?
-  chatId        String?
-  
+  packageId String?
+  tripId    String?
+  chatId    String?
+
   // Status
-  isRead        Boolean          @default(false)
-  isDeleted     Boolean          @default(false)
-  
+  isRead    Boolean @default(false)
+  isDeleted Boolean @default(false)
+
   // Delivery
-  sentAt        DateTime?
-  readAt        DateTime?
-  
-  metadata      Json             @default("{}")
-  
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  
+  sentAt DateTime?
+  readAt DateTime?
+
+  metadata Json @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("notifications")
 }
 
 model Dispute {
-  id            String        @id @default(cuid())
-  reporterId    String
-  reporter      User          @relation("DisputeReporter", fields: [reporterId], references: [id])
-  involvedId    String
-  involved      User          @relation("DisputeInvolved", fields: [involvedId], references: [id])
-  
+  id         String @id @default(cuid())
+  reporterId String
+  reporter   User   @relation("DisputeReporter", fields: [reporterId], references: [id])
+  involvedId String
+  involved   User   @relation("DisputeInvolved", fields: [involvedId], references: [id])
+
   // Related entities
-  packageId     String?
-  tripId        String?
-  
-  type          String        // "non_delivery", "damaged_package", "payment_issue"
-  description   String
-  evidence      String[]      @default([]) // URLs to uploaded evidence
-  
-  status        DisputeStatus @default(OPEN)
-  resolution    String?
-  
+  packageId String?
+  tripId    String?
+
+  type        String // "non_delivery", "damaged_package", "payment_issue"
+  description String
+  evidence    String[] @default([]) // URLs to uploaded evidence
+
+  status     DisputeStatus @default(OPEN)
+  resolution String?
+
   // Admin handling
   assignedAdminId String?
-  resolvedAt    DateTime?
-  
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  
+  resolvedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("disputes")
+}
+
+model SafetyConfirmation {
+  id        String @id @default(cuid())
+  packageId String
+  tripId    String
+  userId    String
+  user      User   @relation(fields: [userId], references: [id])
+
+  confirmationType String // "ASSIGNMENT", "PICKUP", "DELIVERY"
+  confirmations    Json   // JSON object with all confirmations
+  notes            String?
+
+  confirmedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@map("safety_confirmations")
 }
 
 // NextAuth.js models
@@ -609,28 +630,28 @@ model VerificationToken {
 
 // Admin and system models
 model SystemConfig {
-  id            String   @id @default(cuid())
-  key           String   @unique
-  value         String
-  description   String?
-  
-  updatedAt     DateTime @updatedAt
-  
+  id          String  @id @default(cuid())
+  key         String  @unique
+  value       String
+  description String?
+
+  updatedAt DateTime @updatedAt
+
   @@map("system_config")
 }
 
 model AuditLog {
-  id            String   @id @default(cuid())
-  userId        String?
-  action        String
-  entity        String
-  entityId      String?
-  oldValues     Json?
-  newValues     Json?
-  ipAddress     String?
-  userAgent     String?
-  
-  createdAt     DateTime @default(now())
-  
+  id        String  @id @default(cuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  oldValues Json?
+  newValues Json?
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
   @@map("audit_logs")
 }

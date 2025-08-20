@@ -19,12 +19,12 @@ import {
 import { registerSchema } from '@/lib/validations'
 import type { RegisterData } from '@/lib/types'
 import prisma from '@/lib/prisma'
-import { $Enums } from '@prisma/client'
-import { Payload } from '@prisma/client/runtime/library'
 
 // POST /api/auth/register
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const data = await parseRequestBody<RegisterData>(request, registerSchema)
+  console.log('Register data:', data)
+
 
   // Rate limiting
   const clientId = request.headers.get('x-forwarded-for') || 'anonymous'

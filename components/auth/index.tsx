@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 // Fakomame Platform - Authentication Components
 'use client'
 
@@ -14,6 +13,7 @@ export function RegisterForm() {
   const router = useRouter()
   const { register } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState<RegisterData>({
     firstName: '',
     lastName: '',
@@ -23,6 +23,13 @@ export function RegisterForm() {
     role: 'SENDER'
   })
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -30,27 +37,51 @@ export function RegisterForm() {
     try {
       register.mutate(formData, {
         onSuccess: () => {
-          toast.success('Account created successfully!')
+          toast.success('Account created successfully!', {
+            style: {
+              background: '#07921f',
+              color: '#fff',
+              fontSize: '14px',
+            }
+          })
           router.push('/dashboard')
           setIsLoading(false)
         },
         onError: (error: any) => {
-          toast.error(error.response?.data?.message || 'Registration failed')
+          console.log('Registration error:', error)
+          console.log('Resetting form data due to error', error)
+          toast.error(error.message || 'Registration failed', {
+            style: {
+              background: '#f44336',
+              color: '#fff',
+              fontSize: '14px',
+            }
+          })
           setIsLoading(false)
+          if (error?.response?.data?.field) {
+            const errorField = error.response.data.field
+            const fieldElement = document.querySelector(`input[name="${errorField}"], select[name="${errorField}"]`)
+            if (fieldElement) {
+              fieldElement.classList.add('border-red-500', 'ring-red-500')
+              setTimeout(() => {
+                fieldElement.classList.remove('border-red-500', 'ring-red-500')
+              }, 3000)
+            }
+          }
         }
       })
-    } catch (error: any) {
-      toast.error('An unexpected error occurred')
+    } catch (_error: any) {
+      toast.error('An unexpected error occurred', {
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontSize: '14px',
+        }
+      })
       setIsLoading(false)
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData((prev: any) => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }))
-  }
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -127,7 +158,7 @@ export function RegisterForm() {
             name="role"
             value={formData.role}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-black shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
           >
             <option className='text-black' value="SENDER">Package Sender</option>
             <option className='text-black' value="TRAVELER">Traveler</option>
@@ -139,15 +170,33 @@ export function RegisterForm() {
           <label className="block text-sm font-medium text-neutral-500 mb-1">
             Password
           </label>
-          <Input
-            className='text-black'
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="••••••••"
-            required
-          />
+          <div className="relative">
+            <Input
+              className='text-black pr-10'
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.757 6.757M9.878 9.878a3 3 0 103.242 3.242m0-3.242l4.121 4.122m0 0l2.122 2.121M15.121 15.121L18.243 18.243m-6.122-6.122a3 3 0 00-4.243 4.243 3 3 0 004.243-4.243z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <Button
@@ -167,6 +216,7 @@ export function LoginForm() {
   const router = useRouter()
   const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState<LoginCredentials>({
     email: '',
     password: ''
@@ -179,17 +229,36 @@ export function LoginForm() {
     try {
       login.mutate(formData, {
         onSuccess: () => {
-          toast.success('Welcome back!')
-          router.push('/dashboard')
+          toast.success('Welcome back! You\'re successfully logged in.', {
+            style: {
+              background: '#07921f',
+              color: '#fff',
+              fontSize: '14px',
+            }
+          })
+          router.replace('/')
           setIsLoading(false)
         },
         onError: (error: any) => {
-          toast.error(error.response?.data?.message || 'Login failed')
+          toast.error(error.message || 'Login failed', {
+            style: {
+              background: '#f44336',
+              color: '#fff',
+              fontSize: '14px',
+            }
+          })
+
           setIsLoading(false)
         }
       })
-    } catch (error: any) {
-      toast.error('An unexpected error occurred')
+    } catch (_error: any) {
+      toast.error('An unexpected error occurred', {
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontSize: '14px',
+        }
+      })
       setIsLoading(false)
     }
   }
@@ -220,7 +289,7 @@ export function LoginForm() {
             onChange={handleChange}
             placeholder="john@example.com"
             required
-            
+
           />
         </div>
 
@@ -228,15 +297,33 @@ export function LoginForm() {
           <label className="block text-sm font-medium text-neutral-500 mb-1">
             Password
           </label>
-          <Input
-            className='text-black'
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="••••••••"
-            required
-          />
+          <div className="relative">
+            <Input
+              className='text-black pr-10'
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.757 6.757M9.878 9.878a3 3 0 103.242 3.242m0-3.242l4.121 4.122m0 0l2.122 2.121M15.121 15.121L18.243 18.243m-6.122-6.122a3 3 0 00-4.243 4.243 3 3 0 004.243-4.243z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <Button
@@ -276,7 +363,7 @@ export function AuthGuard({
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-green-600"></div>
       </div>
     )
   }
@@ -298,15 +385,33 @@ export function UserProfile() {
     try {
       logout.mutate(undefined, {
         onSuccess: () => {
-          toast.success('Logged out successfully')
+          toast.success('Logged out successfully', {
+            style: {
+              background: '#07921f',
+              color: '#fff',
+              fontSize: '14px',
+            }
+          })
           router.push('/')
         },
         onError: () => {
-          toast.error('Logout failed')
+          toast.error('Logout failed', {
+            style: {
+              background: '#f44336',
+              color: '#fff',
+              fontSize: '14px',
+            }
+          })
         }
       })
-    } catch (error) {
-      toast.error('Logout failed')
+    } catch (_error) {
+      toast.error('Logout failed', {
+        style: {
+          background: '#f44336',
+          color: '#fff',
+          fontSize: '14px',
+        }
+      })
     }
   }
 
@@ -330,12 +435,12 @@ export function UserProfile() {
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-3">
         <div className="flex-shrink-0">
-          <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-indigo-500 text-white text-sm font-medium">
-            {user.firstName[0]}{user.lastName[0]}
-          </span>
+          {/* <span className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-green-600 text-white text-sm font-medium">
+            {user ? user.firstName[0] : "S"}{user ? user.lastName[0] : "L"}
+          </span> */}
         </div>
         <span className="text-sm font-medium text-neutral-500">
-          {user.firstName} {user.lastName}
+          {user ? user.firstName : "John"} {user ? user.lastName : "Doe"}
         </span>
       </div>
 

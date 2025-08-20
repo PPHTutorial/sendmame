@@ -6,46 +6,46 @@ import { toast } from 'react-hot-toast'
 // Auth hooks
 export function useLogin() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
       queryClient.setQueryData(['user'], data)
-      toast.success('Login successful!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Login failed')
+      
     },
   })
 }
 
 export function useRegister() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: authApi.register,
     onSuccess: (data) => {
       queryClient.setQueryData(['user'], data)
-      toast.success('Account created successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Registration failed')
+      
     },
   })
 }
 
 export function useLogout() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: authApi.logout,
     onSuccess: () => {
       queryClient.clear()
       localStorage.removeItem('accessToken')
-      toast.success('Logged out successfully')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Logout failed')
+      
     },
   })
 }
@@ -68,7 +68,7 @@ export function useAuth() {
 
   return {
     login,
-    register, 
+    register,
     logout,
     getCurrentUser,
     isLoggingIn: login.isPending,
@@ -88,31 +88,23 @@ export function useUserProfile(userId: string) {
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: userApi.updateProfile,
-    onSuccess: (data) => {
-      queryClient.setQueryData(['user'], data)
-      queryClient.invalidateQueries({ queryKey: ['user'] })
-      toast.success('Profile updated successfully!')
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update profile')
-    },
   })
 }
 
 export function useUploadAvatar() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: userApi.uploadAvatar,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
-      toast.success('Avatar uploaded successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to upload avatar')
+      
     },
   })
 }
@@ -122,7 +114,9 @@ export function usePackages(params?: any) {
   return useQuery({
     queryKey: ['packages', params],
     queryFn: () => packageApi.getPackages(params),
+    enabled: params !== null && params !== undefined,
     staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
   })
 }
 
@@ -136,46 +130,46 @@ export function usePackage(id: string) {
 
 export function useCreatePackage() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: packageApi.createPackage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] })
-      toast.success('Package created successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create package')
+      
     },
   })
 }
 
 export function useUpdatePackage() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => packageApi.updatePackage(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['package', id] })
       queryClient.invalidateQueries({ queryKey: ['packages'] })
-      toast.success('Package updated successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update package')
+      
     },
   })
 }
 
 export function useDeletePackage() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: packageApi.deletePackage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] })
-      toast.success('Package deleted successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete package')
+      
     },
   })
 }
@@ -194,10 +188,18 @@ export function useTrips(params?: any) {
   return useQuery({
     queryKey: ['trips', params],
     queryFn: () => tripApi.getTrips(params),
+    enabled: params !== null && params !== undefined,
     staleTime: 2 * 60 * 1000, // 2 minutes
+    retry: 1,
   })
 }
-
+/* export function usePackage(id: string) {
+  return useQuery({
+    queryKey: ['package', id],
+    queryFn: () => packageApi.getPackage(id),
+    enabled: !!id,
+  })
+} */
 export function useTrip(id: string) {
   return useQuery({
     queryKey: ['trip', id],
@@ -208,46 +210,46 @@ export function useTrip(id: string) {
 
 export function useCreateTrip() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: tripApi.createTrip,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] })
-      toast.success('Trip created successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create trip')
+      
     },
   })
 }
 
 export function useUpdateTrip() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => tripApi.updateTrip(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['trip', id] })
       queryClient.invalidateQueries({ queryKey: ['trips'] })
-      toast.success('Trip updated successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update trip')
+      
     },
   })
 }
 
 export function useDeleteTrip() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: tripApi.deleteTrip,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] })
-      toast.success('Trip deleted successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete trip')
+      
     },
   })
 }
@@ -281,31 +283,31 @@ export function useChat(id: string) {
 
 export function useCreateChat() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: chatApi.createChat,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chats'] })
-      toast.success('Chat created successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create chat')
+      
     },
   })
 }
 
 export function useSendMessage() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
-    mutationFn: ({ chatId, data }: { chatId: string; data: any }) => 
+    mutationFn: ({ chatId, data }: { chatId: string; data: any }) =>
       chatApi.sendMessage(chatId, data),
     onSuccess: (_, { chatId }) => {
       queryClient.invalidateQueries({ queryKey: ['chat', chatId] })
       queryClient.invalidateQueries({ queryKey: ['chats'] })
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to send message')
+      
     },
   })
 }
@@ -324,23 +326,23 @@ export function useCreatePaymentIntent() {
   return useMutation({
     mutationFn: paymentApi.createPaymentIntent,
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to create payment intent')
+      
     },
   })
 }
 
 export function useConfirmPayment() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: paymentApi.confirmPayment,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
       queryClient.invalidateQueries({ queryKey: ['user'] })
-      toast.success('Payment confirmed successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Payment confirmation failed')
+      
     },
   })
 }
@@ -355,15 +357,15 @@ export function usePaymentMethods() {
 
 export function useAddPaymentMethod() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: paymentApi.addPaymentMethod,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['paymentMethods'] })
-      toast.success('Payment method added successfully!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to add payment method')
+      
     },
   })
 }
@@ -387,44 +389,44 @@ export function useNotifications(params?: any) {
 
 export function useMarkNotificationAsRead() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: notificationApi.markAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to mark notification as read')
+      
     },
   })
 }
 
 export function useMarkAllNotificationsAsRead() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: notificationApi.markAllAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      toast.success('All notifications marked as read!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to mark notifications as read')
+      
     },
   })
 }
 
 export function useDeleteNotification() {
   const queryClient = useQueryClient()
-  
+
   return useMutation({
     mutationFn: notificationApi.deleteNotification,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      toast.success('Notification deleted!')
+      
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to delete notification')
+      
     },
   })
 }

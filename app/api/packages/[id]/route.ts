@@ -14,10 +14,11 @@ import type { UpdatePackageInput } from '@/lib/validations'
 // GET /api/packages/[id] - Get package details
 export const GET = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
+  const { id } = await params
   const packageData = await prisma.package.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       sender: {
         select: {
@@ -91,14 +92,15 @@ export const GET = withErrorHandling(async (
 // PUT /api/packages/[id] - Update package
 export const PUT = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
+  const { id } = await params
   const userPayload = await requireAuth(request)
   const data = await parseRequestBody<UpdatePackageInput>(request, updatePackageSchema)
   
   // Check if package exists and user has permission
   const existingPackage = await prisma.package.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { senderId: true, status: true }
   })
   
@@ -117,7 +119,7 @@ export const PUT = withErrorHandling(async (
   
   // Update package
   const updatedPackage = await prisma.package.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...data,
       ...(data.pickupAddress && {
@@ -147,13 +149,14 @@ export const PUT = withErrorHandling(async (
 // DELETE /api/packages/[id] - Delete package
 export const DELETE = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
+  const { id } = await params
   const userPayload = await requireAuth(request)
   
   // Check if package exists and user has permission
   const existingPackage = await prisma.package.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { senderId: true, status: true }
   })
   
@@ -172,7 +175,7 @@ export const DELETE = withErrorHandling(async (
   
   // Delete package
   await prisma.package.delete({
-    where: { id: params.id }
+    where: { id }
   })
   
   return createSuccessResponse(null, 'Package deleted successfully')

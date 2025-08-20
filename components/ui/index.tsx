@@ -25,17 +25,17 @@ export function Button({
         'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2',
         {
           // Variants
-          'bg-indigo-600 text-neutral-500 hover:bg-indigo-700 focus:ring-indigo-500': variant === 'primary',
-          'bg-gray-600 text-neutral-500 hover:bg-gray-700 focus:ring-gray-500': variant === 'secondary',
-          'border border-gray-300 bg-white text-neutral-500 hover:bg-gray-50 focus:ring-indigo-500': variant === 'outline',
-          'text-neutral-500 hover:bg-gray-100 focus:ring-indigo-500': variant === 'ghost',
-          'bg-red-600 text-neutral-500 hover:bg-red-700 focus:ring-red-500': variant === 'danger',
-          
+          'bg-teal-600 text-white hover:bg-teal-700 focus:ring-teal-500': variant === 'primary',
+          'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500': variant === 'secondary',
+          'border border-teal-600 bg-white text-teal-700 hover:bg-teal-50 focus:ring-teal-500': variant === 'outline',
+          'text-teal-700 hover:bg-teal-50 focus:ring-transparent': variant === 'ghost',
+          'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500': variant === 'danger',
+
           // Sizes
           'px-3 py-1.5 text-sm': size === 'sm',
           'px-4 py-2 text-sm': size === 'md',
           'px-6 py-3 text-base': size === 'lg',
-          
+
           // States
           'opacity-50 cursor-not-allowed': disabled || loading,
         },
@@ -66,13 +66,13 @@ export function Input({ label, error, helper, className, ...props }: InputProps)
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-black mb-1">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
           {label}
         </label>
       )}
       <input
         className={clsx(
-          'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+          'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500',
           {
             'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500': error,
           },
@@ -84,7 +84,7 @@ export function Input({ label, error, helper, className, ...props }: InputProps)
         <p className="mt-1 text-sm text-red-600">{error}</p>
       )}
       {helper && !error && (
-        <p className="mt-1 text-sm text-black-500">{helper}</p>
+        <p className="mt-1 text-sm text-gray-500">{helper}</p>
       )}
     </div>
   )
@@ -107,7 +107,7 @@ export function Textarea({ label, error, helper, className, ...props }: Textarea
       )}
       <textarea
         className={clsx(
-          'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+          'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500',
           {
             'border-red-300 text-red-900 placeholder-red-300 focus:ring-red-500 focus:border-red-500': error,
           },
@@ -119,7 +119,7 @@ export function Textarea({ label, error, helper, className, ...props }: Textarea
         <p className="mt-1 text-sm text-red-600">{error}</p>
       )}
       {helper && !error && (
-        <p className="mt-1 text-sm text-black-500">{helper}</p>
+        <p className="mt-1 text-sm text-gray-500">{helper}</p>
       )}
     </div>
   )
@@ -143,7 +143,7 @@ export function Select({ label, error, helper, options, className, ...props }: S
       )}
       <select
         className={clsx(
-          'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
+          'w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500',
           {
             'border-red-300 text-red-900 focus:ring-red-500 focus:border-red-500': error,
           },
@@ -207,12 +207,12 @@ export function Badge({ children, variant = 'default', size = 'md', className }:
         'inline-flex items-center font-medium rounded-full',
         {
           // Variants
-          'bg-gray-100 text-black-800': variant === 'default',
+          'bg-gray-100 text-gray-800': variant === 'default',
           'bg-green-100 text-green-800': variant === 'success',
           'bg-yellow-100 text-yellow-800': variant === 'warning',
           'bg-red-100 text-red-800': variant === 'danger',
           'bg-blue-100 text-blue-800': variant === 'info',
-          
+
           // Sizes
           'px-2 py-0.5 text-xs': size === 'sm',
           'px-2.5 py-0.5 text-sm': size === 'md',
@@ -235,7 +235,7 @@ export function Spinner({ size = 'md', className }: SpinnerProps) {
   return (
     <svg
       className={clsx(
-        'animate-spin text-black-400',
+        'animate-spin text-gray-400',
         {
           'w-4 h-4': size === 'sm',
           'w-6 h-6': size === 'md',
@@ -278,16 +278,18 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        {/* Backdrop */}
         <div
-          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          className="fixed inset-0 transition-opacity bg-neutral-900/80 backdrop-blur-sm bg-opacity-75"
           onClick={onClose}
         />
         
         <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
         
+        {/* Modal Content */}
         <div
           className={clsx(
-            'inline-block w-full overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle',
+            'relative inline-block w-full overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle',
             {
               'sm:max-w-sm': size === 'sm',
               'sm:max-w-lg': size === 'md',
@@ -295,13 +297,14 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
               'sm:max-w-4xl': size === 'xl',
             }
           )}
+          onClick={(e) => e.stopPropagation()}
         >
           {title && (
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-black-900">{title}</h3>
             </div>
           )}
-          
+
           <div className="px-6 py-4">
             {children}
           </div>
@@ -341,7 +344,7 @@ export function Alert({ variant = 'info', title, children, onClose, className }:
           )}
           <div className="text-sm">{children}</div>
         </div>
-        
+
         {onClose && (
           <button
             onClick={onClose}

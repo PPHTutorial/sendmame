@@ -45,6 +45,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
           firstName: true,
           lastName: true,
           avatar: true,
+          phone: true,
           profile: {
             select: {
               senderRating: true,
@@ -72,7 +73,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       }
     }
   })
-
+  //console.log('Fetched packages:', packages)
   return createSuccessResponse(packages, undefined, {
     ...pagination,
     total,
@@ -85,11 +86,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const userPayload = await requireAuth(request)
   const data = await parseRequestBody(request, createPackageSchema)
 
+
   // Create package
   const packageData = await prisma.package.create({
     data: {
       ...data,
       senderId: userPayload.userId,
+      pickupDate: new Date(data.pickupDate).toISOString(),
+      deliveryDate: new Date(data.deliveryDate).toISOString(),
       pickupLatitude: data.pickupAddress.latitude,
       pickupLongitude: data.pickupAddress.longitude,
       deliveryLatitude: data.deliveryAddress.latitude,

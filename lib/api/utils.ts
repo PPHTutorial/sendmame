@@ -61,7 +61,7 @@ export function createErrorResponse(
   }
 
   if (error instanceof ValidationApiError) {
-    return NextResponse.json(response, { 
+    return NextResponse.json(response, {
       status: error.statusCode,
       headers: {
         'X-Error-Code': error.code || 'VALIDATION_ERROR'
@@ -69,7 +69,7 @@ export function createErrorResponse(
     })
   }
 
-  return NextResponse.json(response, { 
+  return NextResponse.json(response, {
     status: error.statusCode,
     headers: {
       'X-Error-Code': error.code || 'API_ERROR'
@@ -86,15 +86,18 @@ export function validateRequestBody<T>(
     return schema.parse(data)
   } catch (error) {
     if (error instanceof ZodError) {
+      console.error('Validation error:', error.errors)
       const validationErrors: ValidationError[] = error.errors.map((err) => ({
         field: err.path.join('.'),
         message: err.message,
         code: err.code,
+        // details: err.fatal,
       }))
 
       throw new ValidationApiError(
-        'Validation failed',
-        validationErrors
+        validationErrors[0].message,
+        validationErrors,
+        validationErrors[0].code === 'invalid_type' ? 422 : 400
       )
     }
     throw error
@@ -104,15 +107,15 @@ export function validateRequestBody<T>(
 // Request parsing helpers
 export async function parseRequestBody<T>(
   request: NextRequest,
-  schema?: ZodSchema<T>
-): Promise<T> {
+  schema?: ZodSchema<T>): Promise<T> {
   try {
     const body = await request.json()
-    
+
+
     if (schema) {
       return validateRequestBody(schema, body)
     }
-    
+
     return body
   } catch (error) {
     if (error instanceof ValidationApiError) {
@@ -205,24 +208,24 @@ export async function withAuth<T extends [NextRequest, ...any[]]>(
     try {
       const [request] = args
       const { requireAuth, requireRole } = await import('@/lib/auth')
-      
+
       // Get user from JWT token
       const userPayload = await requireAuth(request)
-      
+
       // Check role if specified
       if (options.allowedRoles) {
         requireRole(userPayload.role, options.allowedRoles)
       }
-      
+
       // Check verification if required
       if (options.requireVerification) {
         // Note: This would require database lookup in a real implementation
         // For now, we'll assume the token contains verification status
       }
-      
+
       // Add user to request context
       (request as any).user = userPayload
-      
+
       return await handler(...args)
     } catch (error) {
       if (error instanceof Error) {
@@ -246,13 +249,13 @@ export function withRateLimit<T extends [NextRequest, ...any[]]>(
 ) {
   return async (...args: T): Promise<NextResponse> => {
     const [request] = args
-    const key = options.keyGenerator 
+    const key = options.keyGenerator
       ? options.keyGenerator(request)
       : request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'anonymous'
-    
+
     const now = Date.now()
     const userLimit = rateLimitMap.get(key)
-    
+
     if (!userLimit || now > userLimit.resetTime) {
       rateLimitMap.set(key, {
         count: 1,
@@ -266,7 +269,7 @@ export function withRateLimit<T extends [NextRequest, ...any[]]>(
     } else {
       userLimit.count++
     }
-    
+
     return await handler(...args)
   }
 }
@@ -284,11 +287,11 @@ export function withCors<T extends [NextRequest, ...any[]]>(
   return async (...args: T): Promise<NextResponse> => {
     const [request] = args
     const origin = request.headers.get('origin')
-    
+
     // Handle preflight requests
     if (request.method === 'OPTIONS') {
       const response = new NextResponse(null, { status: 200 })
-      
+
       if (options.origin) {
         if (Array.isArray(options.origin)) {
           if (origin && options.origin.includes(origin)) {
@@ -298,25 +301,25 @@ export function withCors<T extends [NextRequest, ...any[]]>(
           response.headers.set('Access-Control-Allow-Origin', options.origin)
         }
       }
-      
+
       if (options.methods) {
         response.headers.set('Access-Control-Allow-Methods', options.methods.join(', '))
       }
-      
+
       if (options.allowedHeaders) {
         response.headers.set('Access-Control-Allow-Headers', options.allowedHeaders.join(', '))
       }
-      
+
       if (options.credentials) {
         response.headers.set('Access-Control-Allow-Credentials', 'true')
       }
-      
+
       return response
     }
-    
+
     // Handle actual request
     const response = await handler(...args)
-    
+
     if (options.origin) {
       if (Array.isArray(options.origin)) {
         if (origin && options.origin.includes(origin)) {
@@ -326,11 +329,11 @@ export function withCors<T extends [NextRequest, ...any[]]>(
         response.headers.set('Access-Control-Allow-Origin', options.origin)
       }
     }
-    
+
     if (options.credentials) {
       response.headers.set('Access-Control-Allow-Credentials', 'true')
     }
-    
+
     return response
   }
 }
@@ -343,7 +346,7 @@ export function calculatePagination(
 ) {
   const totalPages = Math.ceil(total / limit)
   const skip = (page - 1) * limit
-  
+
   return {
     page,
     limit,
@@ -358,7 +361,7 @@ export function calculatePagination(
 // Database query helpers
 export function buildWhereClause(filters: Record<string, any>) {
   const where: Record<string, any> = {}
-  
+
   for (const [key, value] of Object.entries(filters)) {
     if (value !== undefined && value !== null && value !== '') {
       if (typeof value === 'string' && key.includes('search')) {
@@ -383,7 +386,7 @@ export function buildWhereClause(filters: Record<string, any>) {
       }
     }
   }
-  
+
   return where
 }
 
@@ -395,7 +398,7 @@ export function buildLocationFilter(
 ) {
   // Convert radius from km to degrees (rough approximation)
   const radiusDegrees = radiusKm / 111.32
-  
+
   return {
     latitude: {
       gte: latitude - radiusDegrees,
@@ -420,25 +423,25 @@ export async function handleFileUpload(
   try {
     const formData = await request.formData()
     const files: File[] = []
-    
+
     for (const [key, value] of formData.entries()) {
       if (options.field && key !== options.field) continue
-      
+
       if (value instanceof File) {
         // Validate file size
         if (options.maxSize && value.size > options.maxSize) {
           throw new ApiError(`File ${value.name} is too large`, 400)
         }
-        
+
         // Validate file type
         if (options.allowedTypes && !options.allowedTypes.includes(value.type)) {
           throw new ApiError(`File type ${value.type} is not allowed`, 400)
         }
-        
+
         files.push(value)
       }
     }
-    
+
     return files
   } catch (error) {
     if (error instanceof ApiError) throw error

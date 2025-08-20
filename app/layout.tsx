@@ -3,6 +3,8 @@ import "./globals.css"
 import localFont from 'next/font/local'
 import QueryProvider from '@/components/providers/QueryProvider'
 import { Toaster } from "react-hot-toast"
+import { NavigationHeader, Footer } from '@/components/navigation'
+import { Roboto } from 'next/font/google'
 
 export const metadata: Metadata = {
   title: "Fakomame - Community-Driven Package Delivery",
@@ -55,28 +57,13 @@ export const metadata: Metadata = {
   },
 }
 
-
-const geistSans = localFont({
-  src: [
-    {
-      path: "../public/fonts/Geist.ttf",
-      weight: "400",
-      style: "normal",
-    },
-  ],
-  variable: "--font-geist-sans",
+const roboto = Roboto({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '700'],
+  variable: '--font-roboto',
+  display: 'swap',
 })
 
-const geistMono = localFont({
-  src: [
-    {
-      path: "../public/fonts/GeistMono.ttf",
-      weight: "400",
-      style: "normal",
-    },
-  ],
-  variable: "--font-geist-mono",
-})
 
 export default function RootLayout({
   children,
@@ -85,10 +72,11 @@ export default function RootLayout({
 }>) {
   return (
     <html className="h-full" lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} bg-black h-full`}>
+      <body className={`${roboto.variable} ${roboto.variable} bg-white h-full`}>
         <Toaster />
         <QueryProvider>
           {children}
+          <Footer />
         </QueryProvider>
       </body>
     </html>

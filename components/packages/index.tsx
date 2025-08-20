@@ -28,7 +28,7 @@ export function PackageForm() {
       await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate API call
       toast.success('Package created successfully!')
       router.push('/packages')
-    } catch (error: any) {
+  } catch (_error: any) {
       toast.error('Failed to create package')
     } finally {
       setIsLoading(false)
@@ -80,7 +80,7 @@ export function PackageForm() {
             name="category"
             value={formData.category}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
             required
           >
             <option value="DOCUMENTS">Documents</option>
