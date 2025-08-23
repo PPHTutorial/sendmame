@@ -441,6 +441,7 @@ export function CTASection() {
 
 // Complete Landing Page
 export function LandingPage() {
+    
     return (
         <div className="min-h-screen">
             <HeroSection />

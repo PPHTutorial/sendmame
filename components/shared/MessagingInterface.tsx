@@ -254,7 +254,7 @@ export function MessagingInterface({
         </div>
 
         {/* Message Input */}
-        <div className="p-4 border-t bg-white">
+        <div className="p-4 border-t bg-white border-gray-200">
           <div className="flex items-end gap-2">
             <Button variant="ghost" size="sm" className="mb-2">
               <Paperclip className="h-4 w-4" />

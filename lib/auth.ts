@@ -2,7 +2,10 @@
 import { SignJWT, jwtVerify } from 'jose'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
+import { NextAuthOptions } from 'next-auth'
+import CredentialsProvider from 'next-auth/providers/credentials'
 import type { JwtPayload, AuthUser } from '@/lib/types'
+import prisma from './prisma'
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'fakomame-super-secret-key-change-in-production'
@@ -12,7 +15,7 @@ const JWT_ISSUER = 'fakomame'
 const JWT_AUDIENCE = 'fakomame-users'
 
 // Token expiration times
-const ACCESS_TOKEN_EXPIRY = '24h'
+const ACCESS_TOKEN_EXPIRY = '7d'
 const REFRESH_TOKEN_EXPIRY = '7d'
 
 export class AuthError extends Error {
@@ -61,7 +64,7 @@ export async function verifyToken(token: string): Promise<JwtPayload> {
     })
     
     return payload as unknown as JwtPayload
-  } catch (error) {
+  } catch (_error) {
     throw new AuthError('Invalid or expired token')
   }
 }
@@ -116,7 +119,7 @@ export async function getAuthUser(): Promise<AuthUser | null> {
       avatar: undefined,
       isVerified: false,
     }
-  } catch (error) {
+  } catch (_error) {
     return null
   }
 }
@@ -211,3 +214,69 @@ export function checkAuthRateLimit(identifier: string): boolean {
 export function resetAuthRateLimit(identifier: string): void {
   authAttempts.delete(identifier)
 }
+
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: 'credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email }
+          })
+
+          if (!user || !user.password) {
+            return null
+          }
+
+          const isValidPassword = await verifyPassword(credentials.password, user.password)
+
+          if (!isValidPassword) {
+            return null
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: `${user.firstName} ${user.lastName}`,
+            role: user.role,
+          }
+        } catch (error) {
+          console.error('Auth error:', error)
+          return null
+        }
+      }
+    })
+  ],
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = (user as any).role
+      }
+      return token
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        (session.user as any).id = token.sub
+        ;(session.user as any).role = token.role
+      }
+      return session
+    }
+  },
+  pages: {
+    signIn: '/auth/login',
+  },
+  session: {
+    strategy: 'jwt',
+  },
+}
+

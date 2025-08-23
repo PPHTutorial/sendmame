@@ -579,7 +579,7 @@ model SafetyConfirmation {
   user      User   @relation(fields: [userId], references: [id])
 
   confirmationType String // "ASSIGNMENT", "PICKUP", "DELIVERY"
-  confirmations    Json   // JSON object with all confirmations
+  confirmations    Json // JSON object with all confirmations
   notes            String?
 
   confirmedAt DateTime @default(now())

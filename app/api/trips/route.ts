@@ -35,7 +35,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const trips = await prisma.trip.findMany({
     where,
     skip,
-    take: limit,
+    //take: limit,
     orderBy: { [sortBy]: sortOrder },
     include: {
       traveler: {

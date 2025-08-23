@@ -36,7 +36,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const packages = await prisma.package.findMany({
     where,
     skip,
-    take: limit,
+    //take: limit,
     orderBy: { [sortBy]: sortOrder },
     include: {
       sender: {

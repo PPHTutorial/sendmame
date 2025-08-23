@@ -21,7 +21,7 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`
       }
     }
-    
+
     return config
   },
   (error) => {
@@ -36,26 +36,26 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError<ApiResponse>) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean }
-    
+
     // Handle 401 errors (token expired)
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
-      
+
       try {
         // Try to refresh token
         const refreshResponse = await axios.post('/api/auth/refresh', {}, {
           withCredentials: true
         })
-        
+
         if (refreshResponse.data.success && refreshResponse.data.data?.accessToken) {
           const newToken = refreshResponse.data.data.accessToken
           localStorage.setItem('accessToken', newToken)
-          
+
           // Retry original request with new token
           if (originalRequest.headers) {
             originalRequest.headers.Authorization = `Bearer ${newToken}`
           }
-          
+
           return apiClient(originalRequest)
         }
       } catch (refreshError) {
@@ -66,7 +66,7 @@ apiClient.interceptors.response.use(
         }
       }
     }
-    
+
     return Promise.reject(error)
   }
 )
@@ -94,7 +94,7 @@ export const authApi = {
       url: '/auth/login',
       data,
     }),
-    
+
   register: (data: {
     email: string
     password: string
@@ -108,19 +108,19 @@ export const authApi = {
       url: '/auth/register',
       data,
     }),
-    
+
   logout: () =>
     apiRequest({
       method: 'POST',
       url: '/auth/logout',
     }),
-    
+
   getCurrentUser: () =>
     apiRequest({
       method: 'GET',
       url: '/auth/me',
     }),
-    
+
   refreshToken: () =>
     apiRequest({
       method: 'POST',
@@ -135,18 +135,18 @@ export const userApi = {
       method: 'GET',
       url: `/users/${userId}`,
     }),
-    
+
   updateProfile: (data: any) =>
     apiRequest({
       method: 'PUT',
       url: '/users/profile',
       data,
     }),
-    
+
   uploadAvatar: (file: File) => {
     const formData = new FormData()
     formData.append('avatar', file)
-    
+
     return apiRequest({
       method: 'POST',
       url: '/users/avatar',
@@ -166,33 +166,33 @@ export const packageApi = {
       url: '/packages',
       params,
     }),
-    
+
   getPackage: (id: string) =>
     apiRequest({
       method: 'GET',
       url: `/packages/${id}`,
     }),
-    
+
   createPackage: (data: any) =>
     apiRequest({
       method: 'POST',
       url: '/packages',
       data,
     }),
-    
+
   updatePackage: (id: string, data: any) =>
     apiRequest({
       method: 'PUT',
       url: `/packages/${id}`,
       data,
     }),
-    
+
   deletePackage: (id: string) =>
     apiRequest({
       method: 'DELETE',
       url: `/packages/${id}`,
     }),
-    
+
   searchPackages: (filters: any) =>
     apiRequest({
       method: 'GET',
@@ -209,33 +209,33 @@ export const tripApi = {
       url: '/trips',
       params,
     }),
-    
+
   getTrip: (id: string) =>
     apiRequest({
       method: 'GET',
       url: `/trips/${id}`,
     }),
-    
+
   createTrip: (data: any) =>
     apiRequest({
       method: 'POST',
       url: '/trips',
       data,
     }),
-    
+
   updateTrip: (id: string, data: any) =>
     apiRequest({
       method: 'PUT',
       url: `/trips/${id}`,
       data,
     }),
-    
+
   deleteTrip: (id: string) =>
     apiRequest({
       method: 'DELETE',
       url: `/trips/${id}`,
     }),
-    
+
   searchTrips: (filters: any) =>
     apiRequest({
       method: 'GET',
@@ -251,32 +251,88 @@ export const chatApi = {
       method: 'GET',
       url: '/chats',
     }),
-    
+
   getChat: (id: string) =>
     apiRequest({
       method: 'GET',
       url: `/chats/${id}`,
     }),
-    
+
   createChat: (data: any) =>
     apiRequest({
       method: 'POST',
       url: '/chats',
       data,
     }),
-    
+
   sendMessage: (chatId: string, data: any) =>
     apiRequest({
       method: 'POST',
       url: `/chats/${chatId}/messages`,
       data,
     }),
-    
+
   getMessages: (chatId: string, params?: any) =>
     apiRequest({
       method: 'GET',
       url: `/chats/${chatId}/messages`,
       params,
+    }),
+}
+
+// Assignment API calls
+export const assignmentApi = {
+  getAssignments: (params?: any) =>
+    apiRequest({
+      method: 'GET',
+      url: '/assignments',
+      params,
+    }),
+
+  getAssignment: (id: string) =>
+    apiRequest({
+      method: 'GET',
+      url: `/assignments/${id}`,
+    }),
+
+  createAssignment: (data: {
+    packageId: string
+    tripId: string
+    confirmations: Record<string, any>
+    confirmationType: string,
+    notification?: string,
+    userId: string
+  }) =>
+    apiRequest({
+      method: 'POST',
+      url: '/assignments',
+      data,
+    }),
+
+  updateAssignment: (id: string, data: any) =>
+    apiRequest({
+      method: 'PUT',
+      url: `/assignments/${id}`,
+      data,
+    }),
+
+  deleteAssignment: (id: string) =>
+    apiRequest({
+      method: 'DELETE',
+      url: `/assignments/${id}`,
+    }),
+
+  confirmAssignment: (id: string) =>
+    apiRequest({
+      method: 'PUT',
+      url: `/assignments/${id}/confirm`,
+    }),
+
+  cancelAssignment: (id: string, reason?: string) =>
+    apiRequest({
+      method: 'PUT',
+      url: `/assignments/${id}/cancel`,
+      data: { reason },
     }),
 }
 
@@ -288,27 +344,27 @@ export const paymentApi = {
       url: '/payments/create-intent',
       data,
     }),
-    
+
   confirmPayment: (paymentIntentId: string) =>
     apiRequest({
       method: 'POST',
       url: '/payments/confirm',
       data: { paymentIntentId },
     }),
-    
+
   getPaymentMethods: () =>
     apiRequest({
       method: 'GET',
       url: '/payments/methods',
     }),
-    
+
   addPaymentMethod: (data: any) =>
     apiRequest({
       method: 'POST',
       url: '/payments/methods',
       data,
     }),
-    
+
   getTransactions: (params?: any) =>
     apiRequest({
       method: 'GET',
@@ -325,19 +381,19 @@ export const notificationApi = {
       url: '/notifications',
       params,
     }),
-    
+
   markAsRead: (id: string) =>
     apiRequest({
       method: 'PUT',
       url: `/notifications/${id}/read`,
     }),
-    
+
   markAllAsRead: () =>
     apiRequest({
       method: 'PUT',
       url: '/notifications/read-all',
     }),
-    
+
   deleteNotification: (id: string) =>
     apiRequest({
       method: 'DELETE',

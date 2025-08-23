@@ -34,21 +34,14 @@ export default function TripsPage() {
 
   const limit = 12
 
-  // Build query parameters
+  // Modified query parameters to fetch more data for proper pagination
   const buildQueryParams = useMemo(() => {
     const params: any = {
-      page: currentPage,
-      limit,
+      page: 1, // Always fetch from page 1
+      limit: 1000, // Fetch a large number to get all data
       sortBy,
       sortOrder,
-      ...filters
-    }
-
-    if (searchQuery) {
-      params.title = searchQuery
-      params.arrivalDate = searchQuery
-      params.departureDate = searchQuery
-      params.destination = {country: searchQuery}
+      // Don't include filters in API call, we'll filter client-side
     }
 
     // Remove empty filters
@@ -59,7 +52,7 @@ export default function TripsPage() {
     })
 
     return params
-  }, [currentPage, limit, sortBy, sortOrder, filters, searchQuery])
+  }, [sortBy, sortOrder]) // Removed dependencies that would cause unnecessary refetches
 
   // Fetch trips data
   const tripsQuery = useTrips(buildQueryParams)
@@ -68,7 +61,7 @@ export default function TripsPage() {
   const isLoading = tripsQuery.isLoading
   const isError = tripsQuery.isError
 
-  // Client-side filtering and searching
+  // Comprehensive client-side filtering and searching
   const filteredTrips = useMemo(() => {
     let filtered = tripsQuery.data || []
 
@@ -77,11 +70,24 @@ export default function TripsPage() {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter((trip: any) => {
         const destination = (trip.destination || '').toLowerCase()
-        const from = (trip.from || '').toLowerCase()
-        const to = (trip.to || '').toLowerCase()
+        const origin = (trip.origin || '').toLowerCase()
         const title = (trip.title || '').toLowerCase()
-        return destination.includes(query) || from.includes(query) || to.includes(query) || title.includes(query)
+        const transportMode = (trip.transportMode || '').toLowerCase()
+        const pricePerKg = (trip.pricePerKg || 0).toString()
+        return destination.includes(query) || 
+               origin.includes(query) || 
+               title.includes(query) ||
+               transportMode.includes(query) ||
+               pricePerKg.includes(query)
       })
+    }
+
+    // Apply filters
+    if (filters.title) {
+      const titleQuery = filters.title.toLowerCase()
+      filtered = filtered.filter((trip: any) => 
+        (trip.title || '').toLowerCase().includes(titleQuery)
+      )
     }
 
     // Apply status filter
@@ -99,60 +105,56 @@ export default function TripsPage() {
       const destination = filters.destination.toLowerCase()
       filtered = filtered.filter((trip: any) => 
         (trip.destination || '').toLowerCase().includes(destination) ||
-        (trip.from || '').toLowerCase().includes(destination) ||
-        (trip.to || '').toLowerCase().includes(destination)
+        (trip.title || '').toLowerCase().includes(destination)
       )
     }
 
     // Apply price range filters
     if (filters.priceMin) {
       const minPrice = parseFloat(filters.priceMin)
-      filtered = filtered.filter((trip: any) => (trip.pricePerKg || trip.pricePerSeat || 0) >= minPrice)
+      filtered = filtered.filter((trip: any) => (trip.pricePerKg || 0) >= minPrice)
     }
 
     if (filters.priceMax) {
       const maxPrice = parseFloat(filters.priceMax)
-      filtered = filtered.filter((trip: any) => (trip.pricePerKg || trip.pricePerSeat || 0) <= maxPrice)
+      filtered = filtered.filter((trip: any) => (trip.pricePerKg || 0) <= maxPrice)
     }
 
     // Apply date range filters
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom)
       filtered = filtered.filter((trip: any) => {
-        const tripDate = new Date(trip.departureDate || trip.createdAt)
-        return tripDate >= fromDate
+        const itemDate = new Date(trip.departureDate || trip.createdAt)
+        return itemDate >= fromDate
       })
     }
 
     if (filters.dateTo) {
       const toDate = new Date(filters.dateTo)
       filtered = filtered.filter((trip: any) => {
-        const tripDate = new Date(trip.departureDate || trip.createdAt)
-        return tripDate <= toDate
+        const itemDate = new Date(trip.departureDate || trip.createdAt)
+        return itemDate <= toDate
       })
     }
 
-    // Apply sorting
-    return filtered.sort((a: any, b: any) => {
-      const aDate = new Date(a[sortBy] || a.createdAt)
-      const bDate = new Date(b[sortBy] || b.createdAt)
-      return sortOrder === 'desc' ? bDate.getTime() - aDate.getTime() : aDate.getTime() - bDate.getTime()
-    })
-  }, [tripsQuery.data, searchQuery, filters, sortBy, sortOrder])
+    return filtered
+  }, [tripsQuery.data, searchQuery, filters])
 
-  // Pagination logic
+  // Enhanced pagination logic
   const startIndex = (currentPage - 1) * limit
   const endIndex = startIndex + limit
   const paginatedTrips = filteredTrips.slice(startIndex, endIndex)
 
-  // Data access
-  const trips = paginatedTrips
+  // Comprehensive pagination info
+  const totalPages = Math.max(1, Math.ceil(filteredTrips.length / limit))
   const totalItems = filteredTrips.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / limit))
+  const showingStart = Math.min(startIndex + 1, totalItems)
+  const showingEnd = Math.min(endIndex, totalItems)
 
   // Check if filters are active
-  const hasActiveFilters = Object.values(filters).some(value => value !== '')
+  const hasActiveFilters = Object.values(filters).some(value => value !== '') || searchQuery !== ''
 
+  // Event handlers
   const handleSearch = (query: string) => {
     setSearchQuery(query)
     setCurrentPage(1)
@@ -346,7 +348,7 @@ export default function TripsPage() {
         {/* Results */}
         {isLoading ? (
           <LoadingSpinner className="py-12" />
-        ) : trips.length === 0 ? (
+        ) : paginatedTrips.length === 0 ? (
           <EmptyState
             title="No trips found"
             description="Try adjusting your search criteria or filters to find what you're looking for."
@@ -369,7 +371,7 @@ export default function TripsPage() {
           <>
             {/* Results Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {trips.map((trip: any) => (
+              {paginatedTrips.map((trip: any) => (
                 <TripCard key={trip.id} trip={trip} />
               ))}
             </div>
@@ -380,8 +382,8 @@ export default function TripsPage() {
               totalPages={totalPages}
               onPageChange={handlePageChange}
               showInfo={{
-                start: (currentPage - 1) * limit + 1,
-                end: Math.min(currentPage * limit, totalItems),
+                start: showingStart,
+                end: showingEnd,
                 total: totalItems
               }}
             />

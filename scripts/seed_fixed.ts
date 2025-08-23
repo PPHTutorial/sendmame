@@ -8,10 +8,6 @@ async function main() {
 
   // Clear existing data
   console.log('🧹 Clearing existing data...');
-  await prisma.safetyConfirmation.deleteMany();
-  await prisma.review.deleteMany();
-  await prisma.transaction.deleteMany();
-  await prisma.dispute.deleteMany();
   await prisma.chatParticipant.deleteMany();
   await prisma.message.deleteMany();
   await prisma.chat.deleteMany();
@@ -19,7 +15,6 @@ async function main() {
   await prisma.trackingEvent.deleteMany();
   await prisma.package.deleteMany();
   await prisma.trip.deleteMany();
-  await prisma.wallet.deleteMany();
   await prisma.userProfile.deleteMany();
   await prisma.user.deleteMany();
 

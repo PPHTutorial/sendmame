@@ -149,6 +149,113 @@ export const createReviewSchema = z.object({
   tripId: z.string().optional(),
 })
 
+// Assignment schemas
+export const safetyConfirmationsSchema = z.object({
+  legalCompliance: z.boolean().refine(val => val === true, {
+    message: 'Legal compliance confirmation is required'
+  }),
+  damageInspection: z.boolean().refine(val => val === true, {
+    message: 'Damage inspection confirmation is required'
+  }),
+  accurateDescription: z.boolean().refine(val => val === true, {
+    message: 'Accurate description confirmation is required'
+  }),
+  safetyMeasures: z.boolean().refine(val => val === true, {
+    message: 'Safety measures confirmation is required'
+  }),
+  termsAcceptance: z.boolean().refine(val => val === true, {
+    message: 'Terms acceptance confirmation is required'
+  }),
+})
+
+export const createAssignmentSchema = z.object({
+  packageId: z.string().min(1, 'Package ID is required'),
+  tripId: z.string().min(1, 'Trip ID is required'),
+  safetyConfirmations: safetyConfirmationsSchema,
+  notes: z.string().max(500, 'Notes too long').optional(),
+})
+
+export const updateAssignmentSchema = z.object({
+  status: z.enum(['MATCHED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED']).optional(),
+  notes: z.string().max(500, 'Notes too long').optional(),
+  confirmedAt: z.string().datetime().optional(),
+})
+
+export const assignmentSearchSchema = z.object({
+  packageId: z.string().optional(),
+  tripId: z.string().optional(),
+  senderId: z.string().optional(),
+  travelerId: z.string().optional(),
+  status: z.enum(['MATCHED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED']).optional(),
+  dateFrom: z.string().optional(),
+  dateTo: z.string().optional(),
+  page: z.number().int().positive().default(1),
+  limit: z.number().int().positive().max(100).default(20),
+  sortBy: z.enum(['createdAt', 'updatedAt', 'confirmedAt']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
+})
+
+export const assignmentActionSchema = z.object({
+  assignmentId: z.string().min(1, 'Assignment ID is required'),
+  action: z.enum(['confirm', 'cancel', 'mark_delivered', 'dispute']),
+  reason: z.string().max(500, 'Reason too long').optional(),
+  evidence: z.array(z.string().url()).default([]),
+})
+
+// Safety confirmation schemas
+export const createSafetyConfirmationSchema = z.object({
+  packageId: z.string().min(1, 'Package ID is required'),
+  tripId: z.string().min(1, 'Trip ID is required'),
+  confirmationType: z.enum(['ASSIGNMENT', 'PICKUP', 'DELIVERY']),
+  confirmations: z.record(z.boolean()),
+  notes: z.string().max(500, 'Notes too long').optional(),
+})
+
+export const pickupConfirmationSchema = z.object({
+  packageId: z.string().min(1, 'Package ID is required'),
+  tripId: z.string().min(1, 'Trip ID is required'),
+  confirmations: z.object({
+    packageReceived: z.boolean().refine(val => val === true, {
+      message: 'Package received confirmation is required'
+    }),
+    conditionVerified: z.boolean().refine(val => val === true, {
+      message: 'Condition verification is required'
+    }),
+    documentsChecked: z.boolean().refine(val => val === true, {
+      message: 'Documents check confirmation is required'
+    }),
+    photosTaken: z.boolean().refine(val => val === true, {
+      message: 'Photos confirmation is required'
+    }),
+  }),
+  pickupLocation: addressSchema.optional(),
+  pickupPhotos: z.array(z.string().url()).default([]),
+  notes: z.string().max(500, 'Notes too long').optional(),
+})
+
+export const deliveryConfirmationSchema = z.object({
+  packageId: z.string().min(1, 'Package ID is required'),
+  tripId: z.string().min(1, 'Trip ID is required'),
+  confirmations: z.object({
+    packageDelivered: z.boolean().refine(val => val === true, {
+      message: 'Package delivered confirmation is required'
+    }),
+    recipientVerified: z.boolean().refine(val => val === true, {
+      message: 'Recipient verification is required'
+    }),
+    conditionSatisfactory: z.boolean().refine(val => val === true, {
+      message: 'Condition confirmation is required'
+    }),
+    signatureObtained: z.boolean().refine(val => val === true, {
+      message: 'Signature confirmation is required'
+    }),
+  }),
+  deliveryLocation: addressSchema.optional(),
+  deliveryPhotos: z.array(z.string().url()).default([]),
+  recipientSignature: z.string().optional(),
+  notes: z.string().max(500, 'Notes too long').optional(),
+})
+
 // Payment schemas
 export const createPaymentSchema = z.object({
   amount: z.number().positive('Amount must be positive'),
@@ -189,7 +296,7 @@ export const packageSearchSchema = z.object({
   search: z.string().optional(),
   page: z.number().int().positive().default(1),
   limit: z.number().int().positive().max(100).default(20),
-  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'offeredPrice', 'pickupDate']).default('createdAt'),
+  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'offeredPrice', 'pickupDate', ]).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 })
 
@@ -213,7 +320,7 @@ export const tripSearchSchema = z.object({
   search: z.string().optional(),
   page: z.number().int().positive().default(1),
   limit: z.number().int().positive().max(100).default(20),
-  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'offeredPrice', 'pickupDate']).default('createdAt'),
+  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'offeredPrice', 'pickupDate','pricePerKg']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 })
 
@@ -307,3 +414,11 @@ export type TripSearchInput = z.infer<typeof tripSearchSchema>
 export type CreateNotificationInput = z.infer<typeof createNotificationSchema>
 export type CreateDisputeInput = z.infer<typeof createDisputeSchema>
 export type FileUploadInput = z.infer<typeof fileUploadSchema>
+export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>
+export type UpdateAssignmentInput = z.infer<typeof updateAssignmentSchema>
+export type AssignmentSearchInput = z.infer<typeof assignmentSearchSchema>
+export type AssignmentActionInput = z.infer<typeof assignmentActionSchema>
+export type SafetyConfirmationsInput = z.infer<typeof safetyConfirmationsSchema>
+export type CreateSafetyConfirmationInput = z.infer<typeof createSafetyConfirmationSchema>
+export type PickupConfirmationInput = z.infer<typeof pickupConfirmationSchema>
+export type DeliveryConfirmationInput = z.infer<typeof deliveryConfirmationSchema>

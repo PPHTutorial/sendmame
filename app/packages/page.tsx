@@ -4,6 +4,7 @@
 import React, { useState, useMemo, useEffect } from 'react'
 import { Button, Input } from '@/components/ui'
 import { useAuth, usePackages, useTrips } from '@/lib/hooks/api'
+import { assignmentApi } from '@/lib/api/client'
 import Link from 'next/link'
 import { PackageFilters } from '@/components/packages/PackageFilters'
 import { TripFilters } from '@/components/trips/TripFilters'
@@ -15,7 +16,7 @@ import { TripCard } from '@/components/trips/TripCard'
 import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
 import { MessagingInterface } from '@/components/shared/MessagingInterface'
 import { FaFilter } from 'react-icons/fa6'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 type ActiveTab = 'packages' | 'trips'
 type PackageSortBy = 'title' | 'createdAt' | 'updatedAt' | 'offeredPrice' | 'pickupDate'
@@ -23,24 +24,22 @@ type TripSortBy = 'title' | 'createdAt' | 'updatedAt' | 'departureDate' | 'arriv
 type SortOrder = 'asc' | 'desc'
 
 // Get query parameters from URL
-
-
-
 export default function PackagesPage() {
-    const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '')
+    const searchParams = useSearchParams()
     const tabFromQuery = searchParams.get('tab') as ActiveTab | null
     const { getCurrentUser } = useAuth()
     const { data: user } = getCurrentUser
+    const [activeTab, setActiveTab] = useState<ActiveTab>(tabFromQuery || 'packages')
 
     const router = useRouter()
-    const [activeTab, setActiveTab] = useState<ActiveTab>('packages')
 
-    // Initialize active tab from query parameter
+    // Update active tab when URL changes
     useEffect(() => {
-        if (tabFromQuery && (tabFromQuery === 'packages' || tabFromQuery === 'trips')) {
-            setActiveTab(tabFromQuery)
+        const currentTab = searchParams.get('tab') as ActiveTab | null
+        if (currentTab === 'packages' || currentTab === 'trips') {
+            setActiveTab(currentTab)
         }
-    }, [tabFromQuery])
+    }, [searchParams])
 
     // Package-specific state
     const [packageSearchQuery, setPackageSearchQuery] = useState('')
@@ -83,26 +82,18 @@ export default function PackagesPage() {
     const [currentChat, setCurrentChat] = useState<any>(null)
 
     // Get the current user ID
-    const currentUserId = user.id
+    const currentUserId = user?.id
 
     const limit = 12
 
-    // Package query parameters
+    // Modified query parameters to fetch more data for proper pagination
     const packageQueryParams = useMemo(() => {
         const params: any = {
-            page: packageCurrentPage,
-            limit,
+            page: 1, 
+            //limit: 100,
             sortBy: packageSortBy,
             sortOrder: packageSortOrder,
-            ...packageFilters
-        }
-
-        if (packageSearchQuery) {
-            params.title = packageSearchQuery
-            params.description = packageSearchQuery
-            params.deliveryDate = packageSearchQuery
-            params.description = packageSearchQuery
-            params.offeredPrice = Number(packageSearchQuery)
+            // Don't include filters in API call, we'll filter client-side
         }
 
         // Remove empty filters
@@ -113,20 +104,16 @@ export default function PackagesPage() {
         })
 
         return params
-    }, [packageCurrentPage, limit, packageSortBy, packageSortOrder, packageFilters, packageSearchQuery])
+    }, [packageSortBy, packageSortOrder]) // Removed dependencies that would cause unnecessary refetches
 
     // Trip query parameters
     const tripQueryParams = useMemo(() => {
         const params: any = {
-            page: tripCurrentPage,
-            limit,
+            page: 1, 
+            //limit: 100, 
             sortBy: tripSortBy,
             sortOrder: tripSortOrder,
-            ...tripFilters
-        }
-
-        if (tripSearchQuery) {
-            params.title = tripSearchQuery
+            // Don't include filters in API call, we'll filter client-side
         }
 
         // Remove empty filters
@@ -137,7 +124,7 @@ export default function PackagesPage() {
         })
 
         return params
-    }, [tripCurrentPage, limit, tripSortBy, tripSortOrder, tripFilters, tripSearchQuery])
+    }, [tripSortBy, tripSortOrder]) // Removed dependencies that would cause unnecessary refetches
 
     // Fetch data
     const packagesQuery = usePackages(packageQueryParams)
@@ -147,7 +134,7 @@ export default function PackagesPage() {
     const isLoading = activeTab === 'packages' ? packagesQuery.isLoading : tripsQuery.isLoading
     const isError = activeTab === 'packages' ? packagesQuery.isError : tripsQuery.isError
 
-    // Package data processing
+    // Package data processing with comprehensive client-side filtering
     const processedPackages = useMemo(() => {
         let filtered = packagesQuery.data || []
 
@@ -157,8 +144,21 @@ export default function PackagesPage() {
             filtered = filtered.filter((item: any) => {
                 const title = (item.title || '').toLowerCase()
                 const description = (item.description || '').toLowerCase()
-                return title.includes(query) || description.includes(query)
+                const category = (item.category || '').toLowerCase()
+                const offeredPrice = (item.offeredPrice || 0).toString()
+                return title.includes(query) || 
+                       description.includes(query) || 
+                       category.includes(query) || 
+                       offeredPrice.includes(query)
             })
+        }
+
+        // Apply filters
+        if (packageFilters.title) {
+            const titleQuery = packageFilters.title.toLowerCase()
+            filtered = filtered.filter((item: any) => 
+                (item.title || '').toLowerCase().includes(titleQuery)
+            )
         }
 
         // Apply status filter
@@ -202,7 +202,7 @@ export default function PackagesPage() {
         return filtered
     }, [packagesQuery.data, packageSearchQuery, packageFilters])
 
-    // Trip data processing
+    // Trip data processing with comprehensive client-side filtering
     const processedTrips = useMemo(() => {
         let filtered = tripsQuery.data || []
 
@@ -212,8 +212,23 @@ export default function PackagesPage() {
             filtered = filtered.filter((item: any) => {
                 const title = (item.title || '').toLowerCase()
                 const destination = (item.destination || '').toLowerCase()
-                return title.includes(query) || destination.includes(query)
+                const origin = (item.origin || '').toLowerCase()
+                const transportMode = (item.transportMode || '').toLowerCase()
+                const pricePerKg = (item.pricePerKg || 0).toString()
+                return title.includes(query) || 
+                       destination.includes(query) || 
+                       origin.includes(query) ||
+                       transportMode.includes(query) ||
+                       pricePerKg.includes(query)
             })
+        }
+
+        // Apply filters
+        if (tripFilters.title) {
+            const titleQuery = tripFilters.title.toLowerCase()
+            filtered = filtered.filter((item: any) => 
+                (item.title || '').toLowerCase().includes(titleQuery)
+            )
         }
 
         // Apply status filter
@@ -271,14 +286,28 @@ export default function PackagesPage() {
     const currentPage = activeTab === 'packages' ? packageCurrentPage : tripCurrentPage
     const setCurrentPage = activeTab === 'packages' ? setPackageCurrentPage : setTripCurrentPage
 
-    // Pagination logic
+    // Enhanced pagination logic
     const startIndex = (currentPage - 1) * limit
     const endIndex = startIndex + limit
     const paginatedData = currentData.slice(startIndex, endIndex)
 
-    // Pagination info
+    // Comprehensive pagination info
     const totalPages = Math.max(1, Math.ceil(currentData.length / limit))
     const totalItems = currentData.length
+    const showingStart = Math.min(startIndex + 1, totalItems)
+    const showingEnd = Math.min(endIndex, totalItems)
+
+    // Debug info for pagination
+    console.log(`${activeTab} pagination:`, {
+        totalItems,
+        currentPage,
+        totalPages,
+        showingStart,
+        showingEnd,
+        limit,
+        filteredCount: currentData.length,
+        rawDataCount: activeTab === 'packages' ? (packagesQuery.data?.length || 0) : (tripsQuery.data?.length || 0)
+    })
 
     // Check if filters are active
     const packageHasActiveFilters = Object.values(packageFilters).some(value => value !== '')
@@ -422,7 +451,6 @@ export default function PackagesPage() {
                         <nav className="-mb-px flex space-x-8">
                             <button
                                 onClick={() => {
-                                    setActiveTab('packages')
                                     router.push('/packages?tab=packages')
                                 }}
                                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'packages'
@@ -432,12 +460,11 @@ export default function PackagesPage() {
                             >
                                 Packages
                                 <span className="ml-2 bg-gray-100 text-gray-900 py-0.5 px-2.5 rounded-full text-xs">
-                                    {processedPackages.length}
+                                    {activeTab === 'packages' ? totalItems : processedPackages.length}
                                 </span>
                             </button>
                             <button
                                 onClick={() => {
-                                    setActiveTab('trips')
                                     router.push('/packages?tab=trips')
                                 }}
                                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'trips'
@@ -447,12 +474,12 @@ export default function PackagesPage() {
                             >
                                 Trips
                                 <span className="ml-2 bg-gray-100 text-gray-900 py-0.5 px-2.5 rounded-full text-xs">
-                                    {processedTrips.length}
+                                    {activeTab === 'trips' ? totalItems : processedTrips.length}
                                 </span>
                             </button>
                         </nav>
                         {/* Search and Filter Bar */}
-                        <div className="w-full max-w-2xl">
+                        <div className="w-full lg:max-w-2xl">
                             <div className="flex items-center gap-4">
                                 {/* Search */}
                                 <div className="flex-1 max-w-2xl">
@@ -565,8 +592,8 @@ export default function PackagesPage() {
                             totalPages={totalPages}
                             onPageChange={handlePageChange}
                             showInfo={{
-                                start: (currentPage - 1) * limit + 1,
-                                end: Math.min(currentPage * limit, totalItems),
+                                start: showingStart,
+                                end: showingEnd,
                                 total: totalItems
                             }}
                         />
@@ -604,21 +631,16 @@ export default function PackagesPage() {
                     availableItems={assignmentType === 'package' ? (myTripsQuery || []) : (myPackagesQuery || [])}
                     onAssign={async (targetId: string, confirmations: any) => {
                         try {
-                            const response = await fetch('/api/assignments', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    packageId: assignmentType === 'package' ? selectedItem?.id : targetId,
-                                    tripId: assignmentType === 'package' ? targetId : selectedItem?.id,
-                                    safetyConfirmations: confirmations,
-                                }),
+                            await assignmentApi.createAssignment({
+                                userId: currentUserId,
+                                packageId: assignmentType === 'package' ? selectedItem?.id : targetId,
+                                tripId: assignmentType === 'package' ? targetId : selectedItem?.id,
+                                confirmations: confirmations,
+                                confirmationType: 'ASSIGNMENT',
+                                notification:"TO_PACKAGE"
                             })
 
-                            if (response.ok) {
-                                handleAssignmentComplete()
-                            }
+                            handleAssignmentComplete()
                         } catch (error) {
                             console.error('Error creating assignment:', error)
                         }
