@@ -324,7 +324,7 @@ export function HowItWorksSection() {
                     <p className="text-gray-600 mb-6 text-lg">
                         Ready to send your first package?
                     </p>
-                    <Link href="/auth/register">
+                    <Link href="/register">
                         <Button className="bg-gradient-to-r from-teal-800 to-teal-600 hover:from-teal-900 hover:to-teal-700 text-white px-8 py-4 text-lg font-semibold shadow-xl">
                             Get Started Now →
                         </Button>
@@ -361,7 +361,7 @@ export function CTASection() {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                            <Link href="/auth/register">
+                            <Link href="/register">
                                 <Button className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-black px-8 py-4 text-lg font-bold shadow-xl">
                                     Start Shipping Now
                                 </Button>

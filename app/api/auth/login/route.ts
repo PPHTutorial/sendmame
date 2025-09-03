@@ -18,7 +18,7 @@ import { loginSchema } from '@/lib/validations'
 import prisma from '@/lib/prisma'
 import type { LoginInput } from '@/lib/validations'
 
-// POST /api/auth/login
+// POST /api/login
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const data = await parseRequestBody<LoginInput>(request, loginSchema)
   

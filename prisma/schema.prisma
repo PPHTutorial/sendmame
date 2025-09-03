@@ -49,6 +49,7 @@ enum PaymentStatus {
   REFUNDED
 }
 
+
 enum TransactionType {
   PAYMENT
   PAYOUT
@@ -95,6 +96,9 @@ model User {
   isVerified         Boolean            @default(false)
   isPhoneVerified    Boolean            @default(false)
   isEmailVerified    Boolean            @default(false)
+  isIDVerified       Boolean            @default(false)
+  isFacialVerified   Boolean            @default(false)
+  isAddressVerified  Boolean            @default(false)
   verificationStatus VerificationStatus @default(PENDING)
   twoFactorEnabled   Boolean            @default(false)
   lastLoginAt        DateTime?
@@ -138,6 +142,15 @@ model User {
   // OAuth accounts
   accounts Account[]
   sessions Session[]
+
+  // Password resets
+  passwordResets PasswordReset[]
+
+  // Email verification
+  emailVerification EmailVerification?
+
+  // Phone verification
+  phoneVerification PhoneVerification?
 
   // Referrals
   referralCode String? @unique
@@ -626,6 +639,47 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  usedAt    DateTime?
+  
+  createdAt DateTime @default(now())
+
+  @@map("password_resets")
+}
+
+model EmailVerification {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  
+  createdAt DateTime @default(now())
+
+  @@map("email_verifications")
+}
+
+model PhoneVerification {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phoneNumber String
+  code        String
+  expiresAt   DateTime
+  attempts    Int      @default(0)
+  
+  createdAt   DateTime @default(now())
+
+  @@map("phone_verifications")
 }
 
 // Admin and system models

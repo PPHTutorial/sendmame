@@ -1,9 +1,8 @@
 import type { Metadata } from "next"
 import "./globals.css"
-import localFont from 'next/font/local'
 import QueryProvider from '@/components/providers/QueryProvider'
 import { Toaster } from "react-hot-toast"
-import { NavigationHeader, Footer } from '@/components/navigation'
+import { Sidebar } from '@/components/navigation/Sidebar'
 import { Roboto } from 'next/font/google'
 
 export const metadata: Metadata = {
@@ -72,11 +71,10 @@ export default function RootLayout({
 }>) {
   return (
     <html className="h-full" lang="en">
-      <body className={`${roboto.variable} ${roboto.variable} bg-white h-full`}>
+      <body className={`${roboto.variable} font-sans bg-gray-50 h-full`}>
         <Toaster />
-        <QueryProvider>
-          {children}
-          <Footer />
+        <QueryProvider>         
+            {children}
         </QueryProvider>
       </body>
     </html>

@@ -60,7 +60,7 @@ export default function RegisterPage() {
               <div className="mt-8 text-center">
                 <p className="text-teal-100">
                   Already have an account?{' '}
-                  <Link href="/auth/login" className="text-teal-300 hover:text-teal-200 font-semibold transition-colors duration-200 hover:underline">
+                  <Link href="/login" className="text-teal-300 hover:text-teal-200 font-semibold transition-colors duration-200 hover:underline">
                     Sign in here
                   </Link>
                 </p>

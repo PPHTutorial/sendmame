@@ -9,9 +9,15 @@ Fakomame is a revolutionary package delivery platform that leverages the power o
 ### 🔐 Authentication & Security
 - **JWT-based Authentication** with secure token management
 - **User Registration & Login** with email/phone verification
+- **Google OAuth Integration** for seamless social login
+- **Email Verification System** with 6-digit codes
+- **Password Reset** with secure token-based recovery
+- **Professional Email Templates** for user communication
+- **SMTP Integration** with customizable email service
 - **Password Security** with bcrypt hashing and strength validation
 - **Rate Limiting** to prevent brute force attacks
 - **Role-based Access Control** (Sender, Traveler, Both, Admin)
+- **Two-Factor Authentication** ready infrastructure
 
 ### 📦 Package Management
 - **Package Creation** with detailed descriptions and categorization
@@ -116,8 +122,49 @@ npm install
 ### 2. Environment Configuration
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your database URL and secrets
+# Edit .env.local with your configuration
 ```
+
+Required environment variables:
+```bash
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/sendmame"
+
+# NextAuth
+NEXTAUTH_SECRET="your_nextauth_secret"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Google OAuth (Get from Google Cloud Console)
+GOOGLE_CLIENT_ID="your_google_client_id"
+GOOGLE_CLIENT_SECRET="your_google_client_secret"
+
+# SMTP Email Configuration
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="your_email@gmail.com"
+SMTP_PASS="your_app_password"
+EMAIL_FROM="your_email@gmail.com"
+
+# Google Maps API
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your_google_maps_api_key"
+
+# Cloudinary (for file uploads)
+CLOUDINARY_CLOUD_NAME="your_cloudinary_cloud_name"
+CLOUDINARY_API_KEY="your_cloudinary_api_key"
+CLOUDINARY_API_SECRET="your_cloudinary_api_secret"
+```
+
+#### Setting Up Google OAuth:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable Google+ API
+4. Go to Credentials → Create OAuth 2.0 Client ID
+5. Add authorized redirect URIs: `http://localhost:3000/api/auth/callback/google`
+
+#### Setting Up SMTP (Gmail Example):
+1. Enable 2-factor authentication on your Gmail account
+2. Generate an App Password: Account → Security → App passwords
+3. Use the generated password as `SMTP_PASS`
 
 ### 3. Database Setup
 ```bash
@@ -142,7 +189,14 @@ Visit `http://localhost:3000` to see the application.
 
 ### ✅ Completed Features
 - **Database Schema**: Complete Prisma schema with all entities
-- **Authentication System**: JWT-based auth with registration/login
+- **Authentication System**: 
+  - JWT-based auth with registration/login
+  - Google OAuth integration
+  - Email verification with 6-digit codes
+  - Password reset with secure tokens
+  - Professional HTML email templates
+  - SMTP email service integration
+  - Rate limiting and security measures
 - **API Infrastructure**: RESTful endpoints for core functionality
 - **UI Components**: Reusable component library with Tailwind CSS
 - **Type Safety**: Comprehensive TypeScript definitions
@@ -150,6 +204,7 @@ Visit `http://localhost:3000` to see the application.
 - **Trip API**: CRUD operations for trip management
 - **User Dashboard**: Interactive dashboard with statistics
 - **Responsive Design**: Mobile-first responsive layouts
+- **Email System**: Professional email templates with nodemailer integration
 
 ### 🚧 In Development
 - Real-time chat system implementation

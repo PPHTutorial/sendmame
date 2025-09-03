@@ -20,7 +20,7 @@ import { registerSchema } from '@/lib/validations'
 import type { RegisterData } from '@/lib/types'
 import prisma from '@/lib/prisma'
 
-// POST /api/auth/register
+// POST /api/register
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const data = await parseRequestBody<RegisterData>(request, registerSchema)
   console.log('Register data:', data)

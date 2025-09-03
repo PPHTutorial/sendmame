@@ -16,7 +16,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
   useEffect(() => {
     if (!isLoading) {
       if (!user) {
-        router.push('/auth/login')
+        router.push('/login')
         return
       }
       

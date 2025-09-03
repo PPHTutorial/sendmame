@@ -1,395 +1,347 @@
+// Trips Page - With search, filtering, and sorting functionality
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState } from 'react'
 import { Button, Input } from '@/components/ui'
-import { useTrips } from '@/lib/hooks/api'
-import Link from 'next/link'
+import { useAuth, useTrips } from '@/lib/hooks/api'
+import { TripCard } from '@/components/trips/TripCard'
+import { TripFilters } from '@/components/trips/TripFilters'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Pagination } from '@/components/shared/Pagination'
-import { TripCard } from '@/components/trips/TripCard'
-import { TripFilters } from '@/components/trips/TripFilters'
-import { Plus } from 'lucide-react'
+import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
+import { MessagingInterface } from '@/components/shared/MessagingInterface'
+import Link from 'next/link'
+import { Plus, Search, SortAsc, SortDesc } from 'lucide-react'
 import { FaFilter } from 'react-icons/fa6'
 
-type SortBy = 'createdAt' | 'updatedAt' | 'departureDate' | 'pricePerKg'
+// Types
+type TripSortBy = 'title' | 'createdAt' | 'updatedAt' | 'departureDate' | 'arrivalDate' | 'pricePerKg'
 type SortOrder = 'asc' | 'desc'
 
+// Trip filter interface - must match the component expectations
+interface TripFiltersState {
+  title?: string
+  status?: string
+  transportMode?: string
+  priceMin?: number
+  priceMax?: number
+  dateFrom?: string
+  dateTo?: string
+  destination?: string
+}
+
+// API Query parameters interface
+interface TripQueryParams {
+  page?: number
+  limit?: number
+  sortBy?: TripSortBy
+  sortOrder?: SortOrder
+  search?: string
+  title?: string
+  status?: string
+  transportMode?: string
+  priceMin?: number
+  priceMax?: string
+  dateFrom?: string
+  dateTo?: string
+  destination?: string
+}
+
 export default function TripsPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [sortBy, setSortBy] = useState<SortBy>('createdAt')
+  const { getCurrentUser } = useAuth()
+  const { data: user } = getCurrentUser
+
+  // Trip state with proper types
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [currentPage, setCurrentPageState] = useState<number>(1)
+  const [sortBy, setSortBy] = useState<TripSortBy>('createdAt')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
-  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false)
-  const [filters, setFilters] = useState({
-    title: '',
-    status: '',
-    transportMode: '',
-    priceMin: '',
-    priceMax: '',
-    dateFrom: '',
-    dateTo: '',
-    destination: ''
+  const [isFilterDialogOpen, setIsFilterDialogOpen] = useState<boolean>(false)
+  const [filters, setFilters] = useState<TripFiltersState>({
+    title: undefined,
+    status: undefined,
+    priceMin: undefined,
+    priceMax: undefined,
+    dateFrom: undefined,
+    dateTo: undefined,
+    destination: undefined
   })
 
-  const limit = 12
-
-  // Modified query parameters to fetch more data for proper pagination
-  const buildQueryParams = useMemo(() => {
-    const params: any = {
-      page: 1, // Always fetch from page 1
-      limit: 1000, // Fetch a large number to get all data
-      sortBy,
-      sortOrder,
-      // Don't include filters in API call, we'll filter client-side
-    }
-
-    // Remove empty filters
-    Object.keys(params).forEach(key => {
-      if (params[key] === '' || params[key] === null || params[key] === undefined) {
-        delete params[key]
-      }
+  // Custom page setter with scroll functionality
+  const setCurrentPage = (page: number) => {
+    setCurrentPageState(page)
+    
+    // Scroll to top when page changes
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
     })
-
-    return params
-  }, [sortBy, sortOrder]) // Removed dependencies that would cause unnecessary refetches
-
-  // Fetch trips data
-  const tripsQuery = useTrips(buildQueryParams)
-
-  // Loading states
-  const isLoading = tripsQuery.isLoading
-  const isError = tripsQuery.isError
-
-  // Comprehensive client-side filtering and searching
-  const filteredTrips = useMemo(() => {
-    let filtered = tripsQuery.data || []
-
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      filtered = filtered.filter((trip: any) => {
-        const destination = (trip.destination || '').toLowerCase()
-        const origin = (trip.origin || '').toLowerCase()
-        const title = (trip.title || '').toLowerCase()
-        const transportMode = (trip.transportMode || '').toLowerCase()
-        const pricePerKg = (trip.pricePerKg || 0).toString()
-        return destination.includes(query) || 
-               origin.includes(query) || 
-               title.includes(query) ||
-               transportMode.includes(query) ||
-               pricePerKg.includes(query)
-      })
-    }
-
-    // Apply filters
-    if (filters.title) {
-      const titleQuery = filters.title.toLowerCase()
-      filtered = filtered.filter((trip: any) => 
-        (trip.title || '').toLowerCase().includes(titleQuery)
-      )
-    }
-
-    // Apply status filter
-    if (filters.status) {
-      filtered = filtered.filter((trip: any) => trip.status === filters.status)
-    }
-
-    // Apply transport mode filter
-    if (filters.transportMode) {
-      filtered = filtered.filter((trip: any) => trip.transportMode === filters.transportMode)
-    }
-
-    // Apply destination filter
-    if (filters.destination) {
-      const destination = filters.destination.toLowerCase()
-      filtered = filtered.filter((trip: any) => 
-        (trip.destination || '').toLowerCase().includes(destination) ||
-        (trip.title || '').toLowerCase().includes(destination)
-      )
-    }
-
-    // Apply price range filters
-    if (filters.priceMin) {
-      const minPrice = parseFloat(filters.priceMin)
-      filtered = filtered.filter((trip: any) => (trip.pricePerKg || 0) >= minPrice)
-    }
-
-    if (filters.priceMax) {
-      const maxPrice = parseFloat(filters.priceMax)
-      filtered = filtered.filter((trip: any) => (trip.pricePerKg || 0) <= maxPrice)
-    }
-
-    // Apply date range filters
-    if (filters.dateFrom) {
-      const fromDate = new Date(filters.dateFrom)
-      filtered = filtered.filter((trip: any) => {
-        const itemDate = new Date(trip.departureDate || trip.createdAt)
-        return itemDate >= fromDate
-      })
-    }
-
-    if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo)
-      filtered = filtered.filter((trip: any) => {
-        const itemDate = new Date(trip.departureDate || trip.createdAt)
-        return itemDate <= toDate
-      })
-    }
-
-    return filtered
-  }, [tripsQuery.data, searchQuery, filters])
-
-  // Enhanced pagination logic
-  const startIndex = (currentPage - 1) * limit
-  const endIndex = startIndex + limit
-  const paginatedTrips = filteredTrips.slice(startIndex, endIndex)
-
-  // Comprehensive pagination info
-  const totalPages = Math.max(1, Math.ceil(filteredTrips.length / limit))
-  const totalItems = filteredTrips.length
-  const showingStart = Math.min(startIndex + 1, totalItems)
-  const showingEnd = Math.min(endIndex, totalItems)
-
-  // Check if filters are active
-  const hasActiveFilters = Object.values(filters).some(value => value !== '') || searchQuery !== ''
-
-  // Event handlers
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
-    setCurrentPage(1)
   }
 
-  const handleFilterChange = (newFilters: any) => {
-    setFilters(newFilters)
-    setCurrentPage(1)
+  // Dialog state
+  const [selectedTrip, setSelectedTrip] = useState<any>(null)
+  const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState<boolean>(false)
+  const [selectedChatTrip, setSelectedChatTrip] = useState<any>(null)
+  const [isMessagingOpen, setIsMessagingOpen] = useState<boolean>(false)
+
+  const limit: number = 12
+
+  const tripsQuery = useTrips({
+    sortBy,
+    sortOrder,
+    search: searchQuery,
+    ...filters
+  } as TripQueryParams)
+
+  // Client-side pagination logic
+  const getPaginatedData = () => {
+    if (!tripsQuery.data) return { data: [], pagination: null }
+    
+    const allItems = tripsQuery.data.data
+    const startIndex = (currentPage - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedItems = allItems.slice(startIndex, endIndex)
+    
+    const totalPages = Math.ceil(allItems.length / limit)
+    
+    return {
+      data: paginatedItems,
+      pagination: {
+        total: allItems.length,
+        totalPages,
+        currentPage,
+        limit
+      }
+    }
   }
 
-  const handleSort = (newSortBy: string, newSortOrder: string) => {
-    setSortBy(newSortBy as SortBy)
-    setSortOrder(newSortOrder as SortOrder)
-    setCurrentPage(1)
+  const paginatedResult = getPaginatedData()
+
+
+  const handleAddPackage = async (tripData: any) => {
+    if (!user?.id) {
+      alert('Please log in to add packages to trips')
+      return
+    }
+
+    setSelectedTrip(tripData)
+    setIsAssignmentDialogOpen(true)
   }
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const handleTripMessage = (tripData: any) => {
+    if (!user?.id) {
+      alert('Please log in to send messages')
+      return
+    }
+
+    setSelectedChatTrip(tripData)
+    setIsMessagingOpen(true)
   }
 
-  if (isError) {
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Trips</h1>
-            <p className="text-gray-600 mb-6">Failed to load trips. Please try again.</p>
-            <Button onClick={() => window.location.reload()}>
-              Retry
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
+  const handleAssign = async (targetId: string, confirmations: any) => {
+    try {
+      // Handle assignment creation logic here
+      console.log('Assignment:', { targetId, confirmations })
+
+      setIsAssignmentDialogOpen(false)
+      setSelectedTrip(null)
+
+      // Refresh the data
+      tripsQuery.refetch()
+    } catch (error) {
+      console.error('Assignment creation failed:', error)
+      alert('Failed to create assignment. Please try again.')
+    }
+  }
+
+  const handleSendMessage = async (content: string, type?: string) => {
+    try {
+      // Handle message sending logic here
+      console.log('Sending message:', { content, type })
+    } catch (error) {
+      console.error('Message sending failed:', error)
+      alert('Failed to send message. Please try again.')
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Travel Trips</h1>
-              <p className="mt-2 text-gray-600">
-                Browse available trips and delivery services from travelers
+              <h1 className="text-2xl font-bold text-gray-900">Trips</h1>
+              <p className="text-gray-600 mt-1">
+                Discover travelers who can carry your packages
               </p>
             </div>
-            <div className="mt-4 sm:mt-0 flex space-x-3">
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-3">
               <Link href="/trips/create">
-                <Button className="inline-flex items-center">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Post Trip
-                </Button>
-              </Link>
-              <Link href="/packages">
-                <Button variant="outline">
-                  View Packages
+                <Button className="flex items-center space-x-2">
+                  <Plus className="w-4 h-4" />
+                  <span>Add Trip</span>
                 </Button>
               </Link>
             </div>
           </div>
-        </div>
 
-        {/* Stats and Search Layout */}
-        <div className="mb-6 w-full">
-          <div className=" gap-6 w-full">
-            {/* Dashboard Stats - Takes 1 column on large screens */}
-            {/* <div className="lg:col-span-1 order-2 lg:order-1">
-              <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Trip Statistics</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <FaPlane className="h-5 w-5 text-blue-500 mr-3" />
-                      <span className="text-sm text-gray-600">Total Trips</span>
-                    </div>
-                    <span className="text-lg font-semibold text-gray-900">{totalItems}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <FaCar className="h-5 w-5 text-teal-500 mr-3" />
-                      <span className="text-sm text-gray-600">Active Routes</span>
-                    </div>
-                    <span className="text-lg font-semibold text-gray-900">{trips.filter((t: any) => t.status === 'ACTIVE').length}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <FaUsers className="h-5 w-5 text-green-500 mr-3" />
-                      <span className="text-sm text-gray-600">Available Seats</span>
-                    </div>
-                    <span className="text-lg font-semibold text-gray-900">{trips.reduce((total: number, trip: any) => total + (trip.availableSeats || 0), 0)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <FaDollarSign className="h-5 w-5 text-orange-500 mr-3" />
-                      <span className="text-sm text-gray-600">Avg. Price</span>
-                    </div>
-                    <span className="text-lg font-semibold text-gray-900">
-                      ${trips.length > 0 ? Math.round(trips.reduce((total: number, trip: any) => total + (trip.pricePerSeat || 0), 0) / trips.length) : 0}
-                    </span>
-                  </div>
-                </div>
+          {/* Search, Filter, and Sort Controls */}
+          <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="Search trips..."
+                  value={searchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
             </div>
- */}
-            {/* Search and Filters - Takes 2 columns on large screens */}
-            <div className="">
-              <div className="bg-white rounded-lg w-full">
-                <div className="flex items-center justify-end gap-4 mb-4">
-                  {/* Search */}
-                  <div className="flex-1">
-                    <div className="relative col-span-2">
-                      <Input
-                        type="text"
-                        placeholder="Search trips by route, destination..."
-                        value={searchQuery}
-                        onChange={(e) => handleSearch(e.target.value)}
-                        className="pl-10"
-                      />
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* Filter Controls */}
-                  <div className="flex gap-2">
-                    <div className="relative">
-                      <Button 
-                        variant='outline' 
-                        size='lg'
-                        onClick={() => setIsFilterDialogOpen(true)}
-                        title='Sort & Filter Options'
-                        className={`${hasActiveFilters || sortBy !== 'createdAt' || sortOrder !== 'desc' ? 'border-teal-500 text-teal-600' : ''}`}
-                      >
-                        <FaFilter className="text-gray-400 size-4" />
-                        {(hasActiveFilters || sortBy !== 'createdAt' || sortOrder !== 'desc') && (
-                          <span className="ml-1 text-xs">•</span>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+            {/* Filter and Sort Controls */}
+            <div className="flex items-center space-x-3">
+              {/* Filter Button */}
+              <Button
+                variant="outline"
+                onClick={() => setIsFilterDialogOpen(true)}
+                className="flex items-center space-x-2"
+              >
+                <FaFilter className="w-4 h-4" />
+                <span>Filter</span>
+              </Button>
 
-                {/* Filter Summary */}
-                {Object.values(filters).some(value => value !== '') && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
-                    <span>Active filters:</span>
-                    {filters.status && <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">Status: {filters.status}</span>}
-                    {filters.transportMode && <span className="bg-green-100 text-green-800 px-2 py-1 rounded">Transport: {filters.transportMode}</span>}
-                    {filters.destination && <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">Destination: {filters.destination}</span>}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => setFilters({
-                        title: '',
-                        status: '',
-                        transportMode: '',
-                        priceMin: '',
-                        priceMax: '',
-                        dateFrom: '',
-                        dateTo: '',
-                        destination: ''
-                      })}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      Clear all
-                    </Button>
-                  </div>
-                )}
+              {/* Sort Controls */}
+              <div className="flex items-center space-x-2">
+                <select
+                  value={sortBy}
+                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSortBy(e.target.value as TripSortBy)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="createdAt">Date Created</option>
+                  <option value="updatedAt">Last Updated</option>
+                  <option value="title">Title</option>
+                  <option value="pricePerKg">Price per Kg</option>
+                  <option value="departureDate">Departure Date</option>
+                  <option value="arrivalDate">Arrival Date</option>
+                </select>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="px-3"
+                >
+                  {sortOrder === 'asc' ? (
+                    <SortAsc className="w-4 h-4" />
+                  ) : (
+                    <SortDesc className="w-4 h-4" />
+                  )}
+                </Button>
               </div>
             </div>
           </div>
+
+          {/* Results Summary */}
+          {paginatedResult.pagination && (
+            <div className="mt-4 text-sm text-gray-600">
+              Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, paginatedResult.pagination.total)} of {paginatedResult.pagination.total} trips
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* Trip Filters Dialog */}
-        <TripFilters
-          filters={filters}
-          onFiltersChange={handleFilterChange}
-          isOpen={isFilterDialogOpen}
-          onClose={() => setIsFilterDialogOpen(false)}
-          sortBy={sortBy}
-          sortOrder={sortOrder}
-          onSortChange={handleSort}
-        />
-
-        {/* Results */}
-        {isLoading ? (
-          <LoadingSpinner className="py-12" />
-        ) : paginatedTrips.length === 0 ? (
+      {/* Content */}
+      <div className="px-6 py-6">
+        {tripsQuery.isLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : !tripsQuery.data || tripsQuery.data.length === 0 ? (
           <EmptyState
             title="No trips found"
-            description="Try adjusting your search criteria or filters to find what you're looking for."
-            actionLabel="Clear Filters"
-            onAction={() => {
-              setSearchQuery('')
-              setFilters({
-                title: '',
-                status: '',
-                transportMode: '',
-                priceMin: '',
-                priceMax: '',
-                dateFrom: '',
-                dateTo: '',
-                destination: ''
-              })
-            }}
+            description="There are no trips available at the moment. Create a trip to start carrying packages!"
+            actionLabel="Create Trip"
           />
         ) : (
           <>
             {/* Results Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {paginatedTrips.map((trip: any) => (
-                <TripCard key={trip.id} trip={trip} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {paginatedResult.data?.map((trip: any) => (
+                <TripCard
+                  key={trip.id}
+                  trip={trip}
+                  onAddPackage={handleAddPackage}
+                  onSendMessage={handleTripMessage}
+                  currentUserId={user?.id}
+                />
               ))}
             </div>
 
             {/* Pagination */}
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-              showInfo={{
-                start: showingStart,
-                end: showingEnd,
-                total: totalItems
-              }}
-            />
+            {paginatedResult.pagination && paginatedResult.pagination.totalPages > 1 && (
+              <div className="mt-8 flex justify-center">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={paginatedResult.pagination.totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
           </>
         )}
       </div>
+
+      {/* Trip Filter Dialog */}
+      {isFilterDialogOpen && (
+        <TripFilters
+          isOpen={isFilterDialogOpen}
+          onClose={() => setIsFilterDialogOpen(false)}
+          filters={filters}
+          onFiltersChange={(filters: TripFiltersState) => setFilters(filters)}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSortChange={(sortBy: string, sortOrder: string) => {
+            setSortBy(sortBy as TripSortBy)
+            setSortOrder(sortOrder as SortOrder)
+          }}
+        />
+      )}
+
+      {/* Assignment Dialog */}
+      {isAssignmentDialogOpen && selectedTrip && (
+        <AssignmentDialog
+          isOpen={isAssignmentDialogOpen}
+          onClose={() => {
+            setIsAssignmentDialogOpen(false)
+            setSelectedTrip(null)
+          }}
+          type="package-to-trip"
+          currentItem={selectedTrip}
+          availableItems={[]}
+          onAssign={handleAssign}
+        />
+      )}
+
+      {/* Messaging Interface */}
+      {isMessagingOpen && selectedChatTrip && (
+        <MessagingInterface
+          isOpen={isMessagingOpen}
+          onClose={() => {
+            setIsMessagingOpen(false)
+            setSelectedChatTrip(null)
+          }}
+          chat={null}
+          currentUserId={user?.id || ''}
+          onSendMessage={handleSendMessage}
+        />
+      )}
     </div>
   )
 }

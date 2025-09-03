@@ -117,6 +117,7 @@ export interface JwtPayload {
   userId: string
   email: string
   role: UserRole
+  type?: string // For refresh tokens
   iat: number
   exp: number
 }

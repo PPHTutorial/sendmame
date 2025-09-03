@@ -1,37 +1,91 @@
-// Fakomame Platform - Packages & Trips Listing Page
+// Packages & Trips Page - Simplified for new sidebar navigation
 'use client'
 
-import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { Button, Input } from '@/components/ui'
 import { useAuth, usePackages, useTrips } from '@/lib/hooks/api'
-import { assignmentApi } from '@/lib/api/client'
-import Link from 'next/link'
+import { PackageCard } from '@/components/packages/PackageCard'
+import { TripCard } from '@/components/trips/TripCard'
 import { PackageFilters } from '@/components/packages/PackageFilters'
 import { TripFilters } from '@/components/trips/TripFilters'
-import { PackageCard } from '@/components/packages/PackageCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { Pagination } from '@/components/shared/Pagination'
-import { TripCard } from '@/components/trips/TripCard'
 import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
 import { MessagingInterface } from '@/components/shared/MessagingInterface'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { Plus, Search, SortAsc, SortDesc } from 'lucide-react'
 import { FaFilter } from 'react-icons/fa6'
-import { useRouter, useSearchParams } from 'next/navigation'
 
+// Types
 type ActiveTab = 'packages' | 'trips'
 type PackageSortBy = 'title' | 'createdAt' | 'updatedAt' | 'offeredPrice' | 'pickupDate'
 type TripSortBy = 'title' | 'createdAt' | 'updatedAt' | 'departureDate' | 'arrivalDate' | 'pricePerKg'
 type SortOrder = 'asc' | 'desc'
 
-// Get query parameters from URL
-export default function PackagesPage() {
+// Package filter interface - must match the component expectations
+interface PackageFiltersState {
+  title?: string
+  status?: string
+  category?: string
+  priceMin?: number
+  priceMax?: number
+  pickupDateFrom?: string
+  pickupDateTo?: string
+}
+
+// Trip filter interface - must match the component expectations
+interface TripFiltersState {
+  title?: string
+  status?: string
+  transportMode?: string
+  priceMin?: number
+  priceMax?: number
+  dateFrom?: string
+  dateTo?: string
+  destination?: string
+}
+
+// API Query parameters interface
+interface PackageQueryParams {
+  page: number
+  limit: number
+  sortBy: PackageSortBy
+  sortOrder: SortOrder
+  search?: string
+  title?: string
+  status?: string
+  category?: string
+  priceMin?: number
+  priceMax?: number
+  pickupDateFrom?: string
+  pickupDateTo?: string
+}
+
+interface TripQueryParams {
+  page: number
+  limit: number
+  sortBy: TripSortBy
+  sortOrder: SortOrder
+  search?: string
+  title?: string
+  status?: string
+  transportMode?: string
+  priceMin?: number
+  priceMax?: number
+  dateFrom?: string
+  dateTo?: string
+  destination?: string
+}
+
+function PackagesPageContent() {
     const searchParams = useSearchParams()
     const tabFromQuery = searchParams.get('tab') as ActiveTab | null
     const { getCurrentUser } = useAuth()
     const { data: user } = getCurrentUser
+    
     const [activeTab, setActiveTab] = useState<ActiveTab>(tabFromQuery || 'packages')
-
-    const router = useRouter()
 
     // Update active tab when URL changes
     useEffect(() => {
@@ -42,650 +96,450 @@ export default function PackagesPage() {
     }, [searchParams])
 
     // Package-specific state
-    const [packageSearchQuery, setPackageSearchQuery] = useState('')
-    const [packageCurrentPage, setPackageCurrentPage] = useState(1)
+    const [packageSearchQuery, setPackageSearchQuery] = useState<string>('')
+    const [packageCurrentPage, setPackageCurrentPage] = useState<number>(1)
     const [packageSortBy, setPackageSortBy] = useState<PackageSortBy>('createdAt')
     const [packageSortOrder, setPackageSortOrder] = useState<SortOrder>('desc')
-    const [isPackageFilterDialogOpen, setIsPackageFilterDialogOpen] = useState(false)
-    const [packageFilters, setPackageFilters] = useState({
+    const [isPackageFilterDialogOpen, setIsPackageFilterDialogOpen] = useState<boolean>(false)
+    const [packageFilters, setPackageFilters] = useState<PackageFiltersState>({
         title: '',
         status: '',
         category: '',
-        priceMin: '',
-        priceMax: '',
         pickupDateFrom: '',
         pickupDateTo: ''
     })
 
     // Trip-specific state
-    const [tripSearchQuery, setTripSearchQuery] = useState('')
-    const [tripCurrentPage, setTripCurrentPage] = useState(1)
+    const [tripSearchQuery, setTripSearchQuery] = useState<string>('')
+    const [tripCurrentPage, setTripCurrentPage] = useState<number>(1)
     const [tripSortBy, setTripSortBy] = useState<TripSortBy>('createdAt')
     const [tripSortOrder, setTripSortOrder] = useState<SortOrder>('desc')
-    const [isTripFilterDialogOpen, setIsTripFilterDialogOpen] = useState(false)
-    const [tripFilters, setTripFilters] = useState({
+    const [isTripFilterDialogOpen, setIsTripFilterDialogOpen] = useState<boolean>(false)
+    const [tripFilters, setTripFilters] = useState<TripFiltersState>({
         title: '',
-        status: '',
-        transportMode: '',
-        priceMin: '',
-        priceMax: '',
-        dateFrom: '',
-        dateTo: '',
-        destination: ''
+        status: '',        
+        priceMin: undefined,
+        priceMax: undefined,
+        dateFrom: undefined,
+        dateTo: undefined,
+        destination: undefined
     })
 
     // Assignment and messaging state
-    const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
     const [selectedItem, setSelectedItem] = useState<any>(null)
-    const [assignmentType, setAssignmentType] = useState<'package' | 'trip'>('package')
-    const [isMessagingOpen, setIsMessagingOpen] = useState(false)
-    const [currentChat, setCurrentChat] = useState<any>(null)
+    const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState<boolean>(false)
+    const [selectedChatItem, setSelectedChatItem] = useState<any>(null)
+    const [isMessagingOpen, setIsMessagingOpen] = useState<boolean>(false)
 
-    // Get the current user ID
-    const currentUserId = user?.id
+    const limit: number = 12
 
-    const limit = 12
+    // API queries with proper parameters
+    const packagesQuery = usePackages({
+        sortBy: packageSortBy,
+        sortOrder: packageSortOrder,
+        search: packageSearchQuery,
+        ...packageFilters
+    } as PackageQueryParams)
 
-    // Modified query parameters to fetch more data for proper pagination
-    const packageQueryParams = useMemo(() => {
-        const params: any = {
-            page: 1, 
-            //limit: 100,
-            sortBy: packageSortBy,
-            sortOrder: packageSortOrder,
-            // Don't include filters in API call, we'll filter client-side
-        }
+    const tripsQuery = useTrips({
+        sortBy: tripSortBy,
+        sortOrder: tripSortOrder,
+        search: tripSearchQuery,
+        ...tripFilters
+    } as TripQueryParams)
 
-        // Remove empty filters
-        Object.keys(params).forEach(key => {
-            if (params[key] === '' || params[key] === null || params[key] === undefined) {
-                delete params[key]
-            }
-        })
-
-        return params
-    }, [packageSortBy, packageSortOrder]) // Removed dependencies that would cause unnecessary refetches
-
-    // Trip query parameters
-    const tripQueryParams = useMemo(() => {
-        const params: any = {
-            page: 1, 
-            //limit: 100, 
-            sortBy: tripSortBy,
-            sortOrder: tripSortOrder,
-            // Don't include filters in API call, we'll filter client-side
-        }
-
-        // Remove empty filters
-        Object.keys(params).forEach(key => {
-            if (params[key] === '' || params[key] === null || params[key] === undefined) {
-                delete params[key]
-            }
-        })
-
-        return params
-    }, [tripSortBy, tripSortOrder]) // Removed dependencies that would cause unnecessary refetches
-
-    // Fetch data
-    const packagesQuery = usePackages(packageQueryParams)
-    const tripsQuery = useTrips(tripQueryParams)
-
-    // Loading states
-    const isLoading = activeTab === 'packages' ? packagesQuery.isLoading : tripsQuery.isLoading
-    const isError = activeTab === 'packages' ? packagesQuery.isError : tripsQuery.isError
-
-    // Package data processing with comprehensive client-side filtering
-    const processedPackages = useMemo(() => {
-        let filtered = packagesQuery.data || []
-
-        // Apply search filter
-        if (packageSearchQuery) {
-            const query = packageSearchQuery.toLowerCase()
-            filtered = filtered.filter((item: any) => {
-                const title = (item.title || '').toLowerCase()
-                const description = (item.description || '').toLowerCase()
-                const category = (item.category || '').toLowerCase()
-                const offeredPrice = (item.offeredPrice || 0).toString()
-                return title.includes(query) || 
-                       description.includes(query) || 
-                       category.includes(query) || 
-                       offeredPrice.includes(query)
-            })
-        }
-
-        // Apply filters
-        if (packageFilters.title) {
-            const titleQuery = packageFilters.title.toLowerCase()
-            filtered = filtered.filter((item: any) => 
-                (item.title || '').toLowerCase().includes(titleQuery)
-            )
-        }
-
-        // Apply status filter
-        if (packageFilters.status) {
-            filtered = filtered.filter((item: any) => item.status === packageFilters.status)
-        }
-
-        // Apply category filter
-        if (packageFilters.category) {
-            filtered = filtered.filter((item: any) => item.category === packageFilters.category)
-        }
-
-        // Apply price range filters
-        if (packageFilters.priceMin) {
-            const minPrice = parseFloat(packageFilters.priceMin)
-            filtered = filtered.filter((item: any) => (item.offeredPrice || 0) >= minPrice)
-        }
-
-        if (packageFilters.priceMax) {
-            const maxPrice = parseFloat(packageFilters.priceMax)
-            filtered = filtered.filter((item: any) => (item.offeredPrice || 0) <= maxPrice)
-        }
-
-        // Apply date range filters
-        if (packageFilters.pickupDateFrom) {
-            const fromDate = new Date(packageFilters.pickupDateFrom)
-            filtered = filtered.filter((item: any) => {
-                const itemDate = new Date(item.pickupDate || item.createdAt)
-                return itemDate >= fromDate
-            })
-        }
-
-        if (packageFilters.pickupDateTo) {
-            const toDate = new Date(packageFilters.pickupDateTo)
-            filtered = filtered.filter((item: any) => {
-                const itemDate = new Date(item.pickupDate || item.createdAt)
-                return itemDate <= toDate
-            })
-        }
-
-        return filtered
-    }, [packagesQuery.data, packageSearchQuery, packageFilters])
-
-    // Trip data processing with comprehensive client-side filtering
-    const processedTrips = useMemo(() => {
-        let filtered = tripsQuery.data || []
-
-        // Apply search filter
-        if (tripSearchQuery) {
-            const query = tripSearchQuery.toLowerCase()
-            filtered = filtered.filter((item: any) => {
-                const title = (item.title || '').toLowerCase()
-                const destination = (item.destination || '').toLowerCase()
-                const origin = (item.origin || '').toLowerCase()
-                const transportMode = (item.transportMode || '').toLowerCase()
-                const pricePerKg = (item.pricePerKg || 0).toString()
-                return title.includes(query) || 
-                       destination.includes(query) || 
-                       origin.includes(query) ||
-                       transportMode.includes(query) ||
-                       pricePerKg.includes(query)
-            })
-        }
-
-        // Apply filters
-        if (tripFilters.title) {
-            const titleQuery = tripFilters.title.toLowerCase()
-            filtered = filtered.filter((item: any) => 
-                (item.title || '').toLowerCase().includes(titleQuery)
-            )
-        }
-
-        // Apply status filter
-        if (tripFilters.status) {
-            filtered = filtered.filter((item: any) => item.status === tripFilters.status)
-        }
-
-        // Apply transport mode filter
-        if (tripFilters.transportMode) {
-            filtered = filtered.filter((item: any) => item.transportMode === tripFilters.transportMode)
-        }
-
-        // Apply destination filter
-        if (tripFilters.destination) {
-            const destination = tripFilters.destination.toLowerCase()
-            filtered = filtered.filter((item: any) =>
-                (item.destination || '').toLowerCase().includes(destination) ||
-                (item.title || '').toLowerCase().includes(destination)
-            )
-        }
-
-        // Apply price range filters
-        if (tripFilters.priceMin) {
-            const minPrice = parseFloat(tripFilters.priceMin)
-            filtered = filtered.filter((item: any) => (item.pricePerKg || 0) >= minPrice)
-        }
-
-        if (tripFilters.priceMax) {
-            const maxPrice = parseFloat(tripFilters.priceMax)
-            filtered = filtered.filter((item: any) => (item.pricePerKg || 0) <= maxPrice)
-        }
-
-        // Apply date range filters
-        if (tripFilters.dateFrom) {
-            const fromDate = new Date(tripFilters.dateFrom)
-            filtered = filtered.filter((item: any) => {
-                const itemDate = new Date(item.departureDate || item.createdAt)
-                return itemDate >= fromDate
-            })
-        }
-
-        if (tripFilters.dateTo) {
-            const toDate = new Date(tripFilters.dateTo)
-            filtered = filtered.filter((item: any) => {
-                const itemDate = new Date(item.departureDate || item.createdAt)
-                return itemDate <= toDate
-            })
-        }
-
-        return filtered
-    }, [tripsQuery.data, tripSearchQuery, tripFilters])
-
-    // Current data and pagination based on active tab
-    const currentData = activeTab === 'packages' ? processedPackages : processedTrips
-    const currentPage = activeTab === 'packages' ? packageCurrentPage : tripCurrentPage
-    const setCurrentPage = activeTab === 'packages' ? setPackageCurrentPage : setTripCurrentPage
-
-    // Enhanced pagination logic
-    const startIndex = (currentPage - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedData = currentData.slice(startIndex, endIndex)
-
-    // Comprehensive pagination info
-    const totalPages = Math.max(1, Math.ceil(currentData.length / limit))
-    const totalItems = currentData.length
-    const showingStart = Math.min(startIndex + 1, totalItems)
-    const showingEnd = Math.min(endIndex, totalItems)
-
-    // Debug info for pagination
-    console.log(`${activeTab} pagination:`, {
-        totalItems,
-        currentPage,
-        totalPages,
-        showingStart,
-        showingEnd,
-        limit,
-        filteredCount: currentData.length,
-        rawDataCount: activeTab === 'packages' ? (packagesQuery.data?.length || 0) : (tripsQuery.data?.length || 0)
-    })
-
-    // Check if filters are active
-    const packageHasActiveFilters = Object.values(packageFilters).some(value => value !== '')
-    const tripHasActiveFilters = Object.values(tripFilters).some(value => value !== '')
-    const hasActiveFilters = activeTab === 'packages' ? packageHasActiveFilters : tripHasActiveFilters
-
-    //filtered data
-    const myPackagesQuery = packagesQuery.data?.filter((pkg: { sender: { id: string } }) => pkg.sender.id === currentUserId) || []
-    const myTripsQuery = tripsQuery.data?.filter((trip: { traveler: { id: string } }) => trip.traveler.id === currentUserId) || []
-
-    // Handler functions
-    const handlePackageSearch = (query: string) => {
-        setPackageSearchQuery(query)
-        setPackageCurrentPage(1)
+    const handleTabChange = (tab: ActiveTab) => {
+        setActiveTab(tab)
+        const url = new URL(window.location.href)
+        url.searchParams.set('tab', tab)
+        window.history.pushState({}, '', url.toString())
     }
 
-    const handleTripSearch = (query: string) => {
-        setTripSearchQuery(query)
-        setTripCurrentPage(1)
-    }
+    const handlePackageAction = (packageData: any) => {
+        if (!user?.id) {
+            alert('Please log in to assign packages to trips')
+            return
+        }
 
-    const handlePackageFilterChange = (newFilters: any) => {
-        setPackageFilters(newFilters)
-        setPackageCurrentPage(1)
-    }
-
-    const handleTripFilterChange = (newFilters: any) => {
-        setTripFilters(newFilters)
-        setTripCurrentPage(1)
-    }
-
-    const handlePackageSort = (newSortBy: string, newSortOrder: string) => {
-        setPackageSortBy(newSortBy as PackageSortBy)
-        setPackageSortOrder(newSortOrder as SortOrder)
-        setPackageCurrentPage(1)
-    }
-
-    const handleTripSort = (newSortBy: string, newSortOrder: string) => {
-        setTripSortBy(newSortBy as TripSortBy)
-        setTripSortOrder(newSortOrder as SortOrder)
-        setTripCurrentPage(1)
-    }
-
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page)
-        window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-
-    // Assignment and messaging handlers
-    const handleAddToLuggage = (pkg: any) => {
-        setSelectedItem(pkg)
-        setAssignmentType('package')
+        setSelectedItem(packageData)
         setIsAssignmentDialogOpen(true)
     }
 
-    const handleAddPackage = (trip: any) => {
-        setSelectedItem(trip)
-        setAssignmentType('trip')
+    const handleTripAction = (tripData: any) => {
+        if (!user?.id) {
+            alert('Please log in to add packages to trips')
+            return
+        }
+
+        setSelectedItem(tripData)
         setIsAssignmentDialogOpen(true)
     }
 
-    const handleSendMessage = async (item: any) => {
+    const handleMessage = (itemData: any) => {
+        if (!user?.id) {
+            alert('Please log in to send messages')
+            return
+        }
+
+        // Create a mock chat object for the messaging interface
+        const mockChat = {
+            id: `${activeTab}-${itemData.id}`,
+            participants: [user.id, itemData.creator?.id || itemData.traveler?.id],
+            messages: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        }
+
+        setSelectedChatItem(mockChat)
+        setIsMessagingOpen(true)
+    }
+
+        // Helper function to get current query and page based on active tab
+    const getCurrentQuery = () => activeTab === 'packages' ? packagesQuery : tripsQuery
+    const currentQuery = getCurrentQuery()
+    
+    const getCurrentPage = () => activeTab === 'packages' ? packageCurrentPage : tripCurrentPage
+    const setCurrentPage = (page: number) => {
+        if (activeTab === 'packages') {
+            setPackageCurrentPage(page)
+        } else {
+            setTripCurrentPage(page)
+        }
+        
+        // Scroll to top when page changes
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        })
+    }
+    const currentPage = getCurrentPage()
+
+    // Client-side pagination logic
+    const getPaginatedData = () => {
+        if (!currentQuery.data) return { data: [], pagination: null }
+        
+        const allItems = currentQuery.data.data
+        const startIndex = (currentPage - 1) * limit
+        const endIndex = startIndex + limit
+        const paginatedItems = allItems.slice(startIndex, endIndex)
+        
+        const totalPages = Math.ceil(allItems.length / limit)
+        
+        return {
+            data: paginatedItems,
+            pagination: {
+                total: allItems.length,
+                totalPages,
+                currentPage,
+                limit
+            }
+        }
+    }
+
+    const paginatedResult = getPaginatedData()
+
+    const handleAssign = async (_assignmentData: any) => {
         try {
-            // Create or find existing chat
-            const response = await fetch('/api/chats', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    participantId: activeTab === 'packages' ? item.sender.id : item.traveler.id,
-                    itemType: activeTab === 'packages' ? 'package' : 'trip',
-                    itemId: item.id,
-                }),
-            })
-
-            if (response.ok) {
-                const chat = await response.json()
-                setCurrentChat(chat)
-                setIsMessagingOpen(true)
+            console.log('Assignment:', { activeTab })
+            
+            setIsAssignmentDialogOpen(false)
+            setSelectedItem(null)
+            
+            // Refresh the data
+            if (activeTab === 'packages') {
+                packagesQuery.refetch()
+            } else {
+                tripsQuery.refetch()
             }
         } catch (error) {
-            console.error('Error creating chat:', error)
+            console.error('Assignment failed:', error)
+            alert('Failed to create assignment. Please try again.')
         }
     }
 
-    const handleAssignmentComplete = () => {
-        setIsAssignmentDialogOpen(false)
-        setSelectedItem(null)
-        // Refresh data
-        if (activeTab === 'packages') {
-            packagesQuery.refetch()
-        } else {
-            tripsQuery.refetch()
+    const handleSendMessage = async (content: string, type?: string) => {
+        try {
+            console.log('Sending message:', { content, type })
+        } catch (error) {
+            console.error('Message sending failed:', error)
+            alert('Failed to send message. Please try again.')
         }
-    }
-
-    if (isError) {
-        return (
-            <div className="min-h-screen bg-gray-50 py-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="text-center">
-                        <h1 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Data</h1>
-                        <p className="text-gray-600 mb-6">Failed to load packages and trips. Please try again.</p>
-                        <Button onClick={() => window.location.reload()}>
-                            Retry
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        )
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                {/* Header */}
-                <div className="mb-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+                <div className="px-6 py-4">
+                    {/* Tab Navigation */}
+                    <div className="flex items-center space-x-8 mb-4">
+                        <button
+                            onClick={() => handleTabChange('packages')}
+                            className={`pb-2 border-b-2 transition-colors ${
+                                activeTab === 'packages'
+                                    ? 'border-blue-500 text-blue-600 font-medium'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            Packages
+                        </button>
+                        <button
+                            onClick={() => handleTabChange('trips')}
+                            className={`pb-2 border-b-2 transition-colors ${
+                                activeTab === 'trips'
+                                    ? 'border-blue-500 text-blue-600 font-medium'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                            }`}
+                        >
+                            Trips
+                        </button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900">Packages & Trips</h1>
+                            <h1 className="text-2xl font-bold text-gray-900">
+                                {activeTab === 'packages' ? 'Packages' : 'Trips'}
+                            </h1>
+                            <p className="text-gray-600 mt-1">
+                                {activeTab === 'packages' 
+                                    ? 'Find packages that need to be delivered'
+                                    : 'Discover travelers who can carry your packages'
+                                }
+                            </p>
                         </div>
-                        <div className="mt-4 sm:mt-0 flex space-x-3">
-                            <Link href="/packages/create">
-                                <Button>
-                                    Create Package
-                                </Button>
-                            </Link>
-                            <Link href="/trips/create">
-                                <Button variant="outline">
-                                    Post Trip
+                        
+                        {/* Action Buttons */}
+                        <div className="flex items-center space-x-3">
+                            <Link href={`/${activeTab}/create`}>
+                                <Button className="flex items-center space-x-2">
+                                    <Plus className="w-4 h-4" />
+                                    <span>Add {activeTab === 'packages' ? 'Package' : 'Trip'}</span>
                                 </Button>
                             </Link>
                         </div>
                     </div>
-                </div>
 
-                {/* Tab Navigation */}
-                <div className="mb-6 w-full">
-                    <div className="flex flex-col gap-4 lg:flex-row justify-between border-b border-gray-200 w-full">
-                        <nav className="-mb-px flex space-x-8">
-                            <button
-                                onClick={() => {
-                                    router.push('/packages?tab=packages')
-                                }}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'packages'
-                                    ? 'border-teal-500 text-teal-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
-                            >
-                                Packages
-                                <span className="ml-2 bg-gray-100 text-gray-900 py-0.5 px-2.5 rounded-full text-xs">
-                                    {activeTab === 'packages' ? totalItems : processedPackages.length}
-                                </span>
-                            </button>
-                            <button
-                                onClick={() => {
-                                    router.push('/packages?tab=trips')
-                                }}
-                                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'trips'
-                                    ? 'border-teal-500 text-teal-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                    }`}
-                            >
-                                Trips
-                                <span className="ml-2 bg-gray-100 text-gray-900 py-0.5 px-2.5 rounded-full text-xs">
-                                    {activeTab === 'trips' ? totalItems : processedTrips.length}
-                                </span>
-                            </button>
-                        </nav>
-                        {/* Search and Filter Bar */}
-                        <div className="w-full lg:max-w-2xl">
-                            <div className="flex items-center gap-4">
-                                {/* Search */}
-                                <div className="flex-1 max-w-2xl">
-                                    <div className="relative">
-                                        <Input
-                                            type="text"
-                                            placeholder={activeTab === 'packages' ? 'Search packages...' : 'Search trips...'}
-                                            value={activeTab === 'packages' ? packageSearchQuery : tripSearchQuery}
-                                            onChange={(e) =>
-                                                activeTab === 'packages'
-                                                    ? handlePackageSearch(e.target.value)
-                                                    : handleTripSearch(e.target.value)
-                                            }
-                                            className="pl-10"
-                                        />
-                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                            <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
+                    {/* Search, Filter, and Sort Controls */}
+                    <div className="mt-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        {/* Search Bar */}
+                        <div className="flex-1 max-w-md">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <Input
+                                    type="text"
+                                    placeholder={`Search ${activeTab}...`}
+                                    value={activeTab === 'packages' ? packageSearchQuery : tripSearchQuery}
+                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                        if (activeTab === 'packages') {
+                                            setPackageSearchQuery(e.target.value)
+                                        } else {
+                                            setTripSearchQuery(e.target.value)
+                                        }
+                                    }}
+                                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                />
+                            </div>
+                        </div>
 
-                                {/* Filter Button */}
-                                <Button
-                                    variant='outline'
-                                    size='lg'
-                                    onClick={() =>
-                                        activeTab === 'packages'
-                                            ? setIsPackageFilterDialogOpen(true)
-                                            : setIsTripFilterDialogOpen(true)
+                        {/* Filter and Sort Controls */}
+                        <div className="flex items-center space-x-3">
+                            {/* Filter Button */}
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    if (activeTab === 'packages') {
+                                        setIsPackageFilterDialogOpen(true)
+                                    } else {
+                                        setIsTripFilterDialogOpen(true)
                                     }
-                                    title='Sort & Filter Options'
-                                    className={`${hasActiveFilters ? 'border-teal-500 text-teal-600' : ''}`}
+                                }}
+                                className="flex items-center space-x-2"
+                            >
+                                <FaFilter className="w-4 h-4" />
+                                <span>Filter</span>
+                            </Button>
+
+                            {/* Sort Controls */}
+                            <div className="flex items-center space-x-2">
+                                <select
+                                    value={activeTab === 'packages' ? packageSortBy : tripSortBy}
+                                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+                                        if (activeTab === 'packages') {
+                                            setPackageSortBy(e.target.value as PackageSortBy)
+                                        } else {
+                                            setTripSortBy(e.target.value as TripSortBy)
+                                        }
+                                    }}
+                                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
-                                    <FaFilter className="text-gray-400 size-4" />
-                                    {hasActiveFilters && (
-                                        <span className="ml-1 text-xs">•</span>
+                                    <option value="createdAt">Date Created</option>
+                                    <option value="updatedAt">Last Updated</option>
+                                    {activeTab === 'packages' ? (
+                                        <>
+                                            <option value="title">Title</option>
+                                            <option value="offeredPrice">Price</option>
+                                            <option value="pickupDate">Pickup Date</option>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <option value="title">Title</option>
+                                            <option value="pricePerKg">Price per Kg</option>
+                                            <option value="departureDate">Departure Date</option>
+                                            <option value="arrivalDate">Arrival Date</option>
+                                        </>
+                                    )}
+                                </select>
+
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        if (activeTab === 'packages') {
+                                            setPackageSortOrder(packageSortOrder === 'asc' ? 'desc' : 'asc')
+                                        } else {
+                                            setTripSortOrder(tripSortOrder === 'asc' ? 'desc' : 'asc')
+                                        }
+                                    }}
+                                    className="px-3"
+                                >
+                                    {(activeTab === 'packages' ? packageSortOrder : tripSortOrder) === 'asc' ? (
+                                        <SortAsc className="w-4 h-4" />
+                                    ) : (
+                                        <SortDesc className="w-4 h-4" />
                                     )}
                                 </Button>
                             </div>
                         </div>
                     </div>
+
+                    {/* Results Summary */}
+                    {paginatedResult.pagination && (
+                        <div className="mt-4 text-sm text-gray-600">
+                            Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, paginatedResult.pagination.total)} of {paginatedResult.pagination.total} {activeTab}
+                        </div>
+                    )}
                 </div>
+            </div>
 
-
-                {/* Tab Content */}
-                {isLoading ? (
-                    <LoadingSpinner className="py-12" />
-                ) : currentData.length === 0 ? (
-                    <EmptyState
+            {/* Content */}
+            <div className="px-6 py-6">
+                {currentQuery.isLoading ? (
+                    <div className="flex justify-center items-center h-64">
+                        <LoadingSpinner size="lg" />
+                    </div>
+                ) : !currentQuery.data || currentQuery.data.length === 0 ? (
+                    <EmptyState 
                         title={`No ${activeTab} found`}
-                        description="Try adjusting your search criteria or filters to find what you're looking for."
-                        actionLabel="Clear Filters"
-                        onAction={() => {
-                            if (activeTab === 'packages') {
-                                setPackageSearchQuery('')
-                                setPackageFilters({
-                                    title: '',
-                                    status: '',
-                                    category: '',
-                                    priceMin: '',
-                                    priceMax: '',
-                                    pickupDateFrom: '',
-                                    pickupDateTo: ''
-                                })
-                            } else {
-                                setTripSearchQuery('')
-                                setTripFilters({
-                                    title: '',
-                                    status: '',
-                                    transportMode: '',
-                                    priceMin: '',
-                                    priceMax: '',
-                                    dateFrom: '',
-                                    dateTo: '',
-                                    destination: ''
-                                })
-                            }
-                        }}
+                        description={`There are no ${activeTab} available at the moment. Create ${activeTab === 'packages' ? 'a package' : 'a trip'} to get started!`}
+                        actionLabel={`Create ${activeTab === 'packages' ? 'Package' : 'Trip'}`}
                     />
                 ) : (
                     <>
                         {/* Results Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                            {paginatedData.map((item: any) => (
-                                <div key={item.id}>
-                                    {activeTab === 'packages' ? (
-                                        <PackageCard
-                                            package={item}
-                                            onAddToLuggage={handleAddToLuggage}
-                                            onSendMessage={handleSendMessage}
-                                            currentUserId={currentUserId}
-                                        />
-                                    ) : (
-                                        <TripCard
-                                            trip={item}
-                                            onAddPackage={handleAddPackage}
-                                            onSendMessage={handleSendMessage}
-                                            currentUserId={currentUserId}
-                                        />
-                                    )}
-                                </div>
-                            ))}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {paginatedResult.data?.map((item: any) => 
+                                activeTab === 'packages' ? (
+                                    <PackageCard
+                                        key={item.id}
+                                        package={item}
+                                        onAddToLuggage={handlePackageAction}
+                                        onSendMessage={handleMessage}
+                                        currentUserId={user?.id}
+                                    />
+                                ) : (
+                                    <TripCard
+                                        key={item.id}
+                                        trip={item}
+                                        onAddPackage={handleTripAction}
+                                        onSendMessage={handleMessage}
+                                        currentUserId={user?.id}
+                                    />
+                                )
+                            )}
                         </div>
 
                         {/* Pagination */}
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                            showInfo={{
-                                start: showingStart,
-                                end: showingEnd,
-                                total: totalItems
-                            }}
-                        />
+                        {paginatedResult.pagination && paginatedResult.pagination.totalPages > 1 && (
+                            <div className="mt-8 flex justify-center">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={paginatedResult.pagination.totalPages}
+                                    onPageChange={setCurrentPage}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
+            </div>
 
-                {/* Package Filters Dialog */}
+            {/* Package Filter Dialog */}
+            {isPackageFilterDialogOpen && (
                 <PackageFilters
-                    filters={packageFilters}
-                    onFiltersChange={handlePackageFilterChange}
                     isOpen={isPackageFilterDialogOpen}
                     onClose={() => setIsPackageFilterDialogOpen(false)}
+                    filters={packageFilters}
+                    onFiltersChange={(filters: PackageFiltersState) => setPackageFilters(filters)}
                     sortBy={packageSortBy}
                     sortOrder={packageSortOrder}
-                    onSortChange={handlePackageSort}
-                />
-
-                {/* Trip Filters Dialog */}
-                <TripFilters
-                    filters={tripFilters}
-                    onFiltersChange={handleTripFilterChange}
-                    isOpen={isTripFilterDialogOpen}
-                    onClose={() => setIsTripFilterDialogOpen(false)}
-                    sortBy={tripSortBy}
-                    sortOrder={tripSortOrder}
-                    onSortChange={handleTripSort}
-                />
-
-                {/* Assignment Dialog */}
-                <AssignmentDialog
-                    isOpen={isAssignmentDialogOpen}
-                    onClose={() => setIsAssignmentDialogOpen(false)}
-                    type={assignmentType === 'package' ? 'package-to-trip' : 'trip-to-package'}
-                    currentItem={selectedItem}
-                    availableItems={assignmentType === 'package' ? (myTripsQuery || []) : (myPackagesQuery || [])}
-                    onAssign={async (targetId: string, confirmations: any) => {
-                        try {
-                            await assignmentApi.createAssignment({
-                                userId: currentUserId,
-                                packageId: assignmentType === 'package' ? selectedItem?.id : targetId,
-                                tripId: assignmentType === 'package' ? targetId : selectedItem?.id,
-                                confirmations: confirmations,
-                                confirmationType: 'ASSIGNMENT',
-                                notification:"TO_PACKAGE"
-                            })
-
-                            handleAssignmentComplete()
-                        } catch (error) {
-                            console.error('Error creating assignment:', error)
-                        }
+                    onSortChange={(sortBy: string, sortOrder: string) => {
+                        setPackageSortBy(sortBy as PackageSortBy)
+                        setPackageSortOrder(sortOrder as SortOrder)
                     }}
                 />
+            )}
 
-                {/* Messaging Interface */}
-                {isMessagingOpen && currentChat && (
-                    <MessagingInterface
-                        chat={currentChat}
-                        currentUserId={currentUserId}
-                        isOpen={isMessagingOpen}
-                        onClose={() => {
-                            setIsMessagingOpen(false)
-                            setCurrentChat(null)
-                        }}
-                        onSendMessage={async (content: string, type?: string) => {
-                            try {
-                                const response = await fetch('/api/chats/messages', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        chatId: currentChat.id,
-                                        content,
-                                        messageType: type || 'text',
-                                    }),
-                                })
+            {/* Trip Filter Dialog */}
+            {isTripFilterDialogOpen && (
+                <TripFilters
+                    isOpen={isTripFilterDialogOpen}
+                    onClose={() => setIsTripFilterDialogOpen(false)}
+                    filters={tripFilters}
+                    onFiltersChange={(filters: TripFiltersState) => setTripFilters(filters)}
+                    sortBy={tripSortBy}
+                    sortOrder={tripSortOrder}
+                    onSortChange={(sortBy: string, sortOrder: string) => {
+                        setTripSortBy(sortBy as TripSortBy)
+                        setTripSortOrder(sortOrder as SortOrder)
+                    }}
+                />
+            )}
 
-                                if (response.ok) {
-                                    // Refresh chat data or update local state
-                                    const updatedMessage = await response.json()
-                                    setCurrentChat((prev: any) => ({
-                                        ...prev,
-                                        messages: [...(prev.messages || []), updatedMessage]
-                                    }))
-                                }
-                            } catch (error) {
-                                console.error('Error sending message:', error)
-                            }
-                        }}
-                    />
-                )}
-            </div>
+            {/* Assignment Dialog */}
+            {isAssignmentDialogOpen && selectedItem && (
+                <AssignmentDialog
+                    isOpen={isAssignmentDialogOpen}
+                    onClose={() => {
+                        setIsAssignmentDialogOpen(false)
+                        setSelectedItem(null)
+                    }}
+                    type={activeTab === 'packages' ? 'package-to-trip' : 'trip-to-package'}
+                    currentItem={selectedItem}
+                    availableItems={[]}
+                    onAssign={handleAssign}
+                />
+            )}
+
+            {/* Messaging Interface */}
+            {isMessagingOpen && selectedChatItem && (
+                <MessagingInterface
+                    isOpen={isMessagingOpen}
+                    onClose={() => {
+                        setIsMessagingOpen(false)
+                        setSelectedChatItem(null)
+                    }}
+                    chat={selectedChatItem}
+                    currentUserId={user?.id || ''}
+                    onSendMessage={handleSendMessage}
+                />
+            )}
         </div>
+    )
+}
+
+export default function PackagesPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center items-center h-64"><LoadingSpinner size="lg" /></div>}>
+            <PackagesPageContent />
+        </Suspense>
     )
 }

@@ -7,7 +7,7 @@ export async function requireAdmin(request: NextRequest) {
     const session = await getServerSession(authOptions)
     
     if (!session || !session.user) {
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+      return NextResponse.redirect(new URL('/login', request.url))
     }
 
     // Check if user has admin role
@@ -18,7 +18,7 @@ export async function requireAdmin(request: NextRequest) {
     return null
   } catch (error) {
     console.error('Admin middleware error:', error)
-    return NextResponse.redirect(new URL('/auth/login', request.url))
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 }
 

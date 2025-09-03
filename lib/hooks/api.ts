@@ -1,6 +1,6 @@
 // Fakomame Platform - API Hooks
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { authApi, userApi, packageApi, tripApi, chatApi, paymentApi, notificationApi } from '@/lib/api/client'
+import apiClient, { authApi, userApi, packageApi, tripApi, chatApi, paymentApi, notificationApi } from '@/lib/api/client'
 import { toast } from 'react-hot-toast'
 
 // Auth hooks
@@ -77,6 +77,114 @@ export function useAuth() {
   }
 }
 
+// Verification hooks
+export function useSendEmailVerification() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (email: string) => authApi.sendEmailVerification(email),
+    onSuccess: () => {
+      toast.success('Verification code sent to your email!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to send verification code')
+    },
+  })
+}
+
+export function useVerifyEmail() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ email, code }: { email: string; code: string }) => 
+      authApi.verifyEmail(email, code),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+      toast.success('Email verified successfully!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to verify email')
+    },
+  })
+}
+
+export function useSendPhoneVerification() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (phone: string) => authApi.sendPhoneVerification(phone),
+    onSuccess: () => {
+      toast.success('Verification code sent to your phone!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to send verification code')
+    },
+  })
+}
+
+export function useVerifyPhone() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ phone, code }: { phone: string; code: string }) => 
+      authApi.verifyPhone(phone, code),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+      toast.success('Phone verified successfully!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to verify phone')
+    },
+  })
+}
+
+export function useUploadIDDocument() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ file, type }: { file: File; type: string }) => 
+      authApi.uploadIDDocument(file, type),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+      toast.success('ID document uploaded successfully!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to upload ID document')
+    },
+  })
+}
+
+export function useUploadFacialPhoto() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (file: File) => authApi.uploadFacialPhoto(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+      toast.success('Facial photo uploaded successfully!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to upload facial photo')
+    },
+  })
+}
+
+export function useUploadAddressDocument() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ file, type }: { file: File; type: string }) => 
+      authApi.uploadAddressDocument(file, type),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user'] })
+      toast.success('Address document uploaded successfully!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to upload address document')
+    },
+  })
+}
+
 // User hooks
 export function useUserProfile(userId: string) {
   return useQuery({
@@ -113,7 +221,14 @@ export function useUploadAvatar() {
 export function usePackages(params?: any) {
   return useQuery({
     queryKey: ['packages', params],
-    queryFn: () => packageApi.getPackages(params),
+    queryFn: async () => {
+      const response = await apiClient({
+        method: 'GET',
+        url: '/packages',
+        params
+      })
+      return response.data // Return full response with data and pagination
+    },
     enabled: params !== null && params !== undefined,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,
@@ -187,7 +302,14 @@ export function useSearchPackages(filters: any) {
 export function useTrips(params?: any) {
   return useQuery({
     queryKey: ['trips', params],
-    queryFn: () => tripApi.getTrips(params),
+    queryFn: async () => {
+      const response = await apiClient({
+        method: 'GET',
+        url: '/trips',
+        params
+      })
+      return response.data // Return full response with data and pagination
+    },
     enabled: params !== null && params !== undefined,
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,

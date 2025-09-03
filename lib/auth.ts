@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import type { JwtPayload, AuthUser } from '@/lib/types'
 import prisma from './prisma'
 
@@ -199,7 +200,7 @@ export function checkAuthRateLimit(identifier: string): boolean {
   const attempts = authAttempts.get(identifier)
   
   if (!attempts || now > attempts.resetTime) {
-    authAttempts.set(identifier, { count: 1, resetTime: now + 15 * 60 * 1000 }) // 15 minutes
+    authAttempts.set(identifier, { count: 1, resetTime: now + 1 * 60 * 1000 }) // 1 minute
     return true
   }
   
@@ -218,6 +219,17 @@ export function resetAuthRateLimit(identifier: string): void {
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
+    }),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -258,22 +270,88 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account, profile: _profile }) {
+      if (account?.provider === 'google') {
+        try {
+          // Check if user exists
+          const existingUser = await prisma.user.findUnique({
+            where: { email: user.email || '' }
+          })
+
+          if (!existingUser) {
+            // Create new user from Google OAuth
+            const names = (user.name || '').split(' ')
+            const firstName = names[0] || ''
+            const lastName = names.slice(1).join(' ') || ''
+
+            await prisma.user.create({
+              data: {
+                email: user.email || '',
+                firstName,
+                lastName,
+                avatar: user.image,
+                isEmailVerified: true, // Google emails are already verified
+                isActive: true,
+                role: 'SENDER', // Default role
+                profile: {
+                  create: {
+                    bio: '',
+                    languages: ['English'],
+                    senderRating: 0,
+                    travelerRating: 0,
+                    totalTrips: 0,
+                    totalDeliveries: 0,
+                  }
+                }
+              }
+            })
+          } else if (!existingUser.isActive) {
+            // Reactivate deactivated account
+            await prisma.user.update({
+              where: { id: existingUser.id },
+              data: { 
+                isActive: true,
+                avatar: user.image || existingUser.avatar,
+                isEmailVerified: true
+              }
+            })
+          }
+
+          return true
+        } catch (error) {
+          console.error('Google OAuth sign-in error:', error)
+          return false
+        }
+      }
+      return true
+    },
+    async jwt({ token, user, account: _account }) {
       if (user) {
-        token.role = (user as any).role
+        // First time JWT creation
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email || '' },
+          select: { id: true, role: true, isActive: true }
+        })
+        
+        if (dbUser) {
+          token.role = dbUser.role
+          token.userId = dbUser.id
+          token.isActive = dbUser.isActive
+        }
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.sub
+        (session.user as any).id = token.userId || token.sub
         ;(session.user as any).role = token.role
+        ;(session.user as any).isActive = token.isActive
       }
       return session
     }
   },
   pages: {
-    signIn: '/auth/login',
+    signIn: '/login',
   },
   session: {
     strategy: 'jwt',

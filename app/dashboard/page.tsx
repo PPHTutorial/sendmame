@@ -632,7 +632,7 @@ export default function ModernAdminDashboard() {
         setStats(data)
       } else if (response.status === 401) {
         console.error('Unauthorized access - redirecting to login')
-        window.location.href = '/auth/login'
+        window.location.href = '/login'
       } else {
         console.error('Failed to fetch dashboard stats:', response.status)
       }

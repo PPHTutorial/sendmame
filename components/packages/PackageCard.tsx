@@ -99,6 +99,9 @@ export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, curre
 
     const handleChatClick = async (e: React.MouseEvent) => {
         e.stopPropagation()
+        if(!currentUserId){
+            router.push(`/login`)
+        }
         if (onSendMessage) {
             onSendMessage(pkg)
         }
@@ -106,6 +109,9 @@ export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, curre
 
     const handleAddToLuggage = async (e: React.MouseEvent) => {
         e.stopPropagation()
+        if(!currentUserId){
+            router.push(`/login`)
+        }
         if (onAddToLuggage) {
             onAddToLuggage(pkg)
         }

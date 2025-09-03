@@ -62,7 +62,7 @@ apiClient.interceptors.response.use(
         // Refresh failed, redirect to login
         if (typeof window !== 'undefined') {
           localStorage.removeItem('accessToken')
-          //window.location.href = '/auth/login'
+          //window.location.href = '/login'
         }
       }
     }
@@ -126,6 +126,79 @@ export const authApi = {
       method: 'POST',
       url: '/auth/refresh',
     }),
+
+  // Verification APIs
+  sendEmailVerification: (email: string) =>
+    apiRequest({
+      method: 'POST',
+      url: '/auth/verify-email?action=send',
+      data: { email },
+    }),
+
+  verifyEmail: (email: string, code: string) =>
+    apiRequest({
+      method: 'POST',
+      url: '/auth/verify-email?action=verify',
+      data: { email, code },
+    }),
+
+  sendPhoneVerification: (phone: string) =>
+    apiRequest({
+      method: 'POST',
+      url: '/auth/verify-phone?action=send',
+      data: { phone },
+    }),
+
+  verifyPhone: (phone: string, code: string) =>
+    apiRequest({
+      method: 'POST',
+      url: '/auth/verify-phone?action=verify',
+      data: { phone, code },
+    }),
+
+  uploadIDDocument: (file: File, type: string) => {
+    const formData = new FormData()
+    formData.append('document', file)
+    formData.append('type', type)
+
+    return apiRequest({
+      method: 'POST',
+      url: '/auth/verify-id',
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
+
+  uploadFacialPhoto: (file: File) => {
+    const formData = new FormData()
+    formData.append('photo', file)
+
+    return apiRequest({
+      method: 'POST',
+      url: '/auth/verify-facial',
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
+
+  uploadAddressDocument: (file: File, type: string) => {
+    const formData = new FormData()
+    formData.append('document', file)
+    formData.append('type', type)
+
+    return apiRequest({
+      method: 'POST',
+      url: '/auth/verify-address',
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+  },
 }
 
 // User API calls

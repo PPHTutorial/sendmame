@@ -6,14 +6,14 @@ import { FilterDialog } from '@/components/shared/FilterDialog'
 
 interface TripFiltersProps {
     filters: {
-        title: string
-        status: string
-        transportMode: string
-        priceMin: string
-        priceMax: string
-        dateFrom: string
-        dateTo: string
-        destination: string
+        title?: string
+        status?: string
+        transportMode?: string
+        priceMin?: number
+        priceMax?: number
+        dateFrom?: string
+        dateTo?: string
+        destination?: string
     }
     onFiltersChange: (filters: any) => void
     isOpen: boolean

@@ -58,12 +58,12 @@ export function NavigationHeader() {
                             </div>
                         ) : (
                             <>
-                                {/* <Link href="/auth/login">
+                                {/* <Link href="/login">
                                     <Button variant="ghost" className="text-white  hover:text-yellow-600">
                                         Sign In
                                     </Button>
                                 </Link> */}
-                                <Link href="/auth/login">
+                                <Link href="/login">
                                     <Button className="bg-yellow-400 hover:bg-yellow-500 !text-black rounded-none py-3 px-6">
                                         <User className="mr-2 size-4" />
                                         Get Started
@@ -119,14 +119,14 @@ export function NavigationHeader() {
                                 ) : (
                                     <>
                                         <Link
-                                            href="/auth/login"
+                                            href="/login"
                                             className="text-gray-600 hover:text-teal-600 hover:bg-teal-50 block px-3 py-2 text-base font-medium rounded-md"
                                             onClick={() => setIsMenuOpen(false)}
                                         >
                                             Sign In
                                         </Link>
                                         <Link
-                                            href="/auth/register"
+                                            href="/register"
                                             className="bg-gradient-to-r from-teal-600 to-teal-600 text-white block px-3 py-2 text-base font-medium rounded-md mx-3"
                                             onClick={() => setIsMenuOpen(false)}
                                         >

@@ -6,13 +6,13 @@ import { FilterDialog } from '@/components/shared/FilterDialog'
 
 interface PackageFiltersProps {
   filters: {
-    title: string
-    status: string
-    category: string
-    priceMin: string
-    priceMax: string
-    pickupDateFrom: string
-    pickupDateTo: string
+    title?: string
+    status?: string
+    category?: string
+    priceMin?: number
+    priceMax?: number
+    pickupDateFrom?: string
+    pickupDateTo?: string
   }
   onFiltersChange: (filters: any) => void
   isOpen: boolean
