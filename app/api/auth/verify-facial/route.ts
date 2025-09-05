@@ -73,9 +73,9 @@ async function handleFacialPhotoUpload(request: NextRequest) {
   }
 
   // Validate file type and size
-  if (!facialPhoto.type.startsWith('image/')) {
+  if (!facialPhoto.type.startsWith('image/') && facialPhoto.type !== 'application/pdf') {
     return NextResponse.json(
-      { error: 'Facial photo must be an image file' },
+      { error: 'Facial photo must be an image or PDF file' },
       { status: 400 }
     )
   }
@@ -186,6 +186,7 @@ export async function GET(request: NextRequest) {
         rejectionReason: true,
         verifiedAt: true,
         createdAt: true,
+        documentUrl: true
       },
       orderBy: { createdAt: 'desc' }
     })

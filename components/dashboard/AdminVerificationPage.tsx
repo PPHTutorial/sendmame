@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { 
-  Shield, 
-  ShieldCheck, 
-  ShieldX, 
-  Search, 
+import {
+  Shield,
+  ShieldCheck,
+  ShieldX,
+  Search,
   Eye,
   Check,
   X,
@@ -19,7 +19,9 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
-  Move
+  Move,
+  Maximize,
+  Minimize
 } from 'lucide-react'
 import { MetricCard, DataTable } from '@/components/ui/dashboard-components'
 
@@ -63,8 +65,8 @@ interface VerificationMetrics {
 interface DocumentViewerProps {
   userGroup: UserGroup
   onClose: () => void
-  onApprove: (docId: string) => void
-  onReject: (docId: string, reason: string) => void
+  onApprove: (docId: string, docType: string) => void
+  onReject: (docId: string, reason: string, docType: string) => void
 }
 
 function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentViewerProps) {
@@ -76,6 +78,8 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const [currentFileType, setCurrentFileType] = useState<'image' | 'pdf'>('image')
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const imageRef = useRef<HTMLDivElement>(null)
 
   const currentDoc = userGroup.documents[currentDocIndex]
@@ -84,15 +88,49 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
     ...(currentDoc.backDocumentUrl ? [currentDoc.backDocumentUrl] : [])
   ].filter(Boolean)
 
+  // Helper function to detect file type
+  const getFileType = (url: string): 'image' | 'pdf' => {
+    const lowercaseUrl = url.toLowerCase()
+    if (lowercaseUrl.includes('data:application/pdf')) {
+      return 'pdf'
+    }
+    return 'image'
+  }
+
+  // Update file type when image changes
+  useEffect(() => {
+    if (currentImages[currentImageIndex]) {
+      const fileType = getFileType(currentImages[currentImageIndex])
+      setCurrentFileType(fileType)
+
+    }
+  }, [currentImages, currentImageIndex, currentDoc, currentDocIndex])
+
+  // Handle escape key for fullscreen
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isFullscreen) {
+        setIsFullscreen(false)
+      }
+    }
+
+    if (isFullscreen) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [isFullscreen])
+
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (zoom > 1) {
+    if (zoom > 1 && currentFileType === 'image') {
       setIsDragging(true)
       setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y })
     }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && zoom > 1) {
+    if (isDragging && zoom > 1 && currentFileType === 'image') {
       setPosition({
         x: e.clientX - dragStart.x,
         y: e.clientY - dragStart.y
@@ -122,7 +160,7 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
 
   const handleReject = () => {
     if (rejectionReason.trim()) {
-      onReject(currentDoc.id, rejectionReason)
+      onReject(currentDoc.id, rejectionReason, currentDoc.type)
       setShowRejectForm(false)
       setRejectionReason('')
     }
@@ -185,12 +223,15 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
                     setCurrentDocIndex(index)
                     setCurrentImageIndex(0)
                     resetTransform()
+                    // Reset file type when switching documents
+                    if (userGroup.documents[index].documentUrl) {
+                      setCurrentFileType(getFileType(userGroup.documents[index].documentUrl))
+                    }
                   }}
-                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
-                    index === currentDocIndex
-                      ? 'bg-teal-100 border-teal-300 text-teal-800'
-                      : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'
-                  }`}
+                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${index === currentDocIndex
+                    ? 'bg-teal-100 border-teal-300 text-teal-800'
+                    : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'
+                    }`}
                 >
                   {getDocumentTypeLabel(doc.type)}
                 </button>
@@ -209,12 +250,15 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
                   onClick={() => {
                     setCurrentImageIndex(0)
                     resetTransform()
+                    // Update file type for front image
+                    if (currentImages[0]) {
+                      setCurrentFileType(getFileType(currentImages[0]))
+                    }
                   }}
-                  className={`px-3 py-1 text-xs rounded ${
-                    currentImageIndex === 0
-                      ? 'bg-teal-600 text-white'
-                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                  }`}
+                  className={`px-3 py-1 text-xs rounded ${currentImageIndex === 0
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    }`}
                 >
                   Front
                 </button>
@@ -222,12 +266,15 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
                   onClick={() => {
                     setCurrentImageIndex(1)
                     resetTransform()
+                    // Update file type for back image
+                    if (currentImages[1]) {
+                      setCurrentFileType(getFileType(currentImages[1]))
+                    }
                   }}
-                  className={`px-3 py-1 text-xs rounded ${
-                    currentImageIndex === 1
-                      ? 'bg-teal-600 text-white'
-                      : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-                  }`}
+                  className={`px-3 py-1 text-xs rounded ${currentImageIndex === 1
+                    ? 'bg-teal-600 text-white'
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    }`}
                 >
                   Back
                 </button>
@@ -236,30 +283,42 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
 
             {/* Image Controls */}
             <div className="flex items-center justify-center gap-2 mb-4">
+              {currentFileType === 'image' && (
+                <>
+                  <button
+                    onClick={handleZoomOut}
+                    className="p-2 bg-white rounded-lg shadow hover:bg-gray-50 disabled:opacity-50"
+                    disabled={zoom <= 0.5}
+                  >
+                    <ZoomOut className="h-4 w-4" />
+                  </button>
+                  <span className="text-sm text-gray-600 min-w-16 text-center">
+                    {`${Math.round(zoom * 100)}%`}
+                  </span>
+                  <button
+                    onClick={handleZoomIn}
+                    className="p-2 bg-white rounded-lg shadow hover:bg-gray-50 disabled:opacity-50"
+                    disabled={zoom >= 5}
+                  >
+                    <ZoomIn className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={resetTransform}
+                    className="p-2 bg-white rounded-lg shadow hover:bg-gray-50"
+                    disabled={currentFileType !== 'image' || (zoom === 1 && position.x === 0 && position.y === 0)}
+                  >
+                    <RotateCw className="h-4 w-4" />
+                  </button>
+                </>
+              )}
               <button
-                onClick={handleZoomOut}
-                className="p-2 bg-white rounded-lg shadow hover:bg-gray-50 disabled:opacity-50"
-                disabled={zoom <= 0.5}
-              >
-                <ZoomOut className="h-4 w-4" />
-              </button>
-              <span className="text-sm text-gray-600 min-w-16 text-center">
-                {Math.round(zoom * 100)}%
-              </span>
-              <button
-                onClick={handleZoomIn}
-                className="p-2 bg-white rounded-lg shadow hover:bg-gray-50 disabled:opacity-50"
-                disabled={zoom >= 5}
-              >
-                <ZoomIn className="h-4 w-4" />
-              </button>
-              <button
-                onClick={resetTransform}
+                onClick={() => setIsFullscreen(!isFullscreen)}
                 className="p-2 bg-white rounded-lg shadow hover:bg-gray-50"
+                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
               >
-                <RotateCw className="h-4 w-4" />
+                {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
               </button>
-              {zoom > 1 && (
+              {zoom > 1 && currentFileType === 'image' && !isFullscreen && (
                 <div className="text-xs text-gray-500 ml-2 flex items-center gap-1">
                   <Move className="h-3 w-3" />
                   Drag to pan
@@ -268,9 +327,9 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
             </div>
 
             {/* Image Display */}
-            <div 
+            <div
               ref={imageRef}
-              className="bg-white rounded-lg border-2 border-dashed border-gray-300 flex-1 flex items-center justify-center relative overflow-hidden cursor-move"
+              className={`bg-white rounded-lg border-2 border-dashed border-gray-300 flex-1 flex items-center justify-center relative overflow-hidden ${currentFileType === 'pdf' ? 'cursor-default' : 'cursor-move'}`}
               style={{ minHeight: '40vh' }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
@@ -279,32 +338,48 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
             >
               {currentImages[currentImageIndex] ? (
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={currentImages[currentImageIndex]}
-                    alt={`${getDocumentTypeLabel(currentDoc.type)} document`}
-                    className="max-w-200 transition-transform select-none"
-                    style={{
-                      transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
-                      cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in'
-                    }}
-                    onClick={(e) => {
-                      if (zoom <= 1) {
-                        const rect = e.currentTarget.getBoundingClientRect()
-                        const centerX = rect.width / 2
-                        const centerY = rect.height / 2
-                        const clickX = e.clientX - rect.left
-                        const clickY = e.clientY - rect.top
-                        
-                        setZoom(2)
-                        setPosition({
-                          x: (centerX - clickX) * 2,
-                          y: (centerY - clickY) * 2
-                        })
-                      }
-                    }}
-                    draggable={false}
-                  />
+                  {currentFileType === 'pdf' ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center min-h-[40vh]">
+                      <embed
+                        src={currentImages[currentImageIndex]}
+                        type="application/pdf"
+                        className="w-full h-full min-h-[40vh] rounded"
+                        style={{ minHeight: '40vh' }}
+                      />
+                      <div className="absolute top-4 right-4 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs">
+                        PDF
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={currentImages[currentImageIndex]}
+                        alt={`${getDocumentTypeLabel(currentDoc.type)} document`}
+                        className="max-w-full max-h-full transition-transform select-none"
+                        style={{
+                          transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
+                          cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in'
+                        }}
+                        onClick={(e) => {
+                          if (zoom <= 1) {
+                            const rect = e.currentTarget.getBoundingClientRect()
+                            const centerX = rect.width / 2
+                            const centerY = rect.height / 2
+                            const clickX = e.clientX - rect.left
+                            const clickY = e.clientY - rect.top
+
+                            setZoom(2)
+                            setPosition({
+                              x: (centerX - clickX) * 2,
+                              y: (centerY - clickY) * 2
+                            })
+                          }
+                        }}
+                        draggable={false}
+                      />
+                    </>
+                  )}
                 </>
               ) : (
                 <div className="text-center">
@@ -318,123 +393,126 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
           {/* Details Panel */}
           <div className="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-gray-200 bg-white flex-shrink-0 max-h-[40vh] lg:max-h-none overflow-scroll">
             <div className="h-full overflow-y-auto p-4 md:p-6">
-            {/* User Info */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">User Information</h4>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
-                    {userGroup.user.avatar ? (
-                      <>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={userGroup.user.avatar}
-                          alt="User avatar"
-                          className="h-10 w-10 rounded-full"
-                        />
-                      </>
-                    ) : (
-                      <User className="h-5 w-5 text-gray-600" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="font-medium text-gray-900 truncate">
-                      {userGroup.user.firstName} {userGroup.user.lastName}
+              {/* User Info */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">User Information</h4>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
+                      {userGroup.user.avatar ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={userGroup.user.avatar}
+                            alt="User avatar"
+                            className="h-10 w-10 rounded-full"
+                          />
+                        </>
+                      ) : (
+                        <User className="h-5 w-5 text-gray-600" />
+                      )}
                     </div>
-                    <div className="text-sm text-gray-500 truncate">{userGroup.user.email}</div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-gray-900 truncate">
+                        {userGroup.user.firstName} {userGroup.user.lastName}
+                      </div>
+                      <div className="text-sm text-gray-500 truncate">{userGroup.user.email}</div>
+                    </div>
                   </div>
-                </div>
 
-                <div className="text-sm">
-                  <span className="text-gray-500">Overall Status: </span>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(getGroupStatus())}`}>
-                    {getGroupStatus()}
-                  </span>
-                </div>
-
-                <div className="text-sm">
-                  <span className="text-gray-500">Member since: </span>
-                  <span className="text-gray-900">
-                    {new Date(userGroup.user.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Current Document Info */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">Current Document</h4>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <span className="text-gray-500">Type: </span>
-                  <span className="text-gray-900">{getDocumentTypeLabel(currentDoc.type)}</span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Status: </span>
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(currentDoc.status)}`}>
-                    {currentDoc.status}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-gray-500">Submitted: </span>
-                  <span className="text-gray-900">
-                    {new Date(currentDoc.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                {currentDoc.verifiedAt && (
-                  <div>
-                    <span className="text-gray-500">Verified: </span>
-                    <span className="text-gray-900">
-                      {new Date(currentDoc.verifiedAt).toLocaleDateString()}
+                  <div className="text-sm">
+                    <span className="text-gray-500">Overall Status: </span>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(getGroupStatus())}`}>
+                      {getGroupStatus()}
                     </span>
                   </div>
-                )}
-                {currentDoc.rejectionReason && (
-                  <div>
-                    <span className="text-gray-500">Rejection Reason: </span>
-                    <span className="text-red-600 text-xs">{currentDoc.rejectionReason}</span>
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* All Documents Summary */}
-            <div className="mb-6">
-              <h4 className="text-sm font-medium text-gray-900 mb-3">All Documents ({userGroup.documents.length})</h4>
-              <div className="space-y-2">
-                {userGroup.documents.map((doc, index) => (
-                  <div 
-                    key={doc.id}
-                    className={`p-2 rounded-lg border cursor-pointer transition-colors ${
-                      index === currentDocIndex 
-                        ? 'border-teal-300 bg-teal-50' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                    onClick={() => {
-                      setCurrentDocIndex(index)
-                      setCurrentImageIndex(0)
-                      resetTransform()
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium">{getDocumentTypeLabel(doc.type)}</span>
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(doc.status)}`}>
-                        {doc.status}
+                  <div className="text-sm">
+                    <span className="text-gray-500">Member since: </span>
+                    <span className="text-gray-900">
+                      {new Date(userGroup.user.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Document Info */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Current Document</h4>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="text-gray-500">Type: </span>
+                    <span className="text-gray-900">{getDocumentTypeLabel(currentDoc.type)}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Status: </span>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(currentDoc.status)}`}>
+                      {currentDoc.status}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500">Submitted: </span>
+                    <span className="text-gray-900">
+                      {new Date(currentDoc.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {currentDoc.verifiedAt && (
+                    <div>
+                      <span className="text-gray-500">Verified: </span>
+                      <span className="text-gray-900">
+                        {new Date(currentDoc.verifiedAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {new Date(doc.createdAt).toLocaleDateString()}
+                  )}
+                  {currentDoc.rejectionReason && (
+                    <div>
+                      <span className="text-gray-500">Rejection Reason: </span>
+                      <span className="text-red-600 text-xs">{currentDoc.rejectionReason}</span>
                     </div>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Actions */}
-            {currentDoc.status === 'PENDING' && (
+              {/* All Documents Summary */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">All Documents ({userGroup.documents.length})</h4>
+                <div className="space-y-2">
+                  {userGroup.documents.map((doc, index) => (
+                    <div
+                      key={doc.id}
+                      className={`p-2 rounded-lg border cursor-pointer transition-colors ${index === currentDocIndex
+                        ? 'border-teal-300 bg-teal-50'
+                        : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      onClick={() => {
+                        setCurrentDocIndex(index)
+                        setCurrentImageIndex(0)
+                        resetTransform()
+                        // Reset file type when switching documents
+                        if (userGroup.documents[index].documentUrl) {
+                          setCurrentFileType(getFileType(userGroup.documents[index].documentUrl))
+                        }
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium">{getDocumentTypeLabel(doc.type)}</span>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(doc.status)}`}>
+                          {doc.status}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {new Date(doc.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+
               <div className="space-y-3">
                 <button
-                  onClick={() => onApprove(currentDoc.id)}
+                  onClick={() => onApprove(currentDoc.id, currentDoc.type)}
                   className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
                   <Check className="h-4 w-4" />
@@ -488,18 +566,166 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
                   Download Image
                 </button>
               </div>
-            )}
+              {/* End Actions */}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Modal */}
+      {isFullscreen && (
+        <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-[60]">
+          <div className="relative w-full h-full flex flex-col">
+            {/* Fullscreen Header */}
+            <div className="flex items-center justify-between p-4 bg-black bg-opacity-50 text-white">
+              <div className="flex items-center gap-4">
+                <h3 className="text-lg font-semibold">
+                  {getDocumentTypeLabel(currentDoc.type)} - {userGroup.user.firstName} {userGroup.user.lastName}
+                </h3>
+                {currentImages.length > 1 && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setCurrentImageIndex(0)
+                        resetTransform()
+                        if (currentImages[0]) {
+                          setCurrentFileType(getFileType(currentImages[0]))
+                        }
+                      }}
+                      className={`px-3 py-1 text-xs rounded ${currentImageIndex === 0
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                    >
+                      Front
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCurrentImageIndex(1)
+                        resetTransform()
+                        if (currentImages[1]) {
+                          setCurrentFileType(getFileType(currentImages[1]))
+                        }
+                      }}
+                      className={`px-3 py-1 text-xs rounded ${currentImageIndex === 1
+                        ? 'bg-teal-600 text-white'
+                        : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                        }`}
+                    >
+                      Back
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Fullscreen Image Controls */}
+                {currentFileType === 'image' && (
+                  <>
+                    <button
+                      onClick={handleZoomOut}
+                      className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                      disabled={zoom <= 0.5}
+                    >
+                      <ZoomOut className="h-4 w-4 text-white" />
+                    </button>
+                    <span className="text-sm text-gray-300 min-w-16 text-center">
+                      {`${Math.round(zoom * 100)}%`}
+                    </span>
+                    <button
+                      onClick={handleZoomIn}
+                      className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                      disabled={zoom >= 5}
+                    >
+                      <ZoomIn className="h-4 w-4 text-white" />
+                    </button>
+                    <button
+                      onClick={resetTransform}
+                      className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700"
+                    >
+                      <RotateCw className="h-4 w-4 text-white" />
+                    </button>
+                  </>
+                )}
+                <button
+                  onClick={() => setIsFullscreen(false)}
+                  className="p-2 bg-gray-800 rounded-lg hover:bg-gray-700"
+                >
+                  <Minimize className="h-4 w-4 text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Fullscreen Content */}
+            <div className="flex-1 flex items-center justify-center p-4">
+              <div 
+                className="relative w-full h-full flex items-center justify-center"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                {currentImages[currentImageIndex] ? (
+                  currentFileType === 'pdf' ? (
+                    <embed
+                      src={currentImages[currentImageIndex]}
+                      type="application/pdf"
+                      className="w-full h-full"
+                    />
+                  ) : (
+                    <img
+                      src={currentImages[currentImageIndex]}
+                      alt={`${getDocumentTypeLabel(currentDoc.type)} document`}
+                      className="max-w-full max-h-full object-contain transition-transform select-none"
+                      style={{
+                        transform: `scale(${zoom}) translate(${position.x / zoom}px, ${position.y / zoom}px)`,
+                        cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in'
+                      }}
+                      onClick={(e) => {
+                        if (zoom <= 1) {
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          const centerX = rect.width / 2
+                          const centerY = rect.height / 2
+                          const clickX = e.clientX - rect.left
+                          const clickY = e.clientY - rect.top
+                          
+                          setZoom(2)
+                          setPosition({
+                            x: (centerX - clickX) * 2,
+                            y: (centerY - clickY) * 2
+                          })
+                        }
+                      }}
+                      draggable={false}
+                    />
+                  )
+                ) : (
+                  <div className="text-center text-white">
+                    <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400">No document available</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Fullscreen Footer with drag instructions */}
+            {zoom > 1 && currentFileType === 'image' && (
+              <div className="text-center p-2 bg-black bg-opacity-50 text-gray-300 text-sm">
+                <div className="flex items-center justify-center gap-1">
+                  <Move className="h-3 w-3" />
+                  Drag to pan • Press ESC or click minimize to exit fullscreen
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default function AdminVerificationPage() {
   const [userGroups, setUserGroups] = useState<UserGroup[]>([])
-  const [metrics, setMetrics] = useState<VerificationMetrics | null>(null)
+  const [_metrics, setMetrics] = useState<VerificationMetrics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -546,7 +772,7 @@ export default function AdminVerificationPage() {
     try {
       const response = await fetch('/api/dashboard/verification')
       if (!response.ok) throw new Error('Failed to fetch verification metrics')
-      
+
       const data = await response.json()
       setMetrics({
         totalRequests: data.totalDocuments,
@@ -563,10 +789,14 @@ export default function AdminVerificationPage() {
     fetchMetrics()
   }, [fetchMetrics])
 
-  const handleApprove = async (docId: string) => {
+  const handleApprove = async (docId: string, docType: string) => {
     try {
       const response = await fetch(`/api/dashboard/verification/${docId}/approve`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ docType })
       })
 
       if (!response.ok) throw new Error('Failed to approve document')
@@ -580,14 +810,14 @@ export default function AdminVerificationPage() {
     }
   }
 
-  const handleReject = async (docId: string, reason: string) => {
+  const handleReject = async (docId: string, reason: string, docType: string) => {
     try {
       const response = await fetch(`/api/dashboard/verification/${docId}/reject`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason, docType })
       })
 
       if (!response.ok) throw new Error('Failed to reject document')
@@ -664,7 +894,7 @@ export default function AdminVerificationPage() {
     const pending = group.documents.filter(d => d.status === 'PENDING').length
     const verified = group.documents.filter(d => d.status === 'VERIFIED').length
     const rejected = group.documents.filter(d => d.status === 'REJECTED').length
-    
+
     return { pending, verified, rejected }
   }
 
@@ -725,7 +955,7 @@ export default function AdminVerificationPage() {
       render: (_: any, group: UserGroup) => {
         const status = getGroupStatus(group)
         const counts = getGroupStatusCount(group)
-        
+
         return (
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -768,9 +998,11 @@ export default function AdminVerificationPage() {
           {group.hasPending && (
             <div className="flex items-center gap-1">
               <button
-                onClick={() => {
-                  const pendingDoc = group.documents.find(d => d.status === 'PENDING')
-                  if (pendingDoc) handleApprove(pendingDoc.id)
+                onClick={async () => {
+                  const pendingDocs = group.documents.filter((d) => d.status === 'PENDING')
+                  for (const doc of pendingDocs) {
+                    await handleApprove(doc.id, doc.type)
+                  }
                 }}
                 className="p-1 text-gray-400 hover:text-green-600"
                 title="Quick Approve First Pending"
@@ -875,7 +1107,7 @@ export default function AdminVerificationPage() {
               className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             />
           </div>
-          
+
           <select
             value={selectedStatus}
             onChange={(e) => handleFilterChange('status', e.target.value)}

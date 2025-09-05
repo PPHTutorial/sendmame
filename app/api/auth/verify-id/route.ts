@@ -228,7 +228,10 @@ export async function GET(request: NextRequest) {
     const userId = authPayload.userId
 
     const verificationDoc = await prisma.verificationDocument.findFirst({
-      where: { userId },
+      where: { 
+        userId,
+        type: { in: ['national_id', 'passport', 'drivers_license'] }
+       },
       select: {
         type: true,
         documentUrl: true,

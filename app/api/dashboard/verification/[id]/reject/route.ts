@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { VerificationStatus } from '@prisma/client'
+import { fa } from 'zod/v4/locales'
 
 export async function POST(
   request: NextRequest,
@@ -8,7 +9,7 @@ export async function POST(
 ) {
   try {
     const documentId = params.id
-    const { reason } = await request.json()
+    const { reason, docType } = await request.json()
 
     if (!reason || !reason.trim()) {
       return NextResponse.json(
@@ -30,25 +31,37 @@ export async function POST(
       }
     })
 
-    // Check if user should be marked as unverified
-    // (if they have no verified documents remaining)
-    const verifiedDocuments = await prisma.verificationDocument.count({
-      where: {
-        userId: updatedDocument.userId,
-        status: VerificationStatus.VERIFIED
-      }
-    })
-
-    // Update user verification status if they have no verified documents
-    if (verifiedDocuments === 0) {
-      await prisma.user.update({
-        where: { id: updatedDocument.userId },
-        data: {
-          isVerified: false,
-          verificationStatus: 'PENDING'
-        }
-      })
+    // Determine which user verification field to update based on document type
+    const userUpdateData: any = {
+      // Always set overall verification to false when any document is rejected
+      isVerified: false,
+      verificationStatus: VerificationStatus.PENDING
     }
+
+    switch (docType) {
+      case 'national_id':
+      case 'passport':
+      case 'drivers_license':
+        userUpdateData.isIDVerified = false
+        break
+      case 'facial_photo':
+        userUpdateData.isFacialVerified = false
+        break
+      case 'address_document':
+      case 'lease_agreement':
+      case 'utility_bill':
+      case 'bank_statement':
+        userUpdateData.isAddressVerified = false
+        break
+      default:
+        break
+    }
+
+    // Update user verification fields
+    await prisma.user.update({
+      where: { id: updatedDocument.userId },
+      data: userUpdateData
+    })
 
     return NextResponse.json({
       success: true,

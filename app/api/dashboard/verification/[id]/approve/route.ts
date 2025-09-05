@@ -8,6 +8,7 @@ export async function POST(
 ) {
   try {
     const documentId = params.id
+    const { docType } = await request.json()
 
     // Update the verification document
     const updatedDocument = await prisma.verificationDocument.update({
@@ -22,25 +23,64 @@ export async function POST(
       }
     })
 
-    // Check if user should be marked as verified
-    // (if they have at least one verified document)
-    const verifiedDocuments = await prisma.verificationDocument.count({
-      where: {
-        userId: updatedDocument.userId,
-        status: VerificationStatus.VERIFIED
-      }
+    // Determine which user verification field to update based on document type
+    const userUpdateData: any = {}
+
+    console.log('Document type for approval:', docType)
+
+    switch (docType) {
+      case 'national_id':
+      case 'passport':
+      case 'drivers_license':
+        userUpdateData.isIDVerified = true
+        break
+      case 'facial_photo':
+        userUpdateData.isFacialVerified = true
+        break
+      case 'address_document':
+      case 'lease_agreement':
+      case 'utility_bill':
+      case 'bank_statement':
+        userUpdateData.isAddressVerified = true
+        break
+      default:
+        break
+    }
+
+    // Get current user data to check all verification fields
+    const currentUser = await prisma.user.findUnique({
+      where: { id: updatedDocument.userId }
     })
 
-    // Update user verification status if they have verified documents
-    if (verifiedDocuments > 0) {
-      await prisma.user.update({
-        where: { id: updatedDocument.userId },
-        data: {
-          isVerified: true,
-          verificationStatus: 'VERIFIED'
-        }
-      })
+    if (!currentUser) {
+      throw new Error('User not found')
     }
+
+    // Apply the document-specific verification update
+    const updatedUserData = {
+      ...currentUser,
+      ...userUpdateData
+    }
+
+    // Check if ALL five verification fields are true
+    const allVerificationsPassed =
+      updatedUserData.isPhoneVerified &&
+      updatedUserData.isEmailVerified &&
+      updatedUserData.isIDVerified &&
+      updatedUserData.isFacialVerified &&
+      updatedUserData.isAddressVerified
+
+    // Update overall verification status only if all verifications are complete
+    if (allVerificationsPassed) {
+      userUpdateData.isVerified = true
+      userUpdateData.verificationStatus = VerificationStatus.VERIFIED
+    }
+
+    // Update user verification fields
+    await prisma.user.update({
+      where: { id: updatedDocument.userId },
+      data: userUpdateData
+    })
 
     return NextResponse.json({
       success: true,

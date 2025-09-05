@@ -22,16 +22,16 @@ const verificationAttempts = new Map<string, { count: number; resetTime: number 
 function checkVerificationRateLimit(userId: string): boolean {
   const now = Date.now()
   const attempts = verificationAttempts.get(userId)
-  
+
   if (!attempts || now > attempts.resetTime) {
     verificationAttempts.set(userId, { count: 1, resetTime: now + 15 * 60 * 1000 }) // 15 minutes
     return true
   }
-  
+
   if (attempts.count >= 3) { // Limit to 3 address verification attempts per 15 minutes
     return false
   }
-  
+
   attempts.count++
   return true
 }
@@ -66,8 +66,8 @@ async function handleAddressDocumentUpload(request: NextRequest) {
   // Check rate limiting
   if (!checkVerificationRateLimit(userId)) {
     return NextResponse.json(
-      { 
-        error: 'Too many upload attempts. Please wait 15 minutes before trying again.' 
+      {
+        error: 'Too many upload attempts. Please wait 15 minutes before trying again.'
       },
       { status: 429 }
     )
@@ -92,14 +92,14 @@ async function handleAddressDocumentUpload(request: NextRequest) {
   }
 
   // Validate address data
-  const validationResult = addressVerificationSchema.safeParse({ 
-    street, city, state, postalCode, country, documentType 
+  const validationResult = addressVerificationSchema.safeParse({
+    street, city, state, postalCode, country, documentType
   })
   if (!validationResult.success) {
     return NextResponse.json(
-      { 
-        error: 'Invalid address data', 
-        details: validationResult.error.errors 
+      {
+        error: 'Invalid address data',
+        details: validationResult.error.errors
       },
       { status: 400 }
     )
@@ -158,12 +158,12 @@ async function handleAddressDocumentUpload(request: NextRequest) {
     const bytes = await addressDocument.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const documentUrl = `data:${addressDocument.type};base64,${buffer.toString('base64')}`
-    
+
     // Store address verification in database
     await prisma.$transaction(async (tx) => {
       // Remove any existing address verification documents for this user
       await tx.verificationDocument.deleteMany({
-        where: { 
+        where: {
           userId,
           type: 'address_document'
         }
@@ -228,7 +228,7 @@ export async function GET(request: NextRequest) {
     const userId = authPayload.userId
 
     const verificationDoc = await prisma.verificationDocument.findFirst({
-      where: { 
+      where: {
         userId,
         type: 'address_document'
       },
@@ -239,6 +239,8 @@ export async function GET(request: NextRequest) {
         verifiedAt: true,
         createdAt: true,
         metadata: true,
+        documentUrl: true,
+        backDocumentUrl: true
       },
       orderBy: { createdAt: 'desc' }
     })
