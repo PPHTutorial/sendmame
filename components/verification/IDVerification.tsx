@@ -1,19 +1,42 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui'
 import { CreditCard, Upload, CheckCircle, Clock, X } from 'lucide-react'
+import { useIDVerificationStatus, useUploadIDDocument } from '@/lib/hooks/api'
 
 interface IDVerificationProps {
     onClose: () => void
 }
 
 export function IDVerification({ onClose }: IDVerificationProps) {
-    const [step, setStep] = useState<'upload' | 'review' | 'success'>('upload')
-    const [idType, setIdType] = useState<'passport' | 'drivers_license' | 'national_id'>('drivers_license')
+    const [step, setStep] = useState<'upload' | 'review' | 'success' | 'rejected'>('upload')
+    const [idType, setIdType] = useState<'passport' | 'drivers_license' | 'national_id'>('national_id')
     const [frontImage, setFrontImage] = useState<File | null>(null)
     const [backImage, setBackImage] = useState<File | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
+
+    const uploadIDMutation = useUploadIDDocument()
+
+    const { data: verificationStatus, isLoading: statusLoading } = useIDVerificationStatus()
+
+    // Update step based on verification status
+    useEffect(() => {
+        if (verificationStatus) {
+            const { hasDocument, status, verifiedAt } = verificationStatus
+
+            if (hasDocument) {
+                if (status === 'VERIFIED' && verifiedAt) {
+                    setStep('success')
+                } else if (status === 'REJECTED') {
+                    setStep('rejected')
+                } else if (status === 'PENDING') {
+                    setStep('review')
+                }
+            } else {
+                setStep('upload')
+            }
+        }
+    }, [verificationStatus])
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, side: 'front' | 'back') => {
         const file = e.target.files?.[0]
@@ -29,16 +52,16 @@ export function IDVerification({ onClose }: IDVerificationProps) {
     const handleSubmit = async () => {
         if (!frontImage || (idType !== 'passport' && !backImage)) return
 
-        setIsLoading(true)
-        
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 3000))
+            await uploadIDMutation.mutateAsync({
+                file1: frontImage,
+                file2: backImage,
+                type: idType
+            })
             setStep('review')
         } catch (error) {
+            // Error handling is done by the hook
             console.error('Failed to upload ID:', error)
-        } finally {
-            setIsLoading(false)
         }
     }
 
@@ -115,8 +138,8 @@ export function IDVerification({ onClose }: IDVerificationProps) {
                     <Button onClick={onClose} className="flex-1">
                         Close
                     </Button>
-                    <Button 
-                        variant="outline" 
+                    <Button
+                        variant="outline"
                         onClick={() => setStep('upload')}
                     >
                         Upload New ID
@@ -129,8 +152,8 @@ export function IDVerification({ onClose }: IDVerificationProps) {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <CreditCard className="w-8 h-8 text-blue-600" />
+                <div className="mx-auto w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+                    <CreditCard className="w-8 h-8 text-teal-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Upload Your ID</h3>
                 <p className="text-gray-600">
@@ -147,7 +170,7 @@ export function IDVerification({ onClose }: IDVerificationProps) {
                     <select
                         value={idType}
                         onChange={(e) => setIdType(e.target.value as any)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
                     >
                         <option value="drivers_license">Driver&apos;s License</option>
                         <option value="passport">Passport</option>
@@ -212,10 +235,10 @@ export function IDVerification({ onClose }: IDVerificationProps) {
                 <div className="flex space-x-3">
                     <Button
                         onClick={handleSubmit}
-                        disabled={!frontImage || (idType !== 'passport' && !backImage) || isLoading}
+                        disabled={!frontImage || (idType !== 'passport' && !backImage) || uploadIDMutation.isPending}
                         className="flex-1"
                     >
-                        {isLoading ? (
+                        {uploadIDMutation.isPending ? (
                             <div className="flex items-center space-x-2">
                                 <Clock className="w-4 h-4 animate-spin" />
                                 <span>Uploading...</span>
@@ -230,9 +253,9 @@ export function IDVerification({ onClose }: IDVerificationProps) {
                 </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">Requirements:</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-teal-900 mb-2">Requirements:</h4>
+                <ul className="text-sm text-teal-700 space-y-1">
                     <li>• Photo must be clear and well-lit</li>
                     <li>• All text should be readable</li>
                     <li>• ID must be current and not expired</li>

@@ -1,29 +1,54 @@
 'use client'
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui'
 import { Camera, CheckCircle, Clock, RotateCcw } from 'lucide-react'
+import { useFacialVerificationStatus, useUploadFacialPhoto } from '@/lib/hooks/api'
 
 interface FacialVerificationProps {
     onClose: () => void
 }
 
 export function FacialVerification({ onClose }: FacialVerificationProps) {
-    const [step, setStep] = useState<'capture' | 'review' | 'success'>('capture')
+    const [step, setStep] = useState<'capture' | 'review' | 'success' | 'rejected'>('capture')
     const [capturedImage, setCapturedImage] = useState<string | null>(null)
-    const [isLoading, setIsLoading] = useState(false)
     const [isCameraReady, setIsCameraReady] = useState(false)
     const videoRef = useRef<HTMLVideoElement>(null)
     const canvasRef = useRef<HTMLCanvasElement>(null)
 
+    const uploadFacialMutation = useUploadFacialPhoto()
+
+    const { data: verificationStatus, isLoading: statusLoading } = useFacialVerificationStatus()
+
+    // Update step based on verification status
+    useEffect(() => {
+        console.log('Facial verification status:', verificationStatus)
+        if (verificationStatus) {
+            const { hasDocument, status, verifiedAt } = verificationStatus
+
+            if (hasDocument) {
+                console.log('Document exists with status:', status)
+                if (status === 'VERIFIED' && verifiedAt) {
+                    setStep('success')
+                } else if (status === 'REJECTED') {
+                    setStep('rejected')
+                } else if (status === 'PENDING') {
+                    setStep('review')
+                }
+            } else {
+                setStep('capture')
+            }
+        }
+    }, [verificationStatus])
+
     const startCamera = async () => {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    width: 640, 
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 640,
                     height: 480,
                     facingMode: 'user' // Front camera
-                } 
+                }
             })
             if (videoRef.current) {
                 videoRef.current.srcObject = stream
@@ -48,10 +73,10 @@ export function FacialVerification({ onClose }: FacialVerificationProps) {
             const canvas = canvasRef.current
             const video = videoRef.current
             const context = canvas.getContext('2d')
-            
+
             canvas.width = video.videoWidth
             canvas.height = video.videoHeight
-            
+
             if (context) {
                 context.drawImage(video, 0, 0)
                 const imageData = canvas.toDataURL('image/jpeg')
@@ -69,17 +94,19 @@ export function FacialVerification({ onClose }: FacialVerificationProps) {
     const handleSubmit = async () => {
         if (!capturedImage) return
 
-        setIsLoading(true)
-        
         try {
-            // Simulate API call for facial verification
-            await new Promise(resolve => setTimeout(resolve, 3000))
+            // Convert base64 image to File object
+            const response = await fetch(capturedImage)
+            const blob = await response.blob()
+            const file = new File([blob], 'facial-photo.jpg', { type: 'image/jpeg' })
+
+            // Upload the facial photo using the hook
+            await uploadFacialMutation.mutateAsync(file)
             setStep('success')
             stopCamera()
         } catch (error) {
             console.error('Failed to verify face:', error)
-        } finally {
-            setIsLoading(false)
+            // Error handling is done by the hook
         }
     }
 
@@ -87,7 +114,7 @@ export function FacialVerification({ onClose }: FacialVerificationProps) {
         if (step === 'capture' && !capturedImage) {
             startCamera()
         }
-        
+
         return () => {
             stopCamera()
         }
@@ -110,11 +137,66 @@ export function FacialVerification({ onClose }: FacialVerificationProps) {
         )
     }
 
+    if (step === 'review') {
+        return (
+            <div className="space-y-6">
+                <div className="text-center">
+                    <div className="mx-auto w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
+                        <Clock className="w-8 h-8 text-yellow-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Facial Verification Under Review</h3>
+                    <p className="text-gray-600">
+                        Your facial verification is being reviewed. This usually takes 2-5 business days.
+                    </p>
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 className="text-sm font-medium text-yellow-900 mb-2">What happens next?</h4>
+                    <ul className="text-sm text-yellow-700 space-y-1">
+                        <li>• Our team will verify your selfie within 2-5 business days</li>
+                        <li>• You&apos;ll receive an email notification once complete</li>
+                        <li>• If additional information is needed, we&apos;ll contact you</li>
+                        <li>• Verified faces unlock identity-based features</li>
+                    </ul>
+                </div>
+
+                <div className="flex space-x-3">
+                    <Button onClick={onClose} className="flex-1">
+                        Close
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setStep('capture')}
+                    >
+                        Submit New Selfie
+                    </Button>
+                </div>
+            </div>
+        )
+    }
+
+    if (step === 'rejected') {
+        return (
+            <div className="text-center py-8">
+                <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                    <RotateCcw className="w-8 h-8 text-red-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Face Verification Failed</h3>
+                <p className="text-gray-600 mb-6">
+                    Your facial verification could not be completed. Please try again.
+                </p>
+                <Button onClick={onClose}>
+                    Close
+                </Button>
+            </div>
+        )
+    }
+
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <Camera className="w-8 h-8 text-blue-600" />
+                <div className="mx-auto w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+                    <Camera className="w-8 h-8 text-teal-600" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Facial Verification</h3>
                 <p className="text-gray-600">
@@ -151,7 +233,7 @@ export function FacialVerification({ onClose }: FacialVerificationProps) {
                             {/* Face outline guide */}
                             {isCameraReady && (
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className="border-4 border-blue-500 rounded-full w-48 h-60 opacity-50"></div>
+                                    <div className="border-4 border-teal-500 rounded-full w-48 h-60 opacity-50"></div>
                                 </div>
                             )}
                         </div>
@@ -163,9 +245,9 @@ export function FacialVerification({ onClose }: FacialVerificationProps) {
             </div>
 
             {/* Instructions */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">Instructions:</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
+            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-teal-900 mb-2">Instructions:</h4>
+                <ul className="text-sm text-teal-700 space-y-1">
                     <li>• Look directly at the camera</li>
                     <li>• Ensure your face is well-lit</li>
                     <li>• Remove sunglasses or hats</li>
@@ -180,10 +262,10 @@ export function FacialVerification({ onClose }: FacialVerificationProps) {
                     <>
                         <Button
                             onClick={handleSubmit}
-                            disabled={isLoading}
+                            disabled={uploadFacialMutation.isPending}
                             className="flex-1"
                         >
-                            {isLoading ? (
+                            {uploadFacialMutation.isPending ? (
                                 <div className="flex items-center space-x-2">
                                     <Clock className="w-4 h-4 animate-spin" />
                                     <span>Verifying...</span>
@@ -195,7 +277,7 @@ export function FacialVerification({ onClose }: FacialVerificationProps) {
                         <Button
                             variant="outline"
                             onClick={retakePhoto}
-                            disabled={isLoading}
+                            disabled={uploadFacialMutation.isPending}
                         >
                             <RotateCcw className="w-4 h-4 mr-2" />
                             Retake

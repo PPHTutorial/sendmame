@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, Input } from '@/components/ui'
 import { Phone, CheckCircle, Clock, ChevronDown } from 'lucide-react'
 import parsePhoneNumberFromString, { isValidPhoneNumber, CountryCode } from 'libphonenumber-js'
 import * as flags from 'country-flag-icons/react/3x2'
 import toast from 'react-hot-toast'
+import { useAuth } from '@/lib/hooks/api'
 
 interface Country {
     code: string
@@ -132,12 +133,23 @@ const getFlagComponent = (countryCode: string) => {
 }
 
 export function PhoneVerification({ onClose }: PhoneVerificationProps) {
+    const { getCurrentUser } = useAuth()
+    const { data: user } = getCurrentUser
     const [selectedCountry, setSelectedCountry] = useState<Country>(countries[1]) // Default to US
     const [phoneNumber, setPhoneNumber] = useState('')
     const [verificationCode, setVerificationCode] = useState('')
     const [step, setStep] = useState<'phone' | 'code' | 'success'>('phone')
     const [isLoading, setIsLoading] = useState(false)
     const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+
+
+    useEffect(() => {
+        setPhoneNumber(user.phoneNumber)
+        if (user.isPhoneVerified) {
+            setStep('success')
+        }
+
+    }, [user])
 
     const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value

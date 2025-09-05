@@ -58,7 +58,7 @@ apiClient.interceptors.response.use(
 
           return apiClient(originalRequest)
         }
-      } catch (refreshError) {
+      } catch (_refreshError) {
         // Refresh failed, redirect to login
         if (typeof window !== 'undefined') {
           localStorage.removeItem('accessToken')
@@ -156,9 +156,12 @@ export const authApi = {
       data: { phone, code },
     }),
 
-  uploadIDDocument: (file: File, type: string) => {
+  uploadIDDocument: (file1: File, file2: File | null, type: string) => {
     const formData = new FormData()
-    formData.append('document', file)
+    formData.append('frontDocument', file1)
+    if (file2) {
+      formData.append('backDocument', file2)
+    }
     formData.append('type', type)
 
     return apiRequest({
@@ -171,9 +174,15 @@ export const authApi = {
     })
   },
 
+  getIDVerificationStatus: () =>
+    apiRequest({
+      method: 'GET',
+      url: '/auth/verify-id',
+    }),
+
   uploadFacialPhoto: (file: File) => {
     const formData = new FormData()
-    formData.append('photo', file)
+    formData.append('facialPhoto', file)
 
     return apiRequest({
       method: 'POST',
@@ -185,21 +194,47 @@ export const authApi = {
     })
   },
 
-  uploadAddressDocument: (file: File, type: string) => {
+  getFacialVerificationStatus: () =>
+    apiRequest({
+      method: 'GET',
+      url: '/auth/verify-facial',
+    }),
+
+  uploadAddressDocument: (file: File, type: string, address: {
+    street: string
+    city: string
+    state: string
+    postalCode: string
+    country: string
+  }) => {
     const formData = new FormData()
-    formData.append('document', file)
-    formData.append('type', type)
+    formData.append('addressDocument', file)
+    formData.append('documentType', type)
+    formData.append('street', address.street)
+    formData.append('city', address.city)
+    formData.append('state', address.state)
+    formData.append('postalCode', address.postalCode)
+    formData.append('country', address.country)
 
     return apiRequest({
       method: 'POST',
-      url: '/auth/verify-address',
+      url: '/auth/verify-address?action=upload',
       data: formData,
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
   },
+
+  getAddressVerificationStatus: () =>
+    apiRequest({
+      method: 'GET',
+      url: '/auth/verify-address',
+    }),
+
 }
+
+
 
 // User API calls
 export const userApi = {

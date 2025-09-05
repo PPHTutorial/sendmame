@@ -204,10 +204,12 @@ model VerificationDocument {
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  type            String // "passport", "driver_license", "national_id"
+  type            String
   documentUrl     String
+  backDocumentUrl String? 
   status          VerificationStatus @default(PENDING)
   rejectionReason String?
+  metadata        Json?
 
   verifiedAt DateTime?
   createdAt  DateTime  @default(now())

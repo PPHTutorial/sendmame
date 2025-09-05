@@ -142,11 +142,17 @@ export function useUploadIDDocument() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ file, type }: { file: File; type: string }) => 
-      authApi.uploadIDDocument(file, type),
+    mutationFn: ({ file1, file2, type }: { file1: File; file2: File | null; type: string }) =>
+      authApi.uploadIDDocument(file1, file2, type),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
-      toast.success('ID document uploaded successfully!')
+      toast.success('ID document uploaded successfully!',{
+        style:{
+          background: '#d1fae5',
+          color: '#065f46',
+          fontSize: '14px',
+        }
+      })
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to upload ID document')
@@ -161,11 +167,60 @@ export function useUploadFacialPhoto() {
     mutationFn: (file: File) => authApi.uploadFacialPhoto(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
-      toast.success('Facial photo uploaded successfully!')
+      toast.success('Facial photo uploaded successfully!', {
+        style: {
+          background: '#d1fae5',
+          color: '#065f46',
+          fontSize: '14px',
+        }
+      })
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to upload facial photo')
+      toast.error(error.message || 'Failed to upload facial photo', {
+        style: {
+          background: '#fee2e2',
+          color: '#b91c1c',
+          fontSize: '14px',
+        }
+      })
     },
+  })
+}
+
+export function useIDVerificationStatus() {
+  return useQuery({
+    queryKey: ['idVerificationStatus'],
+    queryFn: async () => {
+      try {
+        const result = await authApi.getIDVerificationStatus()        
+        return result
+      } catch (error) {
+        throw error
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 3,
+    retryOnMount: true,
+    refetchOnMount: true,
+  })
+}
+
+
+export function useFacialVerificationStatus() {
+  return useQuery({
+    queryKey: ['facialVerificationStatus'],
+    queryFn: async () => {
+      try {
+        const result = await authApi.getFacialVerificationStatus()       
+        return result
+      } catch (error) {
+        throw error
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 3,
+    retryOnMount: true,
+    refetchOnMount: true,
   })
 }
 
@@ -173,15 +228,45 @@ export function useUploadAddressDocument() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ file, type }: { file: File; type: string }) => 
-      authApi.uploadAddressDocument(file, type),
+    mutationFn: ({ file, documentType, address }: { 
+      file: File; 
+      address: {
+        street: string;
+        city: string;
+        state: string;
+        postalCode: string;
+        country: string;
+      };
+      documentType: string;
+    }) => authApi.uploadAddressDocument(file, documentType, address),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
+      queryClient.invalidateQueries({ queryKey: ['addressVerificationStatus'] })
       toast.success('Address document uploaded successfully!')
     },
     onError: (error: Error) => {
       toast.error(error.message || 'Failed to upload address document')
     },
+  })
+}
+
+export function useAddressVerificationStatus() {
+  return useQuery({
+    queryKey: ['addressVerificationStatus'],
+    queryFn: async () => {
+      try {
+        const result = await authApi.getAddressVerificationStatus()
+        console.log('Address verification status fetched successfully:', result)
+        return result
+      } catch (error) {
+        console.error('Failed to fetch address verification status:', error)
+        throw error
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 3,
+    retryOnMount: true,
+    refetchOnMount: true,
   })
 }
 
@@ -268,7 +353,7 @@ export function useUpdatePackage() {
       queryClient.invalidateQueries({ queryKey: ['packages'] })
       
     },
-    onError: (error: Error) => {
+    onError: (_error: Error) => {
       
     },
   })
@@ -283,7 +368,7 @@ export function useDeletePackage() {
       queryClient.invalidateQueries({ queryKey: ['packages'] })
       
     },
-    onError: (error: Error) => {
+    onError: (_error: Error) => {
       
     },
   })

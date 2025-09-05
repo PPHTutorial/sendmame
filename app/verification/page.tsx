@@ -9,7 +9,7 @@ import { IDVerification } from '@/components/verification/IDVerification'
 import { FacialVerification } from '@/components/verification/FacialVerification'
 import { AddressVerification } from '@/components/verification/AddressVerification'
 import { ProtectedVerificationLayout } from '@/components/verification/ProtectedVerificationLayout'
-import { useAuth } from '@/lib/hooks/api'
+import { useAuth, useIDVerificationStatus, useFacialVerificationStatus, useAddressVerificationStatus } from '@/lib/hooks/api'
 import { CheckCircle, Clock, XCircle, Shield, Mail, Phone, CreditCard, Camera, MapPin } from 'lucide-react'
 
 export default function VerificationPage() {
@@ -23,28 +23,98 @@ export default function VerificationPage() {
 function VerificationContent() {
     const { getCurrentUser } = useAuth()
     const { data: user } = getCurrentUser
-
+    const { data: idVerificationStatus, isLoading: _statusLoading, error: _statusError } = useIDVerificationStatus()
+    const { data: facialVerificationStatus } = useFacialVerificationStatus()
+    const { data: addressVerificationStatus } = useAddressVerificationStatus()
     const [activeVerification, setActiveVerification] = useState<string | null>(null)
+    // Helper function to determine ID verification status
+    const getIDVerificationStatus = () => {
+        // If we have ID verification data from the API
+        if (idVerificationStatus?.hasDocument) {
+            const { status, verifiedAt } = idVerificationStatus
+            if (status === 'VERIFIED' && verifiedAt) {
+                return 'verified'
+            } else if (status === 'REJECTED') {
+                return 'rejected'
+            } else if (status === 'PENDING') {
+                return 'pending'
+            }
+        }
 
-    // Verification status based on user data
+        // Fallback to user isIDVerified if no API data
+        if (user?.isIDVerified) {
+            return 'verified'
+        }
+
+        // Default to unverified
+        return 'unverified'
+    }
+
+    // Helper function to determine facial verification status
+    const getFacialVerificationStatus = () => {
+        // If we have facial verification data from the API
+        if (facialVerificationStatus?.hasDocument) {
+            const { status, verifiedAt } = facialVerificationStatus
+            if (status === 'VERIFIED' && verifiedAt) {
+                return 'verified'
+            } else if (status === 'REJECTED') {
+                return 'rejected'
+            } else if (status === 'PENDING') {
+                return 'pending'
+            }
+        }
+
+        // Fallback to user isFacialVerified if no API data
+        if (user?.isFacialVerified) {
+            return 'verified'
+        }
+
+        // Default to unverified
+        return 'unverified'
+    }
+
+    // Helper function to determine address verification status
+    const getAddressVerificationStatus = () => {
+        // If we have address verification data from the API
+        if (addressVerificationStatus?.hasDocument) {
+            const { status, verifiedAt } = addressVerificationStatus
+            if (status === 'VERIFIED' && verifiedAt) {
+                return 'verified'
+            } else if (status === 'REJECTED') {
+                return 'rejected'
+            } else if (status === 'PENDING') {
+                return 'pending'
+            }
+        }
+
+        // Fallback to user isAddressVerified if no API data
+        if (user?.isAddressVerified) {
+            return 'verified'
+        }
+
+        // Default to unverified
+        return 'unverified'
+    }
+
+    // Verification status based on user data and API responses
     const verificationStatus = {
         email: user?.isEmailVerified ? 'verified' : 'unverified',
         phone: user?.isPhoneVerified ? 'verified' : 'unverified',
-        id: user?.isIDVerified ? 'verified' : 'unverified',
-        facial: user?.isFacialVerified ? 'verified' : 'unverified',
-        address: user?.isAddressVerified ? 'verified' : 'unverified'
+        id: getIDVerificationStatus(),
+        facial: getFacialVerificationStatus(),
+        address: getAddressVerificationStatus()
     }
 
     // Get the next verification step that needs to be completed
     const getNextVerificationStep = () => {
         const verificationOrder = ['email', 'phone', 'id', 'facial', 'address']
-        
+
         for (const step of verificationOrder) {
             if (verificationStatus[step as keyof typeof verificationStatus] !== 'verified') {
                 return step
             }
         }
-        
+
         return null // All verifications completed
     }
 
