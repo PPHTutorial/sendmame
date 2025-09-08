@@ -93,14 +93,14 @@ export function ImageViewer({ images, initialIndex = 0, onClose }: ImageViewerPr
           {images.length > 1 && (
             <>
               <Button
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/40 backdrop-blur-sm hover:bg-opacity-70 text-white"
                 size="sm"
                 onClick={prevImage}
               >
                 <ChevronLeft className="w-5 h-5" />
               </Button>
               <Button
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/40 backdrop-blur-sm hover:bg-opacity-70 text-white"
                 size="sm"
                 onClick={nextImage}
               >

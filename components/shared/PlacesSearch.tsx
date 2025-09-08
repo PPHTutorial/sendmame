@@ -75,7 +75,7 @@ export function PlacesSearch({
             onChange={(e) => setQuery(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={placeholder}
-            className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent"
           />
         </div>
       </div>
@@ -88,7 +88,7 @@ export function PlacesSearch({
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 outline-none"
             >
               <option value="">All</option>
               <option value="restaurant">Restaurants</option>
@@ -106,7 +106,7 @@ export function PlacesSearch({
             <select
               value={radius}
               onChange={(e) => setRadius(Number(e.target.value))}
-              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 outline-none"
             >
               <option value={1000}>1 km</option>
               <option value={5000}>5 km</option>

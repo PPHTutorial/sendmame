@@ -188,7 +188,7 @@ function ResetPasswordContent() {
                   onChange={handleChange}
                   placeholder="Enter your new password"
                   required
-                  className="w-full pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  className="w-full pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-blue-500 transition-all duration-200"
                 />
                 <button
                   type="button"
@@ -229,7 +229,7 @@ function ResetPasswordContent() {
                   onChange={handleChange}
                   placeholder="Confirm your new password"
                   required
-                  className="w-full pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  className="w-full pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-blue-500 transition-all duration-200"
                 />
                 <button
                   type="button"

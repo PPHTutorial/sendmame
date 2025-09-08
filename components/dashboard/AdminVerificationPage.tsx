@@ -23,7 +23,7 @@ import {
   Maximize,
   Minimize
 } from 'lucide-react'
-import { MetricCard, DataTable } from '@/components/ui/dashboard-components'
+import { MetricCard, DataTable, SkeletonLoader } from '@/components/ui/dashboard-components'
 
 interface VerificationDocument {
   id: string
@@ -192,7 +192,7 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4">
       <div className="bg-white rounded-lg w-full max-w-7xl max-h-[95vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="border-b border-gray-200 p-4 md:p-6 flex-shrink-0">
@@ -577,7 +577,7 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
         <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-[60]">
           <div className="relative w-full h-full flex flex-col">
             {/* Fullscreen Header */}
-            <div className="flex items-center justify-between p-4 bg-black bg-opacity-50 text-white">
+            <div className="flex items-center justify-between p-4 bg-black/40 backdrop-blur-sm text-white">
               <div className="flex items-center gap-4">
                 <h3 className="text-lg font-semibold">
                   {getDocumentTypeLabel(currentDoc.type)} - {userGroup.user.firstName} {userGroup.user.lastName}
@@ -709,7 +709,7 @@ function DocumentViewer({ userGroup, onClose, onApprove, onReject }: DocumentVie
 
             {/* Fullscreen Footer with drag instructions */}
             {zoom > 1 && currentFileType === 'image' && (
-              <div className="text-center p-2 bg-black bg-opacity-50 text-gray-300 text-sm">
+              <div className="text-center p-2 bg-black/40 backdrop-blur-sm text-gray-300 text-sm">
                 <div className="flex items-center justify-center gap-1">
                   <Move className="h-3 w-3" />
                   Drag to pan • Press ESC or click minimize to exit fullscreen
@@ -1017,19 +1017,7 @@ export default function AdminVerificationPage() {
   ]
 
   if (loading && userGroups.length === 0) {
-    return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-          <div className="h-96 bg-gray-200 rounded-lg"></div>
-        </div>
-      </div>
-    )
+    return <SkeletonLoader type="dashboard" />  
   }
 
   if (error) {

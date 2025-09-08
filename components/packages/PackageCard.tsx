@@ -135,7 +135,7 @@ export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, curre
                     </div>
                     <div className="text-right ml-4">
                         <div className="text-2xl font-bold text-teal-600">
-                            ${pkg.offeredPrice}
+                            ${pkg.offeredPrice.toFixed(0)}
                         </div>
                         <div className="text-xs text-gray-500 uppercase tracking-wide">
                             Budget {pkg.currency}
@@ -189,7 +189,7 @@ export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, curre
                             <span className="text-xs font-medium text-gray-700 uppercase tracking-wide">Weight</span>
                         </div>
                         <span className="text-sm font-semibold text-gray-900">
-                            {pkg.dimensions?.weight || 0} kg
+                            {pkg.dimensions?.weight.toFixed(2) || 0} kg
                         </span>
                     </div>
                 </div>

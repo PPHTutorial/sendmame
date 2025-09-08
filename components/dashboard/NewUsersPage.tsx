@@ -21,7 +21,7 @@ import {
   Download,
   RefreshCw
 } from 'lucide-react'
-import { MetricCard, DataTable } from '@/components/ui/dashboard-components'
+import { MetricCard, DataTable, SkeletonLoader } from '@/components/ui/dashboard-components'
 
 interface User {
   id: string
@@ -302,19 +302,7 @@ export default function UsersPage() {
   ]
 
   if (loading && users.length === 0) {
-    return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-          <div className="h-96 bg-gray-200 rounded-lg"></div>
-        </div>
-      </div>
-    )
+    return <SkeletonLoader type="dashboard" />  
   }
 
   if (error) {
@@ -389,14 +377,14 @@ export default function UsersPage() {
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent"
             />
           </div>
           
           <select
             value={selectedRole}
             onChange={(e) => handleFilterChange('role', e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent"
           >
             <option value="">All Roles</option>
             <option value="ADMIN">Admin</option>
@@ -407,7 +395,7 @@ export default function UsersPage() {
           <select
             value={selectedStatus}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent"
           >
             <option value="">All Status</option>
             <option value="active">Active</option>

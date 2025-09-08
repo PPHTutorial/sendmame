@@ -99,30 +99,30 @@ export default function AnalyticsPage() {
 
   if (!userMetrics || !packageMetrics || !transactionMetrics) return null
 
-  // Chart data preparation
-  const userGrowthChartData = userMetrics.growthData.slice(0, 7).reverse().map(item => ({
+  // Chart data preparation with safe fallbacks
+  const userGrowthChartData = (userMetrics.growthData || []).slice(0, 7).reverse().map(item => ({
     label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     value: item.count
   }))
 
-  const roleDistributionData = userMetrics.roleDistribution.map(item => ({
+  const roleDistributionData = (userMetrics.roleDistribution || []).map(item => ({
     label: item.role,
     value: item.count,
     color: item.role === 'ADMIN' ? '#ef4444' : item.role === 'SENDER' ? '#3b82f6' : '#10b981'
   }))
 
-  const packageStatusData = packageMetrics.statusDistribution.map((item, index) => ({
+  const packageStatusData = (packageMetrics.statusDistribution || []).map((item, index) => ({
     label: item.status.replace('_', ' '),
     value: item.count,
     color: `hsl(${index * 60}, 70%, 60%)`
   }))
 
-  const revenueChartData = packageMetrics.revenueData.slice(0, 7).reverse().map(item => ({
+  const revenueChartData = (packageMetrics.revenueData || []).slice(0, 7).reverse().map(item => ({
     label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     value: item.revenue / 100
   }))
 
-  const transactionVolumeData = transactionMetrics.dailyVolume.slice(0, 7).reverse().map(item => ({
+  const transactionVolumeData = (transactionMetrics.dailyVolume || []).slice(0, 7).reverse().map(item => ({
     label: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     value: item.count
   }))
@@ -352,18 +352,18 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Top Routes */}
         <DataTable
-          data={packageMetrics.topRoutes.map(route => ({
+          data={(packageMetrics.topRoutes || []).map(route => ({
             ...route,
-            percentage: ((route.count / packageMetrics.totalPackages) * 100).toFixed(1)
+            percentage: ((route.count / (packageMetrics.totalPackages || 1)) * 100).toFixed(1)
           }))}
           columns={topRoutesColumns}
         />
 
         {/* Top Countries */}
         <DataTable
-          data={userMetrics.topCountries.map(country => ({
+          data={(userMetrics.topCountries || []).map(country => ({
             ...country,
-            percentage: ((country.count / userMetrics.totalUsers) * 100).toFixed(1)
+            percentage: ((country.count / (userMetrics.totalUsers || 1)) * 100).toFixed(1)
           }))}
           columns={topCountriesColumns}
         />

@@ -22,7 +22,7 @@ import {
   RotateCw,
   Move
 } from 'lucide-react'
-import { MetricCard, DataTable } from '@/components/ui/dashboard-components'
+import { MetricCard, DataTable, SkeletonLoader } from '@/components/ui/dashboard-components'
 
 interface VerificationDocument {
   id: string
@@ -109,7 +109,7 @@ function DocumentViewer({ document, onClose, onApprove, onReject }: DocumentView
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="border-b border-gray-200 p-6">
@@ -270,7 +270,7 @@ function DocumentViewer({ document, onClose, onApprove, onReject }: DocumentView
                       value={rejectionReason}
                       onChange={(e) => setRejectionReason(e.target.value)}
                       placeholder="Please provide a reason for rejection..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent"
                       rows={3}
                     />
                     <div className="flex gap-2">
@@ -591,19 +591,7 @@ export default function VerificationPage() {
   ]
 
   if (loading && documents.length === 0) {
-    return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-24 bg-gray-200 rounded-lg"></div>
-            ))}
-          </div>
-          <div className="h-96 bg-gray-200 rounded-lg"></div>
-        </div>
-      </div>
-    )
+    return <SkeletonLoader type="dashboard" />  
   }
 
   if (error) {
@@ -672,20 +660,20 @@ export default function VerificationPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 " />
             <input
               type="text"
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent"
             />
           </div>
           
           <select
             value={selectedStatus}
             onChange={(e) => handleFilterChange('status', e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:outline-none focus:border-transparent"
           >
             <option value="">All Status</option>
             <option value="PENDING">Pending</option>
@@ -696,7 +684,7 @@ export default function VerificationPage() {
           <select
             value={selectedType}
             onChange={(e) => handleFilterChange('type', e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent"
           >
             <option value="">All Document Types</option>
             <option value="passport">Passport</option>

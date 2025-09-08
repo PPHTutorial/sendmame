@@ -204,7 +204,7 @@ export function TripCard({ trip, onAddPackage, onSendMessage, currentUserId }: T
               {trip.pricePerKg && (
                 <div>
                   <span className="text-lg font-bold text-teal-600">
-                    ${trip.pricePerKg}/kg
+                    ${trip.pricePerKg.toFixed(0)}/kg
                   </span>
                   <span className="text-xs text-gray-500 block">Per kilogram</span>
                 </div>
@@ -212,7 +212,7 @@ export function TripCard({ trip, onAddPackage, onSendMessage, currentUserId }: T
               {trip.minimumPrice && trip.maximumPrice && (
                 <div className="mt-2">
                   <span className="text-sm text-gray-600">
-                    ${trip.minimumPrice} - ${trip.maximumPrice} {trip.currency}
+                    ${trip.minimumPrice.toFixed(0)} - ${trip.maximumPrice.toFixed(0)} {trip.currency}
                   </span>
                 </div>
               )}

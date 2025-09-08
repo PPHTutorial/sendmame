@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { DashboardSidebar } from '@/components/dashboard/DashboardSidebar'
+import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
 import { Menu } from 'lucide-react'
 import { Button } from '@/components/ui/index'
 
@@ -36,7 +36,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-white">
       {/* Sidebar */}
       <DashboardSidebar
         collapsed={sidebarCollapsed}

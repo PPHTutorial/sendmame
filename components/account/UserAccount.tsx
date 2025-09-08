@@ -219,7 +219,7 @@ function ProfileForm({ user, isEditing, onSave, onCancel }: any) {
             onChange={(e) => handleChange('bio', e.target.value)}
             placeholder="Tell us about yourself..."
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent resize-none"
           />
         ) : (
           <div className="p-3 bg-gray-50 rounded-lg">
