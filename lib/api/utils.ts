@@ -359,29 +359,45 @@ export function calculatePagination(
 }
 
 // Database query helpers
-export function buildWhereClause(filters: Record<string, any>) {
+export function buildWhereClause(filters: Record<string, any>, modelType?: 'package' | 'trip') {
   const where: Record<string, any> = {}
 
   for (const [key, value] of Object.entries(filters)) {
     if (value !== undefined && value !== null && value !== '') {
-      if (typeof value === 'string' && key.includes('search')) {
-        where[key.replace('search', '')] = {
-          contains: value,
-          mode: 'insensitive',
+      if (key === 'search' && typeof value === 'string') {
+        if (modelType === 'package') {
+          where.OR = [
+            { title: { contains: value, mode: 'insensitive' } },
+            { description: { contains: value, mode: 'insensitive' } },
+            { category: { contains: value, mode: 'insensitive' } },
+            { pickupLocationAddress: { contains: value, mode: 'insensitive' } },
+            { dropoffLocationAddress: { contains: value, mode: 'insensitive' } },
+          ]
+        } else if (modelType === 'trip') {
+          where.OR = [
+            { title: { contains: value, mode: 'insensitive' } },
+            { description: { contains: value, mode: 'insensitive' } },
+            { transportMode: { contains: value, mode: 'insensitive' } },
+            { departureCity: { contains: value, mode: 'insensitive' } },
+            { arrivalCity: { contains: value, mode: 'insensitive' } },
+          ]
         }
-      } else if (key.includes('Min')) {
-        const field = key.replace('Min', '').toLowerCase()
-        where[field] = { ...where[field], gte: value }
-      } else if (key.includes('Max')) {
-        const field = key.replace('Max', '').toLowerCase()
-        where[field] = { ...where[field], lte: value }
-      } else if (key.includes('From')) {
-        const field = key.replace('From', '').toLowerCase()
-        where[field] = { ...where[field], gte: new Date(value) }
-      } else if (key.includes('To')) {
-        const field = key.replace('To', '').toLowerCase()
-        where[field] = { ...where[field], lte: new Date(value) }
-      } else {
+      } else if (key.endsWith('Min')) {
+        const field = key.replace('Min', '')
+        where[field] = { ...where[field], gte: Number(value) }
+      } else if (key.endsWith('Max')) {
+        const field = key.replace('Max', '')
+        where[field] = { ...where[field], lte: Number(value) }
+      } else if (key.endsWith('From')) {
+        const field = key.replace('From', '')
+        where[field] = { ...where[field], gte: new Date(value as string) }
+      } else if (key.endsWith('To')) {
+        const field = key.replace('To', '')
+        where[field] = { ...where[field], lte: new Date(value as string) }
+      } else if (typeof value === 'boolean') {
+        where[key] = value
+      }
+      else {
         where[key] = value
       }
     }

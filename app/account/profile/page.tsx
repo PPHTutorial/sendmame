@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/hooks/api'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
@@ -53,6 +53,17 @@ interface UserStats {
   responseTime: string
 }
 
+interface Activity {
+  id: string;
+  type: string;
+  title: string;
+  description: string;
+  time: string;
+  status: string;
+  amount: string | null;
+  createdAt: string;
+}
+
 // Profile Header Component with real user data
 function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: any) {
   const getVerificationBadge = () => {
@@ -94,9 +105,9 @@ function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: a
           {/* Profile Picture */}
           <div className="relative">
             <div className="w-28 h-28 lg:w-36 lg:h-36 bg-neutral-500 bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-white border-opacity-30">
-              {user?.profile?.profilePicture ? (
+              {user?.avatar ? (
                 <Image 
-                  src={user.profile.profilePicture} 
+                  src={user.avatar} 
                   alt="Profile" 
                   width={144}
                   height={144}
@@ -184,11 +195,11 @@ function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: a
               )
             ) : (
               <div className="flex space-x-2">
-                <Button className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30">
+                <Button className="bg-white !text-teal-800 bg-opacity-20 hover:bg-opacity-30 hover:!text-white border-white border-opacity-30">
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Message
                 </Button>
-                <Button className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white border-white border-opacity-30">
+                <Button className="bg-white !text-teal-800 bg-opacity-20 hover:bg-opacity-30 hover:!text-white border-white border-opacity-30">
                   <Heart className="w-4 h-4 mr-2" />
                   Follow
                 </Button>
@@ -458,36 +469,25 @@ function ActivityStats({ stats }: { stats: UserStats }) {
 }
 
 // Recent Activity with real data structure
-function RecentActivity({ _user }: any) {
-  const activities = [
-    {
-      id: 1,
-      type: 'package_delivered',
-      title: 'Package delivered successfully',
-      description: 'MacBook Pro delivered to San Francisco',
-      time: '2 hours ago',
-      status: 'completed',
-      amount: '$150'
-    },
-    {
-      id: 2,
-      type: 'trip_posted',
-      title: 'New trip posted',
-      description: 'Los Angeles to New York',
-      time: '1 day ago',
-      status: 'active',
-      amount: null
-    },
-    {
-      id: 3,
-      type: 'payment_received',
-      title: 'Payment received',
-      description: 'Package delivery commission',
-      time: '2 days ago',
-      status: 'completed',
-      amount: '$45'
-    }
-  ]
+function RecentActivity({ activities, isLoading }: { activities: Activity[], isLoading: boolean }) {
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4 p-4">
+              <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -501,24 +501,30 @@ function RecentActivity({ _user }: any) {
         </Link>
       </div>
       
-      <div className="space-y-4">
-        {activities.map((activity) => (
-          <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
-            <div className={`w-2 h-2 rounded-full mt-2 ${
-              activity.status === 'completed' ? 'bg-green-500' : 'bg-blue-500'
-            }`}></div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <p className="font-medium text-gray-900">{activity.title}</p>
-                {activity.amount && (
-                  <span className="text-sm font-medium text-green-600">{activity.amount}</span>
-                )}
+      <div className="grid grid-cols-2 md:grid-cols-3 space-y-4">
+        {activities && activities.length > 0 ? (
+          activities.map((activity) => (
+            <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
+              <div className={`w-2 h-2 rounded-full mt-2 ${
+                activity.status === 'completed' || activity.status === 'delivered' ? 'bg-green-500' : 'bg-blue-500'
+              }`}></div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="font-medium text-gray-900">{activity.title}</p>
+                  {activity.amount && (
+                    <span className="text-sm font-medium text-green-600">{activity.amount}</span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">{activity.description}</p>
+                <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
               </div>
-              <p className="text-sm text-gray-600">{activity.description}</p>
-              <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
             </div>
+          ))
+        ) : (
+          <div className="text-center py-8">
+            <p className="text-gray-500">No recent activity found.</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   )
@@ -543,26 +549,15 @@ export default function ProfilePage() {
     totalReviews: 0,
     responseTime: '< 1 hour'
   })
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [isActivityLoading, setIsActivityLoading] = useState(true)
   
   // Determine if viewing own profile or another user's profile
   const userId = params?.id
   const isOwnProfile = !userId || userId === currentUser?.id
 
-  useEffect(() => {
-    if (isOwnProfile && currentUser) {
-      setProfileUser(currentUser)
-      // Fetch user statistics from API based on Prisma schema
-      fetchUserStats(currentUser.id)
-    } else if (userId && typeof userId === 'string') {
-      // Fetch other user's public profile data
-      fetchUserProfile(userId)
-    }
-  }, [currentUser, userId, isOwnProfile])
-
-  const fetchUserStats = async (userId: string) => {
+  const fetchUserStats = useCallback(async (userId: string) => {
     try {
-      // This would make real API calls to get statistics from database
-      // Based on Prisma schema: Package, Trip, Review, Transaction models
       const response = await fetch(`/api/users/${userId}/stats`)
       if (response.ok) {
         const stats = await response.json()
@@ -571,28 +566,58 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Failed to fetch user stats:', error)
     }
-  }
+  }, [])
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = useCallback(async (userId: string) => {
     try {
-      // Fetch public profile data for other users
       const response = await fetch(`/api/users/${userId}/profile`)
       if (response.ok) {
         const profile = await response.json()
         setProfileUser(profile)
-        setUserStats(profile.stats || userStats)
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error)
     }
-  }
+  }, [])
+
+  const fetchUserActivity = useCallback(async (userId: string) => {
+    setIsActivityLoading(true)
+    try {
+      const response = await fetch(`/api/users/${userId}/activity`)
+      if (response.ok) {
+        const data = await response.json()
+        setActivities(data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch user activity:', error)
+    } finally {
+      setIsActivityLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const loadUserData = async (id: string) => {
+      await Promise.all([
+        fetchUserStats(id),
+        fetchUserActivity(id)
+      ]);
+    }
+
+    if (isOwnProfile && currentUser) {
+      setProfileUser(currentUser)
+      loadUserData(currentUser.id)
+    } else if (userId && typeof userId === 'string') {
+      fetchUserProfile(userId)
+      loadUserData(userId)
+    }
+  }, [currentUser, userId, isOwnProfile, fetchUserStats, fetchUserProfile, fetchUserActivity])
 
   if (!profileUser) {
     return (
       <AuthGuard>
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading profile...</p>
           </div>
         </div>
@@ -648,7 +673,7 @@ export default function ProfilePage() {
           
           <ActivityStats stats={userStats} />
           
-          <RecentActivity user={profileUser} />
+          <RecentActivity activities={activities} isLoading={isActivityLoading} />
         </main>
       </div>
     </AuthGuard>

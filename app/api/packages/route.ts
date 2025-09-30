@@ -22,13 +22,18 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const { skip, ...pagination } = calculatePagination(page, limit, 0)
 
   // Build where clause
-  const where = buildWhereClause(filters)
+  const where = buildWhereClause(filters, 'package')
+
+  console.log('Package filters:', filters)
 
   // Add status filter to only show active packages
   where.status = {
     in: ['POSTED', 'MATCHED', 'IN_TRANSIT']
   }
 
+  
+
+  
   // Get total count
   const total = await prisma.package.count({ where })
 

@@ -9,11 +9,12 @@ interface PackageFiltersProps {
     title?: string
     status?: string
     category?: string
-    priceMin?: number
-    priceMax?: number
-    pickupDateFrom?: string
-    pickupDateTo?: string
+    offeredPrice?: number
+    finalPrice?: number
+    pickupDate?: string
+    deliveryDate?: string
   }
+
   onFiltersChange: (filters: any) => void
   isOpen: boolean
   onClose: () => void
@@ -41,8 +42,8 @@ export function PackageFilters({ filters, onFiltersChange, isOpen, onClose, sort
       title: '',
       status: '',
       category: '',
-      priceMin: '',
-      priceMax: '',
+      offeredPrice: undefined,
+      finalPrice: undefined,
       pickupDateFrom: '',
       pickupDateTo: ''
     })
@@ -52,7 +53,7 @@ export function PackageFilters({ filters, onFiltersChange, isOpen, onClose, sort
 
   const packageStatuses = [
     'DRAFT',
-    'POSTED', 
+    'POSTED',
     'MATCHED',
     'IN_TRANSIT',
     'DELIVERED',
@@ -75,6 +76,7 @@ export function PackageFilters({ filters, onFiltersChange, isOpen, onClose, sort
     { value: 'createdAt', label: 'Date Created' },
     { value: 'updatedAt', label: 'Last Updated' },
     { value: 'offeredPrice', label: 'Offered Price' },
+    { value: 'finalPrice', label: 'Final Price' },
     { value: 'pickupDate', label: 'Pickup Date' }
   ]
 
@@ -100,21 +102,19 @@ export function PackageFilters({ filters, onFiltersChange, isOpen, onClose, sort
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab('sorting')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'sorting'
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'sorting'
                 ? 'border-teal-500 text-teal-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Sorting
           </button>
           <button
             onClick={() => setActiveTab('filtering')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'filtering'
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'filtering'
                 ? 'border-teal-500 text-teal-600'
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
+              }`}
           >
             Filtering
           </button>
@@ -219,12 +219,12 @@ export function PackageFilters({ filters, onFiltersChange, isOpen, onClose, sort
             {/* Price Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Min Price ($)
+                Offered Price ($)
               </label>
               <Input
                 type="number"
-                value={filters.priceMin}
-                onChange={(e) => handleFilterChange('priceMin', e.target.value)}
+                value={filters.offeredPrice}
+                onChange={(e) => handleFilterChange('offeredPrice', e.target.value)}
                 placeholder="0"
                 min="0"
                 step="0.01"
@@ -233,12 +233,12 @@ export function PackageFilters({ filters, onFiltersChange, isOpen, onClose, sort
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Max Price ($)
+                Final Price ($)
               </label>
               <Input
                 type="number"
-                value={filters.priceMax}
-                onChange={(e) => handleFilterChange('priceMax', e.target.value)}
+                value={filters.finalPrice}
+                onChange={(e) => handleFilterChange('finalPrice', e.target.value)}
                 placeholder="No limit"
                 min="0"
                 step="0.01"
@@ -248,25 +248,27 @@ export function PackageFilters({ filters, onFiltersChange, isOpen, onClose, sort
             {/* Date Range */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pickup From
+                Pickup Date
               </label>
               <Input
                 type="date"
-                value={filters.pickupDateFrom}
-                onChange={(e) => handleFilterChange('pickupDateFrom', e.target.value)}
+                value={filters.pickupDate}
+                onChange={(e) => handleFilterChange('pickupDate', e.target.value)}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pickup To
+                Delivery Date
               </label>
               <Input
                 type="date"
-                value={filters.pickupDateTo}
-                onChange={(e) => handleFilterChange('pickupDateTo', e.target.value)}
+                value={filters.deliveryDate}
+                onChange={(e) => handleFilterChange('deliveryDate', e.target.value)}
               />
             </div>
+
+            
           </div>
         </div>
       )}

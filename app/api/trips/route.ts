@@ -21,7 +21,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const { skip, ...pagination } = calculatePagination(page, limit, 0)
   
   // Build where clause
-  const where = buildWhereClause(filters)
+  const where = buildWhereClause(filters, 'trip')
   
   // Add status filter to only show active trips
   where.status = {

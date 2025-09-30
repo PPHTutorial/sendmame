@@ -1,6 +1,7 @@
 // Fakomame Platform - Validation Schemas
 import { z } from 'zod'
 import { UserRole, PackageStatus, TripStatus } from '@prisma/client'
+import { off } from 'process'
 
 // Authentication schemas
 export const loginSchema = z.object({
@@ -285,8 +286,8 @@ export const packageSearchSchema = z.object({
   destination: locationFilterSchema.optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
-  priceMin: z.number().positive().optional(),
-  priceMax: z.number().positive().optional(),
+  offeredPrice: z.number().positive().optional(),
+  finalPrice: z.number().positive().optional(),
   category: z.string().optional(),
   maxWeight: z.number().positive().optional(),
   isFragile: z.boolean().optional(),

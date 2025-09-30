@@ -280,37 +280,38 @@ export default function PackageDetailsPage() {
                             <div className="p-6">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Sender Information</h2>
 
-                                <div className="flex items-center space-x-4 mb-4">
-                                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                        {pkg.sender.avatar ? (
-                                            <img
-                                                src={pkg.sender.avatar}
-                                                alt={`${pkg.sender.firstName} ${pkg.sender.lastName}`}
-                                                className="w-12 h-12 rounded-full object-cover"
-                                            />
-                                        ) : (
-                                            <span className="text-blue-600 font-semibold">
-                                                {pkg.sender.firstName[0]}{pkg.sender.lastName[0]}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-gray-900">
-                                            {pkg.sender.firstName} {pkg.sender.lastName}
-                                        </p>
-                                        {pkg.sender.profile && (
-                                            <div className="flex items-center space-x-2 text-sm text-gray-500">
-                                                <div className="flex items-center">
-                                                    <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
-                                                    <span>{pkg.sender.profile.senderRating.toFixed(1)}</span>
+                                <Link href={isMyPost ? `/account/profile` : `/account/profile/${pkg.sender.id}`} className="block">
+                                    <div className="flex items-center space-x-4 mb-4">
+                                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                            {pkg.sender.avatar ? (
+                                                <img
+                                                    src={pkg.sender.avatar}
+                                                    alt={`${pkg.sender.firstName} ${pkg.sender.lastName}`}
+                                                    className="w-12 h-12 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <span className="text-blue-600 font-semibold">
+                                                    {pkg.sender.firstName[0]}{pkg.sender.lastName[0]}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-900">
+                                                {pkg.sender.firstName} {pkg.sender.lastName}
+                                            </p>
+                                            {pkg.sender.profile && (
+                                                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                                    <div className="flex items-center">
+                                                        <Star className="w-3 h-3 text-yellow-400 fill-current mr-1" />
+                                                        <span>{pkg.sender.profile.senderRating.toFixed(1)}</span>
+                                                    </div>
+                                                    <span>•</span>
+                                                    <span>{pkg.sender.profile.totalDeliveries} deliveries</span>
                                                 </div>
-                                                <span>•</span>
-                                                <span>{pkg.sender.profile.totalDeliveries} deliveries</span>
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-
+                                </Link>
                                 <div className="space-y-3">
                                     <Button className="w-full flex items-center justify-center space-x-2">
                                         <MessageCircle className="w-4 h-4" />
