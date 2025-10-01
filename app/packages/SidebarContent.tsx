@@ -1,13 +1,15 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui'
 import { SortAsc, SortDesc } from 'lucide-react'
+import { useDebounce } from '@/lib/hooks/useDebounce'
 import {
     FilterSection,
     CheckboxFilter,
     RangeInput,
     DateInput,
+    TextInput,
     StatusSelector,
     packageStatuses,
     tripStatuses,
@@ -41,6 +43,160 @@ const SidebarContent = ({
     setTripSearchInput,
     handleTabChange,
 }: any) => {
+    // Debounced states for package filters
+    const [packageOfferedPriceMin, setPackageOfferedPriceMin] = useState(packageFilters.offeredPriceMin);
+    const debouncedPackageOfferedPriceMin = useDebounce(packageOfferedPriceMin, 300);
+    const [packageOfferedPriceMax, setPackageOfferedPriceMax] = useState(packageFilters.offeredPriceMax);
+    const debouncedPackageOfferedPriceMax = useDebounce(packageOfferedPriceMax, 300);
+    const [packageFinalPriceMin, setPackageFinalPriceMin] = useState(packageFilters.finalPriceMin);
+    const debouncedPackageFinalPriceMin = useDebounce(packageFinalPriceMin, 300);
+    const [packageFinalPriceMax, setPackageFinalPriceMax] = useState(packageFilters.finalPriceMax);
+    const debouncedPackageFinalPriceMax = useDebounce(packageFinalPriceMax, 300);
+    const [packageValueMin, setPackageValueMin] = useState(packageFilters.valueMin);
+    const debouncedPackageValueMin = useDebounce(packageValueMin, 300);
+    const [packageValueMax, setPackageValueMax] = useState(packageFilters.valueMax);
+    const debouncedPackageValueMax = useDebounce(packageValueMax, 300);
+
+    // Debounced states for trip filters
+    const [tripPricePerKgMin, setTripPricePerKgMin] = useState(tripFilters.pricePerKgMin);
+    const debouncedTripPricePerKgMin = useDebounce(tripPricePerKgMin, 300);
+    const [tripPricePerKgMax, setTripPricePerKgMax] = useState(tripFilters.pricePerKgMax);
+    const debouncedTripPricePerKgMax = useDebounce(tripPricePerKgMax, 300);
+    const [tripMinimumPriceMin, setTripMinimumPriceMin] = useState(tripFilters.minimumPriceMin);
+    const debouncedTripMinimumPriceMin = useDebounce(tripMinimumPriceMin, 300);
+    const [tripMinimumPriceMax, setTripMinimumPriceMax] = useState(tripFilters.minimumPriceMax);
+    const debouncedTripMinimumPriceMax = useDebounce(tripMinimumPriceMax, 300);
+    const [tripMaximumPriceMin, setTripMaximumPriceMin] = useState(tripFilters.maximumPriceMin);
+    const debouncedTripMaximumPriceMin = useDebounce(tripMaximumPriceMin, 300);
+    const [tripMaximumPriceMax, setTripMaximumPriceMax] = useState(tripFilters.maximumPriceMax);
+    const debouncedTripMaximumPriceMax = useDebounce(tripMaximumPriceMax, 300);
+    const [tripMaxWeightMin, setTripMaxWeightMin] = useState(tripFilters.maxWeightMin);
+    const debouncedTripMaxWeightMin = useDebounce(tripMaxWeightMin, 300);
+    const [tripMaxWeightMax, setTripMaxWeightMax] = useState(tripFilters.maxWeightMax);
+    const debouncedTripMaxWeightMax = useDebounce(tripMaxWeightMax, 300);
+    const [tripAvailableSpaceMin, setTripAvailableSpaceMin] = useState(tripFilters.availableSpaceMin);
+    const debouncedTripAvailableSpaceMin = useDebounce(tripAvailableSpaceMin, 300);
+    const [tripAvailableSpaceMax, setTripAvailableSpaceMax] = useState(tripFilters.availableSpaceMax);
+    const debouncedTripAvailableSpaceMax = useDebounce(tripAvailableSpaceMax, 300);
+
+    // Debounced states for location inputs
+    const [packagePickupCity, setPackagePickupCity] = useState(packageFilters.pickupCity);
+    const debouncedPackagePickupCity = useDebounce(packagePickupCity, 300);
+    const [packagePickupCountry, setPackagePickupCountry] = useState(packageFilters.pickupCountry);
+    const debouncedPackagePickupCountry = useDebounce(packagePickupCountry, 300);
+    const [packageDeliveryCity, setPackageDeliveryCity] = useState(packageFilters.deliveryCity);
+    const debouncedPackageDeliveryCity = useDebounce(packageDeliveryCity, 300);
+    const [packageDeliveryCountry, setPackageDeliveryCountry] = useState(packageFilters.deliveryCountry);
+    const debouncedPackageDeliveryCountry = useDebounce(packageDeliveryCountry, 300);
+
+    const [tripOriginCity, setTripOriginCity] = useState(tripFilters.originCity);
+    const debouncedTripOriginCity = useDebounce(tripOriginCity, 300);
+    const [tripOriginCountry, setTripOriginCountry] = useState(tripFilters.originCountry);
+    const debouncedTripOriginCountry = useDebounce(tripOriginCountry, 300);
+    const [tripDestinationCity, setTripDestinationCity] = useState(tripFilters.destinationCity);
+    const debouncedTripDestinationCity = useDebounce(tripDestinationCity, 300);
+    const [tripDestinationCountry, setTripDestinationCountry] = useState(tripFilters.destinationCountry);
+    const debouncedTripDestinationCountry = useDebounce(tripDestinationCountry, 300);
+
+    // Update package filters on debounced changes
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, offeredPriceMin: debouncedPackageOfferedPriceMin }));
+    }, [debouncedPackageOfferedPriceMin, setPackageFilters]);
+
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, offeredPriceMax: debouncedPackageOfferedPriceMax }));
+    }, [debouncedPackageOfferedPriceMax, setPackageFilters]);
+
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, finalPriceMin: debouncedPackageFinalPriceMin }));
+    }, [debouncedPackageFinalPriceMin, setPackageFilters]);
+
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, finalPriceMax: debouncedPackageFinalPriceMax }));
+    }, [debouncedPackageFinalPriceMax, setPackageFilters]);
+
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, valueMin: debouncedPackageValueMin }));
+    }, [debouncedPackageValueMin, setPackageFilters]);
+
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, valueMax: debouncedPackageValueMax }));
+    }, [debouncedPackageValueMax, setPackageFilters]);
+
+    // Update trip filters on debounced changes
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, pricePerKgMin: debouncedTripPricePerKgMin }));
+    }, [debouncedTripPricePerKgMin, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, pricePerKgMax: debouncedTripPricePerKgMax }));
+    }, [debouncedTripPricePerKgMax, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, minimumPriceMin: debouncedTripMinimumPriceMin }));
+    }, [debouncedTripMinimumPriceMin, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, minimumPriceMax: debouncedTripMinimumPriceMax }));
+    }, [debouncedTripMinimumPriceMax, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, maximumPriceMin: debouncedTripMaximumPriceMin }));
+    }, [debouncedTripMaximumPriceMin, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, maximumPriceMax: debouncedTripMaximumPriceMax }));
+    }, [debouncedTripMaximumPriceMax, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, maxWeightMin: debouncedTripMaxWeightMin }));
+    }, [debouncedTripMaxWeightMin, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, maxWeightMax: debouncedTripMaxWeightMax }));
+    }, [debouncedTripMaxWeightMax, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, availableSpaceMin: debouncedTripAvailableSpaceMin }));
+    }, [debouncedTripAvailableSpaceMin, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, availableSpaceMax: debouncedTripAvailableSpaceMax }));
+    }, [debouncedTripAvailableSpaceMax, setTripFilters]);
+
+    // Update location filters on debounced changes
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, pickupCity: debouncedPackagePickupCity }));
+    }, [debouncedPackagePickupCity, setPackageFilters]);
+
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, pickupCountry: debouncedPackagePickupCountry }));
+    }, [debouncedPackagePickupCountry, setPackageFilters]);
+
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, deliveryCity: debouncedPackageDeliveryCity }));
+    }, [debouncedPackageDeliveryCity, setPackageFilters]);
+
+    useEffect(() => {
+        setPackageFilters((prev: any) => ({ ...prev, deliveryCountry: debouncedPackageDeliveryCountry }));
+    }, [debouncedPackageDeliveryCountry, setPackageFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, originCity: debouncedTripOriginCity }));
+    }, [debouncedTripOriginCity, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, originCountry: debouncedTripOriginCountry }));
+    }, [debouncedTripOriginCountry, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, destinationCity: debouncedTripDestinationCity }));
+    }, [debouncedTripDestinationCity, setTripFilters]);
+
+    useEffect(() => {
+        setTripFilters((prev: any) => ({ ...prev, destinationCountry: debouncedTripDestinationCountry }));
+    }, [debouncedTripDestinationCountry, setTripFilters]);
+
     return (
         <>
             {/* Tab Navigation */}
@@ -97,15 +253,29 @@ const SidebarContent = ({
                     {activeTab === 'packages' ? (
                         <>
                             <option value="title">Title</option>
-                            <option value="offeredPrice">Price</option>
+                            <option value="offeredPrice">Offered Price</option>
+                            <option value="finalPrice">Final Price</option>
+                            <option value="value">Package Value</option>
                             <option value="pickupDate">Pickup Date</option>
+                            <option value="deliveryDate">Delivery Date</option>
+                            <option value="category">Category</option>
+                            <option value="priority">Priority</option>
+                            <option value="createdAt">Created Date</option>
+                            <option value="updatedAt">Updated Date</option>
                         </>
                     ) : (
                         <>
                             <option value="title">Title</option>
                             <option value="pricePerKg">Price per Kg</option>
+                            <option value="minimumPrice">Minimum Price</option>
+                            <option value="maximumPrice">Maximum Price</option>
+                            <option value="maxWeight">Max Weight</option>
+                            <option value="availableSpace">Available Space</option>
                             <option value="departureDate">Departure Date</option>
                             <option value="arrivalDate">Arrival Date</option>
+                            <option value="transportMode">Transport Mode</option>
+                            <option value="createdAt">Created Date</option>
+                            <option value="updatedAt">Updated Date</option>
                         </>
                     )}
                 </select>
@@ -176,8 +346,22 @@ const SidebarContent = ({
 
                             <FilterSection title="Price Range">
                                 <div className="flex items-center space-x-2">
-                                    <RangeInput placeholder="Min" value={packageFilters.offeredPriceMin} onChange={(v) => setPackageFilters({ ...packageFilters, offeredPriceMin: v })} />
-                                    <RangeInput placeholder="Max" value={packageFilters.offeredPriceMax} onChange={(v) => setPackageFilters({ ...packageFilters, offeredPriceMax: v })} />
+                                    <RangeInput placeholder="Min" value={packageOfferedPriceMin} onChange={setPackageOfferedPriceMin} />
+                                    <RangeInput placeholder="Max" value={packageOfferedPriceMax} onChange={setPackageOfferedPriceMax} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Final Price Range">
+                                <div className="flex items-center space-x-2">
+                                    <RangeInput placeholder="Min" value={packageFinalPriceMin} onChange={setPackageFinalPriceMin} />
+                                    <RangeInput placeholder="Max" value={packageFinalPriceMax} onChange={setPackageFinalPriceMax} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Package Value">
+                                <div className="flex items-center space-x-2">
+                                    <RangeInput placeholder="Min" value={packageValueMin} onChange={setPackageValueMin} />
+                                    <RangeInput placeholder="Max" value={packageValueMax} onChange={setPackageValueMax} />
                                 </div>
                             </FilterSection>
 
@@ -188,16 +372,43 @@ const SidebarContent = ({
                                 </div>
                             </FilterSection>
 
-                            <FilterSection title="Weight (kg)">
+                            <FilterSection title="Delivery Date">
                                 <div className="flex items-center space-x-2">
-                                    <RangeInput placeholder="Min" value={packageFilters.weightMin} onChange={(v) => setPackageFilters({ ...packageFilters, weightMin: v })} />
-                                    <RangeInput placeholder="Max" value={packageFilters.weightMax} onChange={(v) => setPackageFilters({ ...packageFilters, weightMax: v })} />
+                                    <DateInput value={packageFilters.deliveryDateFrom} onChange={(v) => setPackageFilters({ ...packageFilters, deliveryDateFrom: v })} />
+                                    <DateInput value={packageFilters.deliveryDateTo} onChange={(v) => setPackageFilters({ ...packageFilters, deliveryDateTo: v })} />
                                 </div>
+                            </FilterSection>
+
+                            <FilterSection title="Pickup Location">
+                                <div className="space-y-2">
+                                    <TextInput placeholder="City" value={packagePickupCity} onChange={setPackagePickupCity} />
+                                    <TextInput placeholder="Country" value={packagePickupCountry} onChange={setPackagePickupCountry} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Delivery Location">
+                                <div className="space-y-2">
+                                    <TextInput placeholder="City" value={packageDeliveryCity} onChange={setPackageDeliveryCity} />
+                                    <TextInput placeholder="Country" value={packageDeliveryCountry} onChange={setPackageDeliveryCountry} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Priority">
+                                <select
+                                    className="px-3 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-teal-500"
+                                    value={packageFilters.priority || ''}
+                                    onChange={(e) => setPackageFilters({ ...packageFilters, priority: e.target.value || undefined })}
+                                >
+                                    <option value="">All Priorities</option>
+                                    <option value="low">Low</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
                             </FilterSection>
 
                             <FilterSection title="Attributes">
                                 <CheckboxFilter label="Fragile" checked={!!packageFilters.isFragile} onChange={(v) => setPackageFilters({ ...packageFilters, isFragile: v })} />
-                                <CheckboxFilter label="Perishable" checked={!!packageFilters.isPerishable} onChange={(v) => setPackageFilters({ ...packageFilters, isPerishable: v })} />
                                 <CheckboxFilter label="Requires Signature" checked={!!packageFilters.requiresSignature} onChange={(v) => setPackageFilters({ ...packageFilters, requiresSignature: v })} />
                             </FilterSection>
                         </>
@@ -219,15 +430,29 @@ const SidebarContent = ({
                                 >
                                     <option value="">All Modes</option>
                                     {transportModes.map((mode) => (
-                                        <option key={mode} value={mode}>{mode}</option>
+                                        <option key={mode} value={mode}>{mode.charAt(0).toUpperCase() + mode.slice(1)}</option>
                                     ))}
                                 </select>
                             </FilterSection>
 
                             <FilterSection title="Price per Kg">
                                 <div className="flex items-center space-x-2">
-                                    <RangeInput placeholder="Min" value={tripFilters.pricePerKgMin} onChange={(v) => setTripFilters({ ...tripFilters, pricePerKgMin: v })} />
-                                    <RangeInput placeholder="Max" value={tripFilters.pricePerKgMax} onChange={(v) => setTripFilters({ ...tripFilters, pricePerKgMax: v })} />
+                                    <RangeInput placeholder="Min" value={tripPricePerKgMin} onChange={setTripPricePerKgMin} />
+                                    <RangeInput placeholder="Max" value={tripPricePerKgMax} onChange={setTripPricePerKgMax} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Minimum Price">
+                                <div className="flex items-center space-x-2">
+                                    <RangeInput placeholder="Min" value={tripMinimumPriceMin} onChange={setTripMinimumPriceMin} />
+                                    <RangeInput placeholder="Max" value={tripMinimumPriceMax} onChange={setTripMinimumPriceMax} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Maximum Price">
+                                <div className="flex items-center space-x-2">
+                                    <RangeInput placeholder="Min" value={tripMaximumPriceMin} onChange={setTripMaximumPriceMin} />
+                                    <RangeInput placeholder="Max" value={tripMaximumPriceMax} onChange={setTripMaximumPriceMax} />
                                 </div>
                             </FilterSection>
 
@@ -247,14 +472,34 @@ const SidebarContent = ({
 
                             <FilterSection title="Max Weight (kg)">
                                 <div className="flex items-center space-x-2">
-                                    <RangeInput placeholder="Min" value={tripFilters.maxWeightMin} onChange={(v) => setTripFilters({ ...tripFilters, maxWeightMin: v })} />
-                                    <RangeInput placeholder="Max" value={tripFilters.maxWeightMax} onChange={(v) => setTripFilters({ ...tripFilters, maxWeightMax: v })} />
+                                    <RangeInput placeholder="Min" value={tripMaxWeightMin} onChange={setTripMaxWeightMin} />
+                                    <RangeInput placeholder="Max" value={tripMaxWeightMax} onChange={setTripMaxWeightMax} />
                                 </div>
                             </FilterSection>
 
-                            <FilterSection title="Can Carry">
-                                <CheckboxFilter label="Fragile Items" checked={!!tripFilters.canCarryFragile} onChange={(v) => setTripFilters({ ...tripFilters, canCarryFragile: v })} />
-                                <CheckboxFilter label="Perishable Items" checked={!!tripFilters.canCarryPerishable} onChange={(v) => setTripFilters({ ...tripFilters, canCarryPerishable: v })} />
+                            <FilterSection title="Available Space">
+                                <div className="flex items-center space-x-2">
+                                    <RangeInput placeholder="Min" value={tripAvailableSpaceMin} onChange={setTripAvailableSpaceMin} />
+                                    <RangeInput placeholder="Max" value={tripAvailableSpaceMax} onChange={setTripAvailableSpaceMax} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Origin Location">
+                                <div className="space-y-2">
+                                    <TextInput placeholder="City" value={tripOriginCity} onChange={setTripOriginCity} />
+                                    <TextInput placeholder="Country" value={tripOriginCountry} onChange={setTripOriginCountry} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Destination Location">
+                                <div className="space-y-2">
+                                    <TextInput placeholder="City" value={tripDestinationCity} onChange={setTripDestinationCity} />
+                                    <TextInput placeholder="Country" value={tripDestinationCountry} onChange={setTripDestinationCountry} />
+                                </div>
+                            </FilterSection>
+
+                            <FilterSection title="Flexible Dates">
+                                <CheckboxFilter label="Flexible Dates" checked={!!tripFilters.flexibleDates} onChange={(v) => setTripFilters({ ...tripFilters, flexibleDates: v })} />
                             </FilterSection>
                         </>
                     )}
@@ -269,16 +514,26 @@ const SidebarContent = ({
                                 setPackageFilters({
                                     status: undefined, category: undefined, offeredPriceMin: undefined, offeredPriceMax: undefined,
                                     pickupDateFrom: undefined, pickupDateTo: undefined, deliveryDateFrom: undefined, deliveryDateTo: undefined,
-                                    weightMin: undefined, weightMax: undefined, isFragile: false, isPerishable: false, requiresSignature: false,
+                                    isFragile: undefined, requiresSignature: undefined,
                                 })
                                 setPackageSearchInput('')
+                                // Reset debounced location states
+                                setPackagePickupCity(undefined)
+                                setPackagePickupCountry(undefined)
+                                setPackageDeliveryCity(undefined)
+                                setPackageDeliveryCountry(undefined)
                             } else {
                                 setTripFilters({
                                     status: undefined, transportMode: undefined, pricePerKgMin: undefined, pricePerKgMax: undefined,
                                     departureDateFrom: undefined, departureDateTo: undefined, arrivalDateFrom: undefined, arrivalDateTo: undefined,
-                                    maxWeightMin: undefined, maxWeightMax: undefined, canCarryFragile: false, canCarryPerishable: false,
+                                    maxWeightMin: undefined, maxWeightMax: undefined, flexibleDates: undefined,
                                 })
                                 setTripSearchInput('')
+                                // Reset debounced location states
+                                setTripOriginCity(undefined)
+                                setTripOriginCountry(undefined)
+                                setTripDestinationCity(undefined)
+                                setTripDestinationCountry(undefined)
                             }
                         }}
                     >

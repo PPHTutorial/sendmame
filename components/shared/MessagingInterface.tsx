@@ -85,7 +85,7 @@ export function MessagingInterface({
 console.log('Chat data:', chat)
   useEffect(() => {
     scrollToBottom()
-  }, [chat?.messages])
+  }, [chat])
 
   const handleSendMessage = () => {
     if (newMessage.trim() && !isLoading) {
@@ -104,11 +104,11 @@ console.log('Chat data:', chat)
   const formatMessageTime = (createdAt: string) => {
     const date = new Date(createdAt)
     if (isToday(date)) {
-      return format(date, 'HH:mm')
+      return format(date, 'hh:mm a')
     } else if (isYesterday(date)) {
-      return `Yesterday ${format(date, 'HH:mm')}`
+      return `Yesterday ${format(date, 'hh:mm a')}`
     } else {
-      return format(date, 'MMM dd, HH:mm')
+      return format(date, 'MM dd, hh:mm a')
     }
   }
 

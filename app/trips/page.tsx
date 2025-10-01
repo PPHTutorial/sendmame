@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react'
 import { Button, Input } from '@/components/ui'
-import { useAuth, useTrips } from '@/lib/hooks/api'
+import { useAuth, useTrips, useFindOrCreateChat, useSendMessage } from '@/lib/hooks/api'
 import { TripCard } from '@/components/trips/TripCard'
 import { TripFilters } from '@/components/trips/TripFilters'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -51,6 +51,8 @@ interface TripQueryParams {
 export default function TripsPage() {
   const { getCurrentUser } = useAuth()
   const { data: user } = getCurrentUser
+  const findOrCreateChat = useFindOrCreateChat()
+  const sendMessage = useSendMessage()
 
   // Trip state with proper types
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -135,8 +137,16 @@ export default function TripsPage() {
       return
     }
 
-    setSelectedChatTrip(tripData)
-    setIsMessagingOpen(true)
+    findOrCreateChat.mutate({
+      participantId: tripData.travelerId,
+      itemType: 'trip',
+      itemId: tripData.id,
+    }, {
+      onSuccess: (chatData) => {
+        setSelectedChatTrip(chatData);
+        setIsMessagingOpen(true);
+      }
+    });
   }
 
   const handleAssign = async (targetId: string, confirmations: any) => {
@@ -156,13 +166,11 @@ export default function TripsPage() {
   }
 
   const handleSendMessage = async (content: string, type?: string) => {
-    try {
-      // Handle message sending logic here
-      console.log('Sending message:', { content, type })
-    } catch (error) {
-      console.error('Message sending failed:', error)
-      alert('Failed to send message. Please try again.')
-    }
+    if (!selectedChatTrip) return;
+    sendMessage.mutate({
+        chatId: selectedChatTrip.id,
+        data: { content, type: type || 'TEXT', chatId: selectedChatTrip.id }
+    });
   }
 
   return (
@@ -337,7 +345,7 @@ export default function TripsPage() {
             setIsMessagingOpen(false)
             setSelectedChatTrip(null)
           }}
-          chat={null}
+          chat={selectedChatTrip}
           currentUserId={user?.id || ''}
           onSendMessage={handleSendMessage}
         />

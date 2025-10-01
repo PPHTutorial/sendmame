@@ -76,7 +76,7 @@ export async function apiRequest<T = any>(
   config: AxiosRequestConfig
 ): Promise<T> {
   try {
-    const response = await apiClient(config)
+    const response = await apiClient(config)  
     return response.data.data
   } catch (error) {
     if (error instanceof AxiosError) {
@@ -376,7 +376,7 @@ export const chatApi = {
   sendMessage: (chatId: string, data: any) =>
     apiRequest({
       method: 'POST',
-      url: `/chats/${chatId}/messages`,
+      url: `/chats/messages`,
       data,
     }),
 

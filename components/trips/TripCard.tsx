@@ -137,7 +137,7 @@ export function TripCard({ trip, onAddPackage, onSendMessage, currentUserId }: T
 
   return (
     <div
-      className="group bg-white border border-gray-200 rounded-xl hover:border-teal-300 hover:shadow-lg hover:scale-[1.05] transition-all duration-300 cursor-pointer overflow-hidden"
+      className="group bg-white border border-gray-200 rounded-xl hover:border-teal-300 hover:shadow-lg hover:scale-[1.01] transition-all duration-300 cursor-pointer overflow-hidden"
       onClick={handleTripDetails}
     >
       <div className="p-6">
@@ -194,7 +194,7 @@ export function TripCard({ trip, onAddPackage, onSendMessage, currentUserId }: T
             <div className="w-1/3 flex flex-col items-center justify-center rounded-lg">
               <div className="flex items-center justify-center space-x-2 mb-1">
                 <Weight className="w-4 h-4 text-gray-600" />
-                <span className="text-xs font-medium text-gray-700 uppercase tracking-wide text-center">Weight</span>
+                {/* <span className="text-xs font-medium text-gray-700 uppercase tracking-wide text-center">Weight</span> */}
               </div>
               <span className="text-sm font-semibold text-gray-900">
                 {trip.maxWeight} kg
@@ -202,7 +202,7 @@ export function TripCard({ trip, onAddPackage, onSendMessage, currentUserId }: T
             </div>
             <div className="w-1/3 text-center">
               {trip.pricePerKg && (
-                <div>
+                <div className="flex flex-col items-center">
                   <span className="text-lg font-bold text-teal-600">
                     ${trip.pricePerKg.toFixed(0)}/kg
                   </span>
@@ -220,7 +220,7 @@ export function TripCard({ trip, onAddPackage, onSendMessage, currentUserId }: T
             <div className="w-1/3 flex flex-col items-center justify-center rounded-lg ">
               <div className="flex justify-center items-center space-x-2 mb-1">
                 <Package className="w-4 h-4 text-gray-600" />
-                <span className="text-xs font-medium text-gray-700 uppercase tracking-wide">Dimmension</span>
+                {/* <span className="text-xs font-medium text-gray-700 uppercase tracking-wide">Dimm</span> */}
               </div>
               <span className="text-sm font-semibold text-gray-900 text-center">
                 {trip.maxDimensions?.length || 0} × {trip.maxDimensions?.width || 0} × {trip.maxDimensions?.height || 0} cm

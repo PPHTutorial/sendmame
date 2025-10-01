@@ -741,12 +741,12 @@ export default function AccountSettingsPage() {
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
               <div className="flex items-center space-x-4">
-                <Link href="/account/profile" className="text-blue-600 hover:text-blue-700 flex items-center">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Profile
+                <Link href="/account/profile" className="text-neutral-600 hover:text-neutral-700 flex items-center">
+                  <ArrowLeft className="w-6 h-6 mr-2" />
+                 
                 </Link>
                 <span className="text-gray-300">|</span>
                 <h1 className="text-xl font-semibold text-gray-900 flex items-center">
@@ -759,7 +759,7 @@ export default function AccountSettingsPage() {
         </header>
 
         {/* Main Content */}
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <PersonalInfoSettings user={currentUser} />
           <SecuritySettings />
           <NotificationSettings />

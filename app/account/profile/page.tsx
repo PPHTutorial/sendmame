@@ -501,7 +501,7 @@ function RecentActivity({ activities, isLoading }: { activities: Activity[], isL
         </Link>
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 space-y-4">
+      <div className="grid grid-cols-2 space-y-4">
         {activities && activities.length > 0 ? (
           activities.map((activity) => (
             <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">

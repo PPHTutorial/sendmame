@@ -25,7 +25,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   
   // Add status filter to only show active trips
   where.status = {
-    in: ['POSTED', 'ACTIVE']
+    in: ['POSTED', 'ACTIVE', 'COMPLETED', 'CANCELLED',]
   }
   
   // Get total count
@@ -93,6 +93,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       destinationLongitude: data.destinationAddress.longitude,
       availableSpace: data.maxWeight, // Initially all space is available
       status: 'POSTED',
+      transportMode: data.transportMode as string,
     },
     include: {
       traveler: {

@@ -76,6 +76,7 @@ export const createPackageSchema = z.object({
     message: 'Delivery date must be in the future',
   }),
   offeredPrice: z.number().positive('Price must be positive'),
+  finalPrice: z.number().positive('Price must be positive').optional(),
   currency: z.string().length(3, 'Currency must be 3 characters').default('USD'),
   specialInstructions: z.string().max(500, 'Instructions too long').optional(),
   images: z.array(z.string().url()).default([]),  
@@ -97,7 +98,10 @@ export const createTripSchema = z.object({
   }),
   maxWeight: z.number().positive('Max weight must be positive'),
   maxDimensions: dimensionsSchema.omit({ weight: true }),
-  transportMode: z.enum(['car', 'plane', 'train', 'bus', 'ship', 'other']),
+  transportMode: z.preprocess(
+    (val) => typeof val === 'string' ? val.toLowerCase() : val,
+    z.enum(['car', 'plane', 'train', 'bus', 'ship', 'other'])
+  ),
   pricePerKg: z.number().positive('Price per kg must be positive').optional(),
   minimumPrice: z.number().positive('Minimum price must be positive').optional(),
   maximumPrice: z.number().positive('Maximum price must be positive').optional(),
@@ -106,8 +110,9 @@ export const createTripSchema = z.object({
   restrictions: z.array(z.string()).default([]),
 })
 
-export const updateTripSchema = createTripSchema.partial().extend({
+export const updateTripSchema = createTripSchema.omit({ transportMode: true }).partial().extend({
   status: z.nativeEnum(TripStatus).optional(),
+  transportMode: z.enum(['car', 'plane', 'train', 'bus', 'ship', 'other']).optional(),
 })
 
 // User profile schemas
@@ -281,47 +286,148 @@ export const locationFilterSchema = z.object({
   radius: z.number().positive('Radius must be positive').default(50), // km
 })
 
+// Comprehensive Package Search and Filter Schema
 export const packageSearchSchema = z.object({
-  origin: locationFilterSchema.optional(),
-  destination: locationFilterSchema.optional(),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
-  offeredPrice: z.number().positive().optional(),
-  finalPrice: z.number().positive().optional(),
+  // Search query for full-text search across multiple fields
+  search: z.string().optional(),
+
+  // Status filtering
+  status: z.enum(['DRAFT', 'POSTED', 'MATCHED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED', 'DISPUTED']).optional(),
+
+  // Category filtering
   category: z.string().optional(),
-  maxWeight: z.number().positive().optional(),
-  isFragile: z.boolean().optional(),
-  status: z.string().optional(),
+
+  // Priority filtering
+  priority: z.enum(['low', 'normal', 'high', 'urgent']).optional(),
+
+  // Price range filtering
+  offeredPriceMin: z.number().min(0).optional(),
+  offeredPriceMax: z.number().min(0).optional(),
+  finalPriceMin: z.number().min(0).optional(),
+  finalPriceMax: z.number().min(0).optional(),
+  valueMin: z.number().min(0).optional(),
+  valueMax: z.number().min(0).optional(),
+
+  // Date range filtering
   pickupDateFrom: z.string().optional(),
   pickupDateTo: z.string().optional(),
-  search: z.string().optional(),
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(20),
-  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'offeredPrice', 'pickupDate', ]).default('createdAt'),
+  deliveryDateFrom: z.string().optional(),
+  deliveryDateTo: z.string().optional(),
+  createdAtFrom: z.string().optional(),
+  createdAtTo: z.string().optional(),
+  updatedAtFrom: z.string().optional(),
+  updatedAtTo: z.string().optional(),
+
+  // Boolean attribute filtering
+  isFragile: z.boolean().optional(),
+  requiresSignature: z.boolean().optional(),
+  flexibleTiming: z.boolean().optional(),
+
+  // Location-based filtering (JSON address fields)
+  pickupCity: z.string().optional(),
+  pickupCountry: z.string().optional(),
+  deliveryCity: z.string().optional(),
+  deliveryCountry: z.string().optional(),
+
+  // Location coordinates for radius search
+  pickupLatitude: z.number().min(-90).max(90).optional(),
+  pickupLongitude: z.number().min(-180).max(180).optional(),
+  deliveryLatitude: z.number().min(-90).max(90).optional(),
+  deliveryLongitude: z.number().min(-180).max(180).optional(),
+  locationRadius: z.number().min(1).max(1000).default(250), // km
+
+  // Pagination
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
+
+  // Sorting
+  sortBy: z.enum([
+    'title',
+    'createdAt',
+    'updatedAt',
+    'offeredPrice',
+    'finalPrice',
+    'value',
+    'pickupDate',
+    'deliveryDate',
+    'category',
+    'priority'
+  ]).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 })
 
+// Comprehensive Trip Search and Filter Schema
 export const tripSearchSchema = z.object({
-  origin: locationFilterSchema.optional(),
-  destination: locationFilterSchema.optional(),
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
-  transportMode: z.enum(['car', 'plane', 'train', 'bus', 'ship', 'other']).optional(),
-  availableWeight: z.number().positive().optional(),
-  priceRange: z.object({
-    min: z.number().positive().optional(),
-    max: z.number().positive().optional(),
-  }).optional(),
-  status: z.string().optional(),
-  category: z.string().optional(),
-  minimumPrice: z.number().positive().optional(),
-  maximumPrice: z.number().positive().optional(),
-  pickupDateFrom: z.string().optional(),
-  pickupDateTo: z.string().optional(),
+  // Search query for full-text search across multiple fields
   search: z.string().optional(),
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(20),
-  sortBy: z.enum(['title', 'createdAt', 'updatedAt', 'offeredPrice', 'pickupDate','pricePerKg']).default('createdAt'),
+
+  // Status filtering
+  status: z.enum(['POSTED', 'ACTIVE', 'COMPLETED', 'CANCELLED']).optional(),
+
+  // Transport mode filtering (case insensitive)
+  transportMode: z.preprocess(
+    (val) => typeof val === 'string' ? val.toLowerCase() : val,
+    z.enum(['car', 'plane', 'train', 'bus', 'ship', 'other']).optional()
+  ),
+
+  // Price range filtering
+  pricePerKgMin: z.number().min(0).optional(),
+  pricePerKgMax: z.number().min(0).optional(),
+  minimumPriceMin: z.number().min(0).optional(),
+  minimumPriceMax: z.number().min(0).optional(),
+  maximumPriceMin: z.number().min(0).optional(),
+  maximumPriceMax: z.number().min(0).optional(),
+
+  // Date range filtering
+  departureDateFrom: z.string().optional(),
+  departureDateTo: z.string().optional(),
+  arrivalDateFrom: z.string().optional(),
+  arrivalDateTo: z.string().optional(),
+  createdAtFrom: z.string().optional(),
+  createdAtTo: z.string().optional(),
+  updatedAtFrom: z.string().optional(),
+  updatedAtTo: z.string().optional(),
+
+  // Capacity filtering
+  maxWeightMin: z.number().min(0).optional(),
+  maxWeightMax: z.number().min(0).optional(),
+  availableSpaceMin: z.number().min(0).optional(),
+  availableSpaceMax: z.number().min(0).optional(),
+
+  // Boolean attribute filtering
+  flexibleDates: z.boolean().optional(),
+
+  // Location-based filtering (JSON address fields)
+  originCity: z.string().optional(),
+  originCountry: z.string().optional(),
+  destinationCity: z.string().optional(),
+  destinationCountry: z.string().optional(),
+
+  // Location coordinates for radius search
+  originLatitude: z.number().min(-90).max(90).optional(),
+  originLongitude: z.number().min(-180).max(180).optional(),
+  destinationLatitude: z.number().min(-90).max(90).optional(),
+  destinationLongitude: z.number().min(-180).max(180).optional(),
+  locationRadius: z.number().min(1).max(1000).default(250), // km
+
+  // Pagination
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(20),
+
+  // Sorting
+  sortBy: z.enum([
+    'title',
+    'createdAt',
+    'updatedAt',
+    'departureDate',
+    'arrivalDate',
+    'pricePerKg',
+    'minimumPrice',
+    'maximumPrice',
+    'maxWeight',
+    'availableSpace',
+    'transportMode'
+  ]).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 })
 

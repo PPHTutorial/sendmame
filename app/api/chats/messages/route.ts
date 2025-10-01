@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { createErrorResponse, createSuccessResponse } from '@/lib/api/utils'
 
 // POST /api/chats/messages - Send a message
 export async function POST(request: NextRequest) {
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!chat) {
-      return NextResponse.json({ error: 'Chat not found or access denied' }, { status: 404 })
+      return createErrorResponse('Chat not found or access denied', 404)
     }
 
     // Create the message
@@ -58,10 +59,10 @@ export async function POST(request: NextRequest) {
       data: { updatedAt: new Date() }
     })
 
-    return NextResponse.json(message)
+    return createSuccessResponse(message, 'Message sent successfully')
   } catch (error) {
     console.error('Error sending message:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return createErrorResponse('Internal server error', 500)
   }
 }
 
@@ -77,10 +78,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
 
     if (!chatId) {
-      return NextResponse.json(
-        { error: 'Missing required parameter: chatId' },
-        { status: 400 }
-      )
+      return createErrorResponse('Missing required parameter: chatId', 400)
     }
 
     // Verify user is participant in the chat
@@ -96,7 +94,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!chat) {
-      return NextResponse.json({ error: 'Chat not found or access denied' }, { status: 404 })
+      return createErrorResponse('Chat not found or access denied', 404)
     }
 
     // Get messages with pagination
@@ -122,8 +120,9 @@ export async function GET(request: NextRequest) {
       where: { chatId }
     })
 
-    return NextResponse.json({
-      messages: messages.reverse(), // Reverse to show oldest first
+    return createSuccessResponse({
+      data: messages.reverse(),
+      messages: 'Messages fetched successfully',
       pagination: {
         page,
         limit,
@@ -133,6 +132,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching messages:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return createErrorResponse('Internal server error', 500)
   }
 }

@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Button, Input } from '@/components/ui'
-import { useAuth, usePackages, useTrips } from '@/lib/hooks/api'
+import { useAuth, usePackages, useTrips, useFindOrCreateChat, useSendMessage } from '@/lib/hooks/api'
 import { PackageCard } from '@/components/packages/PackageCard'
 import { TripCard } from '@/components/trips/TripCard'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -13,50 +13,67 @@ import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
 import { MessagingInterface } from '@/components/shared/MessagingInterface'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
+import { Suspense } from 'react'
 import { Plus, Search, Menu } from 'lucide-react'
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import SidebarContent from './SidebarContent';
 import { NavSidebarContent } from '@/components/shared/NavSidebarContent';
 import { MainNavigation } from '@/components/shared/MainNavigation';
 import { Filter } from 'lucide-react';
+import { Footer } from '@/components/navigation'
 
 // Types
 type ActiveTab = 'packages' | 'trips'
-type PackageSortBy = 'title' | 'createdAt' | 'updatedAt' | 'offeredPrice' | 'pickupDate'
-type TripSortBy = 'title' | 'createdAt' | 'updatedAt' | 'departureDate' | 'arrivalDate' | 'pricePerKg'
+type PackageSortBy = 'title' | 'createdAt' | 'updatedAt' | 'offeredPrice' | 'finalPrice' | 'value' | 'pickupDate' | 'deliveryDate' | 'category' | 'priority'
+type TripSortBy = 'title' | 'createdAt' | 'updatedAt' | 'departureDate' | 'arrivalDate' | 'pricePerKg' | 'minimumPrice' | 'maximumPrice' | 'maxWeight' | 'availableSpace' | 'transportMode'
 type SortOrder = 'asc' | 'desc'
 
-// Updated Package filter interface
+// Updated Package filter interface - matching Prisma schema
 interface PackageFiltersState {
     status?: string
     category?: string
     offeredPriceMin?: number
     offeredPriceMax?: number
+    finalPriceMin?: number
+    finalPriceMax?: number
+    valueMin?: number
+    valueMax?: number
     pickupDateFrom?: string
     pickupDateTo?: string
     deliveryDateFrom?: string
     deliveryDateTo?: string
-    weightMin?: number
-    weightMax?: number
     isFragile?: boolean
-    isPerishable?: boolean
     requiresSignature?: boolean
+    priority?: string
+    pickupCity?: string
+    pickupCountry?: string
+    deliveryCity?: string
+    deliveryCountry?: string
 }
 
-// Updated Trip filter interface
+// Updated Trip filter interface - matching Prisma schema
 interface TripFiltersState {
     status?: string
     transportMode?: string
     pricePerKgMin?: number
     pricePerKgMax?: number
+    minimumPriceMin?: number
+    minimumPriceMax?: number
+    maximumPriceMin?: number
+    maximumPriceMax?: number
     departureDateFrom?: string
     departureDateTo?: string
     arrivalDateFrom?: string
     arrivalDateTo?: string
     maxWeightMin?: number
     maxWeightMax?: number
-    canCarryFragile?: boolean
-    canCarryPerishable?: boolean
+    availableSpaceMin?: number
+    availableSpaceMax?: number
+    flexibleDates?: boolean
+    originCity?: string
+    originCountry?: string
+    destinationCity?: string
+    destinationCountry?: string
 }
 
 // API Query parameters interface
@@ -84,6 +101,10 @@ function PackagesPageContent() {
     const tabFromQuery = searchParams.get('tab') as ActiveTab | null
     const { getCurrentUser } = useAuth()
     const { data: user } = getCurrentUser
+
+    console.log('Current User:', user)
+    const findOrCreateChat = useFindOrCreateChat()
+    const sendMessage = useSendMessage()
 
     const [activeTab, setActiveTab] = useState<ActiveTab>(tabFromQuery || 'packages')
     const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false)
@@ -125,11 +146,8 @@ function PackagesPageContent() {
         pickupDateTo: undefined,
         deliveryDateFrom: undefined,
         deliveryDateTo: undefined,
-        weightMin: undefined,
-        weightMax: undefined,
-        isFragile: false,
-        isPerishable: false,
-        requiresSignature: false,
+        isFragile: undefined,
+        requiresSignature: undefined,
     })
 
     // Trip-specific state
@@ -149,8 +167,7 @@ function PackagesPageContent() {
         arrivalDateTo: undefined,
         maxWeightMin: undefined,
         maxWeightMax: undefined,
-        canCarryFragile: false,
-        canCarryPerishable: false,
+        flexibleDates: undefined,
     })
 
     // Assignment and messaging state
@@ -244,31 +261,19 @@ function PackagesPageContent() {
             return;
         }
 
-        try {
-            const response = await fetch('/api/chats', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    participantId: participantId,
-                    itemType: activeTab === 'packages' ? 'package' : 'trip',
-                    itemId: itemData.id,
-                }),
-            });
 
-            if (!response.ok) {
-                throw new Error('Failed to create or find chat');
+
+        findOrCreateChat.mutate({
+            participantId: participantId,
+            itemType: activeTab === 'packages' ? 'package' : 'trip',
+            itemId: itemData.id,
+        }, {
+            onSuccess: (chatData) => {
+                setSelectedChatItem(chatData);
+                setIsMessagingOpen(true);
+
             }
-
-            const chatData = await response.json();
-            
-            setSelectedChatItem(chatData);
-            setIsMessagingOpen(true);
-        } catch (error) {
-            console.error('Error handling message:', error);
-            alert('Could not open chat. Please try again.');
-        }
+        });
     }
 
     // Helper function to get current query and page based on active tab
@@ -335,22 +340,32 @@ function PackagesPageContent() {
     }
 
     const handleSendMessage = async (content: string, type?: string) => {
-        try {
-            console.log('Sending message:', { content, type })
-        } catch (error) {
-            console.error('Message sending failed:', error)
-            alert('Failed to send message. Please try again.')
-        }
+        if (!selectedChatItem) return;
+        sendMessage.mutate({
+            chatId: selectedChatItem.id,
+            data: { content, type: type || 'TEXT', chatId: selectedChatItem.id }
+        }, {
+            onSuccess: (data) => {
+                console.log('Message sent successfully:', data);
+                selectedChatItem.messages.push(data);
+                setSelectedChatItem({ ...selectedChatItem });
+            },
+            onError: (error) => {
+                console.error('Failed to send message:', error);
+            }
+        });
+
+
     }
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="max-w-[96rem] min-h-screen bg-white mx-auto">
             {/* Header */}
-            <header className="flex items-center justify-between gap-4 w-full p-4 bg-white border-b border-gray-200 sticky top-0 z-30 shadow-sm">
+            <header className="flex items-center justify-between gap-4 w-full p-4 bg-white sticky top-0 z-30 mx-4">
                 <div className="flex items-center gap-4">
                     <Button
                         variant="ghost"
-                        className="md:hidden"
+                        className="!p-0"
                         onClick={() => setIsNavSidebarOpen(true)}
                     >
                         <Menu className="h-6 w-6" />
@@ -358,14 +373,14 @@ function PackagesPageContent() {
                     <h1 className="text-2xl font-bold text-gray-900 uppercase hidden sm:block">Pauggage</h1>
                 </div>
 
-                <div className="hidden md:flex flex-grow justify-center">
+                {/* <div className="hidden lg:flex flex-grow justify-center">
                     <MainNavigation />
-                </div>
+                </div> */}
 
 
                 {/* Search Bar & Filter Toggle */}
-                <div className="flex flex-1 md:flex-none items-center gap-2 justify-end">
-                    <div className="relative flex-1 max-w-xs sm:max-w-sm md:max-w-md">
+                <div className="flex w-full max-w-3xl md:flex-none items-center gap-2 justify-end">
+                    <div className="w-full relative flex-1 ">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input
                             type="text"
@@ -407,7 +422,7 @@ function PackagesPageContent() {
             <div className="flex items-start">
                 {/* Mobile Navigation sidebar */}
                 {isNavSidebarOpen && (
-                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 md:hidden" onClick={() => setIsNavSidebarOpen(false)}>
+                    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 " onClick={() => setIsNavSidebarOpen(false)}>
                         <div className="fixed inset-y-0 left-0 w-80 bg-white flex flex-col" onClick={(e) => e.stopPropagation()}>
                             <NavSidebarContent user={user} onLinkClick={() => setIsNavSidebarOpen(false)} />
                         </div>
@@ -450,7 +465,7 @@ function PackagesPageContent() {
 
                 {/* Desktop filter sidebar */}
                 {!currentQuery.isLoading && (
-                    <div className="hidden md:block sticky top-[81px] h-[calc(100vh-81px)] overflow-y-auto p-8 w-96 bg-white border-r border-gray-200">
+                    <div className="hidden lg:block sticky top-[81px] h-[calc(100vh-81px)] overflow-y-auto p-8 w-96 bg-white border-x border-gray-200">
                         <SidebarContent
                             activeTab={activeTab}
                             packageFilters={packageFilters}
@@ -479,9 +494,9 @@ function PackagesPageContent() {
                         />
                     </div>)}
 
-                <div className="flex-1 mx-auto px-4 sm:px-6 lg:px-8 py-6">
+                <div className="flex-1 mx-auto py-8">
                     {/* Content */}
-                    <div className="px-6 py-6">
+                    <div className="">
                         {currentQuery.isLoading ? (
                             <div className="flex justify-center items-center h-64">
                                 <LoadingSpinner size="lg" />
@@ -496,7 +511,7 @@ function PackagesPageContent() {
                         ) : (
                             <>
                                 {/* Results Grid */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {paginatedResult.data?.map((item: any) => (
                                         <div key={item.id} className="h-full">
                                             {activeTab === 'packages' ? (
@@ -567,4 +582,11 @@ function PackagesPageContent() {
 }
 
 
-export default PackagesPageContent
+export default function PackagesPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <PackagesPageContent />
+            <Footer />
+        </Suspense>
+    )
+}

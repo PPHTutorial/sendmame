@@ -119,7 +119,7 @@ export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, curre
 
     return (
         <div
-            className="group bg-white border border-gray-200 rounded-xl hover:border-teal-300 hover:shadow-lg hover:scale-[1.05] transition-all duration-300 cursor-pointer overflow-hidden"
+            className="group bg-white border border-gray-200 rounded-xl hover:border-teal-300 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 cursor-pointer overflow-hidden"
             onClick={handleItemDetails}
         >
             <div className="p-6">
@@ -174,21 +174,21 @@ export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, curre
 
                 {/* Package Details */}
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex items-center space-x-2 mb-1">
+                    <div className="flex flex-col bg-gray-50 rounded-lg p-3 justify-center">
+                        <div className="flex items-center justify-center space-x-2 mb-1">
                             <Luggage className="w-4 h-4 text-gray-600" />
                             <span className="text-xs font-medium text-gray-700 uppercase tracking-wide">Dimensions</span>
                         </div>
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-sm text-center font-semibold text-gray-900">
                             {pkg.dimensions?.length || 0} × {pkg.dimensions?.width || 0} × {pkg.dimensions?.height || 0} cm
                         </span>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex items-center space-x-2 mb-1">
+                    <div className="flex flex-col justify-center bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center justify-center space-x-2 mb-1">
                             <FaScaleBalanced className="w-4 h-4 text-gray-600" />
                             <span className="text-xs font-medium text-gray-700 uppercase tracking-wide">Weight</span>
                         </div>
-                        <span className="text-sm font-semibold text-gray-900">
+                        <span className="text-sm text-center font-semibold text-gray-900">
                             {pkg.dimensions?.weight.toFixed(2) || 0} kg
                         </span>
                     </div>

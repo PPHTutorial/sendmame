@@ -370,18 +370,73 @@ export function buildWhereClause(filters: Record<string, any>, modelType?: 'pack
             { title: { contains: value, mode: 'insensitive' } },
             { description: { contains: value, mode: 'insensitive' } },
             { category: { contains: value, mode: 'insensitive' } },
-            { pickupLocationAddress: { contains: value, mode: 'insensitive' } },
-            { dropoffLocationAddress: { contains: value, mode: 'insensitive' } },
+            { specialInstructions: { contains: value, mode: 'insensitive' } },
+            // Search in JSON address fields
+            { pickupAddress: { path: ['city'], string_contains: value } },
+            { pickupAddress: { path: ['country'], string_contains: value } },
+            { pickupAddress: { path: ['state'], string_contains: value } },
+            { pickupAddress: { path: ['street'], string_contains: value } },
+            { deliveryAddress: { path: ['city'], string_contains: value } },
+            { deliveryAddress: { path: ['country'], string_contains: value } },
+            { deliveryAddress: { path: ['state'], string_contains: value } },
+            { deliveryAddress: { path: ['street'], string_contains: value } },
           ]
         } else if (modelType === 'trip') {
           where.OR = [
             { title: { contains: value, mode: 'insensitive' } },
-            { description: { contains: value, mode: 'insensitive' } },
             { transportMode: { contains: value, mode: 'insensitive' } },
-            { departureCity: { contains: value, mode: 'insensitive' } },
-            { arrivalCity: { contains: value, mode: 'insensitive' } },
+            // Search in JSON address fields
+            { originAddress: { path: ['city'], string_contains: value } },
+            { originAddress: { path: ['country'], string_contains: value } },
+            { originAddress: { path: ['state'], string_contains: value } },
+            { originAddress: { path: ['street'], string_contains: value } },
+            { destinationAddress: { path: ['city'], string_contains: value } },
+            { destinationAddress: { path: ['country'], string_contains: value } },
+            { destinationAddress: { path: ['state'], string_contains: value } },
+            { destinationAddress: { path: ['street'], string_contains: value } },
           ]
         }
+      } else if (key === 'pickupCity' && typeof value === 'string') {
+        where.pickupAddress = { path: ['city'], string_contains: value }
+      } else if (key === 'pickupCountry' && typeof value === 'string') {
+        where.pickupAddress = { path: ['country'], string_contains: value }
+      } else if (key === 'deliveryCity' && typeof value === 'string') {
+        where.deliveryAddress = { path: ['city'], string_contains: value }
+      } else if (key === 'deliveryCountry' && typeof value === 'string') {
+        where.deliveryAddress = { path: ['country'], string_contains: value }
+      } else if (key === 'originCity' && typeof value === 'string') {
+        where.originAddress = { path: ['city'], string_contains: value }
+      } else if (key === 'originCountry' && typeof value === 'string') {
+        where.originAddress = { path: ['country'], string_contains: value }
+      } else if (key === 'destinationCity' && typeof value === 'string') {
+        where.destinationAddress = { path: ['city'], string_contains: value }
+      } else if (key === 'pickupLatitude' && typeof value === 'number' && filters.pickupLongitude && filters.locationRadius) {
+        // Location-based filtering for pickup
+        const radius = filters.locationRadius || 50
+        const radiusDegrees = radius / 111.32 // Convert km to degrees
+        where.pickupLatitude = { gte: value - radiusDegrees, lte: value + radiusDegrees }
+        where.pickupLongitude = { gte: Number(filters.pickupLongitude) - radiusDegrees, lte: Number(filters.pickupLongitude) + radiusDegrees }
+      } else if (key === 'deliveryLatitude' && typeof value === 'number' && filters.deliveryLongitude && filters.locationRadius) {
+        // Location-based filtering for delivery
+        const radius = filters.locationRadius || 50
+        const radiusDegrees = radius / 111.32 // Convert km to degrees
+        where.deliveryLatitude = { gte: value - radiusDegrees, lte: value + radiusDegrees }
+        where.deliveryLongitude = { gte: Number(filters.deliveryLongitude) - radiusDegrees, lte: Number(filters.deliveryLongitude) + radiusDegrees }
+      } else if (key === 'originLatitude' && typeof value === 'number' && filters.originLongitude && filters.locationRadius) {
+        // Location-based filtering for trip origin
+        const radius = filters.locationRadius || 50
+        const radiusDegrees = radius / 111.32 // Convert km to degrees
+        where.originLatitude = { gte: value - radiusDegrees, lte: value + radiusDegrees }
+        where.originLongitude = { gte: Number(filters.originLongitude) - radiusDegrees, lte: Number(filters.originLongitude) + radiusDegrees }
+      } else if (key === 'destinationLatitude' && typeof value === 'number' && filters.destinationLongitude && filters.locationRadius) {
+        // Location-based filtering for trip destination
+        const radius = filters.locationRadius || 50
+        const radiusDegrees = radius / 111.32 // Convert km to degrees
+        where.destinationLatitude = { gte: value - radiusDegrees, lte: value + radiusDegrees }
+        where.destinationLongitude = { gte: Number(filters.destinationLongitude) - radiusDegrees, lte: Number(filters.destinationLongitude) + radiusDegrees }
+      } else if (key === 'locationRadius') {
+        // Skip this as it's handled above with coordinates
+        continue
       } else if (key.endsWith('Min')) {
         const field = key.replace('Min', '')
         where[field] = { ...where[field], gte: Number(value) }

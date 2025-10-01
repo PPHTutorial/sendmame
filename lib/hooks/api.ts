@@ -484,7 +484,23 @@ export function useChat(id: string) {
     queryKey: ['chat', id],
     queryFn: () => chatApi.getChat(id),
     enabled: !!id,
-    refetchInterval: 5000, // Refetch every 5 seconds for real-time feel
+    refetchInterval: 5000, 
+  })
+}
+
+export function useFindOrCreateChat() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (data: { participantId: string; itemType: 'package' | 'trip'; itemId: string }) =>
+      chatApi.createChat(data),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['chats'] })
+      queryClient.setQueryData(['chat', data.id], data)
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Could not open chat. Please try again.')
+    },
   })
 }
 
@@ -507,14 +523,53 @@ export function useSendMessage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ chatId, data }: { chatId: string; data: any }) =>
+    mutationFn: ({ chatId, data }: { chatId: string; data: { content: string; type?: string , chatId: string } }) =>
       chatApi.sendMessage(chatId, data),
-    onSuccess: (_, { chatId }) => {
+    
+    onMutate: async ({ chatId, data }) => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: ['chat', chatId] })
+
+      // Snapshot the previous value
+      const previousChat = queryClient.getQueryData(['chat', chatId])
+
+      // Optimistically update to the new value
+      queryClient.setQueryData(['chat', chatId], (old: any) => {
+        if (!old) return old
+        const currentUser = queryClient.getQueryData(['user']) as any;
+
+        const newMessage = {
+          id: `temp-${Date.now()}`, // Temporary ID
+          content: data.content,
+          senderId: currentUser?.id || 'optimistic-user-id',
+          createdAt: new Date().toISOString(),
+          messageType: data.type || 'text',
+          attachments: [],
+          isEdited: false,
+        };
+
+        return {
+          ...old,
+          messages: [...old.messages, newMessage],
+        }
+      })
+
+      // Return a context object with the snapshotted value
+      return { previousChat }
+    },
+    
+    onError: (err, { chatId }, context) => {
+      // Rollback to the previous value on error
+      if (context?.previousChat) {
+        queryClient.setQueryData(['chat', chatId], context.previousChat)
+      }
+      toast.error('Failed to send message. Please try again.')
+    },
+    
+    onSettled: (data, error, { chatId }) => {
+      // Always refetch after error or success to ensure data consistency
       queryClient.invalidateQueries({ queryKey: ['chat', chatId] })
       queryClient.invalidateQueries({ queryKey: ['chats'] })
-    },
-    onError: (error: Error) => {
-      
     },
   })
 }

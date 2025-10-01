@@ -105,6 +105,13 @@ model User {
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
 
+  // Subscription information
+  subscriptionTier     String?            @default("FREE")
+  subscriptionStatus   String?            @default("INACTIVE")
+  stripeCustomerId     String?            @unique
+  subscriptionId       String?            @unique
+  lastPaymentDate      DateTime?
+
   // Profile information
   profile UserProfile?
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { createErrorResponse, createSuccessResponse } from '@/lib/api/utils'
 
 // GET /api/chats/[id] - Get specific chat with messages
 export async function GET(
@@ -73,12 +74,12 @@ export async function GET(
     })
 
     if (!chat) {
-      return NextResponse.json({ error: 'Chat not found' }, { status: 404 })
+      return createErrorResponse('Chat not found', 404)
     }
 
-    return NextResponse.json(chat)
+    return createSuccessResponse(chat, 'Chat fetched successfully')
   } catch (error) {
     console.error('Error fetching chat:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return createErrorResponse('Internal server error', 500)
   }
 }

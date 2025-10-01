@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { createErrorResponse, createSuccessResponse } from '@/lib/api/utils'
 
 // GET /api/chats - Get user's chats
 export async function GET(request: NextRequest) {
@@ -66,10 +67,10 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(chats)
+    return createSuccessResponse(chats, 'Chats fetched successfully')
   } catch (error) {
     console.error('Error fetching chats:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return createErrorResponse('Internal server error', 500)
   }
 }
 
@@ -79,16 +80,13 @@ export async function POST(request: NextRequest) {
     const userPayload = await requireAuth(request)
     const userId = userPayload.userId
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return createErrorResponse('Unauthorized', 401)
     }
 
     const { participantId, itemType, itemId } = await request.json()
 
     if (!participantId || !itemType || !itemId) {
-      return NextResponse.json(
-        { error: 'Missing required fields: participantId, itemType, itemId' },
-        { status: 400 }
-      )
+      return createErrorResponse('Missing required fields: participantId, itemType, itemId', 400)
     }
 
     // Check if chat already exists
@@ -165,7 +163,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingChat) {
-      return NextResponse.json(existingChat)
+      return createSuccessResponse(existingChat, 'Chat fetched successfully')
     }
 
     // Create new chat
@@ -227,9 +225,9 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(newChat)
+    return createSuccessResponse(newChat, 'Chat created successfully')
   } catch (error) {
     console.error('Error creating chat:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    return createErrorResponse('Internal server error', 500)
   }
 }

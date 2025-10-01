@@ -8,11 +8,9 @@ import {
   parseSearchParams,
   calculatePagination,
   buildWhereClause,
-  ApiError
 } from '@/lib/api/utils'
 import { requireAuth } from '@/lib/auth'
 import { createPackageSchema, packageSearchSchema } from '@/lib/validations'
-import type { CreatePackageInput, PackageSearchInput } from '@/lib/validations'
 
 // GET /api/packages - List packages with search and pagination
 export const GET = withErrorHandling(async (request: NextRequest) => {
@@ -28,7 +26,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 
   // Add status filter to only show active packages
   where.status = {
-    in: ['POSTED', 'MATCHED', 'IN_TRANSIT']
+    in: ['POSTED', 'MATCHED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED', 'DRAFT', 'DISPUTED'],
   }
 
   

@@ -63,6 +63,22 @@ export const DateInput = ({ value, onChange }: DateInputProps) => (
     />
 )
 
+interface TextInputProps {
+    placeholder: string
+    value: string | undefined
+    onChange: (value: string | undefined) => void
+}
+
+export const TextInput = ({ placeholder, value, onChange }: TextInputProps) => (
+    <Input
+        type="text"
+        placeholder={placeholder}
+        value={value || ''}
+        onChange={(e) => onChange(e.target.value || undefined)}
+        className="w-full"
+    />
+)
+
 interface StatusSelectorProps<T extends string> {
     statuses: readonly T[]
     selectedStatus: T | undefined
@@ -110,4 +126,4 @@ export const packageCategories = [
     'Other',
 ]
 
-export const transportModes = ['Plane', 'Train', 'Bus', 'Car', 'Ship', 'Other']
+export const transportModes = ['car', 'plane', 'train', 'bus', 'ship', 'other']
