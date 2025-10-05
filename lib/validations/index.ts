@@ -1,4 +1,4 @@
-// Fakomame Platform - Validation Schemas
+// Amenade Platform - Validation Schemas
 import { z } from 'zod'
 import { UserRole, PackageStatus, TripStatus } from '@prisma/client'
 import { off } from 'process'

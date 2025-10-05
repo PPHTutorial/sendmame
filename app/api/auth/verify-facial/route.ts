@@ -1,4 +1,4 @@
-// Fakomame Platform - Facial Verification API
+// Amenade Platform - Facial Verification API
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth'
 import prisma from '@/lib/prisma'

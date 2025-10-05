@@ -160,7 +160,7 @@ export function Sidebar({ children }: SidebarProps) {
               </div>
               {isExpanded && (
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Fakomame</h1>
+                  <h1 className="text-xl font-bold text-gray-900">Amenade</h1>
                   <p className="text-xs text-gray-500">Package Delivery</p>
                 </div>
               )}
@@ -374,7 +374,7 @@ export function Sidebar({ children }: SidebarProps) {
             >
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
-            <h1 className="text-lg font-semibold text-gray-900">Fakomame</h1>
+            <h1 className="text-lg font-semibold text-gray-900">Amenade</h1>
             <div className="w-9" /> {/* Spacer for centering */}
           </div>
         </div>

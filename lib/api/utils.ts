@@ -1,4 +1,4 @@
-// Fakomame Platform - API Utilities
+// Amenade Platform - API Utilities
 import { NextRequest, NextResponse } from 'next/server'
 import { ZodError, ZodSchema } from 'zod'
 import type { ApiResponse, ValidationError } from '@/lib/types'

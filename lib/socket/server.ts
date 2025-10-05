@@ -1,4 +1,4 @@
-// Fakomame Platform - Socket.IO Server Configuration
+// Amenade Platform - Socket.IO Server Configuration
 import { Server as HTTPServer } from 'http'
 import { Server as IOServer, Socket } from 'socket.io'
 import { verifyToken } from '@/lib/auth'

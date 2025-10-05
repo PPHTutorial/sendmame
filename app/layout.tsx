@@ -6,32 +6,32 @@ import { Sidebar } from '@/components/navigation/Sidebar'
 import { Roboto } from 'next/font/google'
 
 export const metadata: Metadata = {
-  title: "Fakomame - Community-Driven Package Delivery",
+  title: "Amenade - Community-Driven Package Delivery",
   description: "Connect senders with travelers for fast, reliable, and cost-effective package delivery worldwide.",
   keywords: "package delivery, travel, shipping, logistics, community, global shipping, package transport, courier service",
-  authors: [{ name: "Fakomame Team" }],
-  creator: "Fakomame",
-  publisher: "Fakomame",
+  authors: [{ name: "Amenade Team" }],
+  creator: "Amenade",
+  publisher: "Amenade",
   formatDetection: {
     email: false,
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://fakomame.com'),
+  metadataBase: new URL('https://amenade.com'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: "Fakomame - Community-Driven Package Delivery",
+    title: "Amenade - Community-Driven Package Delivery",
     description: "Connect senders with travelers for fast, reliable, and cost-effective package delivery worldwide.",
-    url: 'https://fakomame.com',
-    siteName: 'Fakomame',
+    url: 'https://amenade.com',
+    siteName: 'Amenade',
     images: [
       {
-        url: 'https://fakomame.com/logo.jpg',
+        url: 'https://amenade.com/logo.jpg',
         width: 1200,
         height: 630,
-        alt: 'Fakomame - Community-Driven Package Delivery',
+        alt: 'Amenade - Community-Driven Package Delivery',
       }
     ],
     locale: 'en_US',
@@ -39,9 +39,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Fakomame - Community-Driven Package Delivery",
+    title: "Amenade - Community-Driven Package Delivery",
     description: "Connect senders with travelers for fast, reliable, and cost-effective package delivery worldwide.",
-    images: ['https://fakomame.com/logo.jpg'],
+    images: ['https://amenade.com/logo.jpg'],
   },
   robots: {
     index: true,

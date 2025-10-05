@@ -1,4 +1,4 @@
-// Fakomame Platform - Socket.IO Client Hook
+// Amenade Platform - Socket.IO Client Hook
 'use client'
 
 import { useEffect, useRef, useState } from 'react'

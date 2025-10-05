@@ -1,4 +1,4 @@
-// Fakomame - Package Delivery Platform Database Schema
+// Amenade - Package Delivery Platform Database Schema
 // Enhanced schema for community-driven package delivery platform
 
 generator client {
@@ -48,7 +48,6 @@ enum PaymentStatus {
   FAILED
   REFUNDED
 }
-
 
 enum TransactionType {
   PAYMENT
@@ -106,11 +105,11 @@ model User {
   updatedAt          DateTime           @updatedAt
 
   // Subscription information
-  subscriptionTier     String?            @default("FREE")
-  subscriptionStatus   String?            @default("INACTIVE")
-  stripeCustomerId     String?            @unique
-  subscriptionId       String?            @unique
-  lastPaymentDate      DateTime?
+  subscriptionTier   String?   @default("FREE")
+  subscriptionStatus String?   @default("INACTIVE")
+  stripeCustomerId   String?   @unique
+  subscriptionId     String?   @unique
+  lastPaymentDate    DateTime?
 
   // Profile information
   profile UserProfile?
@@ -132,9 +131,10 @@ model User {
   receivedReviews Review[] @relation("ReviewReceiver")
 
   // Financial
-  wallet         Wallet?
-  transactions   Transaction[]
-  paymentMethods PaymentMethod[]
+  wallet               Wallet?
+  transactions         Transaction[]
+  subscriptionPayments SubscriptionPayment[]
+  paymentMethods       PaymentMethod[]
 
   // Notifications
   notifications Notification[]
@@ -213,7 +213,7 @@ model VerificationDocument {
 
   type            String
   documentUrl     String
-  backDocumentUrl String? 
+  backDocumentUrl String?
   status          VerificationStatus @default(PENDING)
   rejectionReason String?
   metadata        Json?
@@ -385,7 +385,7 @@ model Message {
 
   content     String
   messageType String   @default("text") // text, image, file, location, system
-  attachments String[] @default([])
+  attachments Json[]  @default([])
 
   isEdited  Boolean @default(false)
   isDeleted Boolean @default(false)
@@ -461,6 +461,9 @@ model Transaction {
   packageId String?
   tripId    String?
 
+  // Subscription payment reference
+  subscriptionPayment SubscriptionPayment?
+
   // Payment gateway details
   paymentMethodId String?
   paymentMethod   PaymentMethod? @relation(fields: [paymentMethodId], references: [id])
@@ -485,6 +488,40 @@ model Transaction {
   updatedAt DateTime @updatedAt
 
   @@map("transactions")
+}
+
+model SubscriptionPayment {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  // Subscription details
+  subscriptionTier String
+  amount           Float
+  currency         String   @default("USD")
+  paymentPeriod    Int      @default(1) // Number of months this payment covers
+  startDate        DateTime @default(now())
+  endDate          DateTime // Calculated end date
+
+  // Payment details
+  status                PaymentStatus @default(COMPLETED)
+  stripeSessionId       String?       @unique // Stripe checkout session ID
+  stripeCustomerId      String? // Stripe customer ID  
+  stripePaymentIntentId String?       @unique // Stripe payment intent ID
+
+  // Related transaction
+  transactionId String?      @unique
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+
+  // Metadata
+  description String?
+  metadata    Json    @default("{}")
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscription_payments")
 }
 
 model PaymentMethod {
@@ -651,14 +688,14 @@ model VerificationToken {
 }
 
 model PasswordReset {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
   expiresAt DateTime
-  used      Boolean  @default(false)
+  used      Boolean   @default(false)
   usedAt    DateTime?
-  
+
   createdAt DateTime @default(now())
 
   @@map("password_resets")
@@ -671,7 +708,7 @@ model EmailVerification {
   code      String
   expiresAt DateTime
   attempts  Int      @default(0)
-  
+
   createdAt DateTime @default(now())
 
   @@map("email_verifications")
@@ -685,8 +722,8 @@ model PhoneVerification {
   code        String
   expiresAt   DateTime
   attempts    Int      @default(0)
-  
-  createdAt   DateTime @default(now())
+
+  createdAt DateTime @default(now())
 
   @@map("phone_verifications")
 }

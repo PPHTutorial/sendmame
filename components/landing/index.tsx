@@ -1,5 +1,5 @@
 /* eslint-disable react/no-unescaped-entities */
-// Fakomame Platform - Landing Page Components
+// Amenade Platform - Landing Page Components
 'use client'
 
 import React from 'react'
@@ -91,7 +91,7 @@ export function ServicesGrid() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-16">
                     <h2 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-                        Why Choose Fakomame?
+                        Why Choose Amenade?
                     </h2>
                     <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                         Experience the future of package delivery with our innovative platform connecting senders with travelers worldwide.

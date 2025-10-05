@@ -1,8 +1,8 @@
-# 🚀 Fakomame - Community-Driven Package Delivery Platform
+# 🚀 Amenade - Community-Driven Package Delivery Platform
 
 > **Connecting senders with travelers for fast, reliable, and cost-effective package delivery worldwide**
 
-Fakomame is a revolutionary package delivery platform that leverages the power of community by connecting people who need to send packages with travelers heading in the same direction. This creates a win-win scenario where senders get affordable delivery options and travelers can earn money while helping their community.
+Amenade is a revolutionary package delivery platform that leverages the power of community by connecting people who need to send packages with travelers heading in the same direction. This creates a win-win scenario where senders get affordable delivery options and travelers can earn money while helping their community.
 
 ## ✨ Features
 
@@ -83,7 +83,7 @@ Fakomame is a revolutionary package delivery platform that leverages the power o
 ## 📁 Project Structure
 
 ```
-fakomame/
+amenade/
 ├── app/                      # Next.js App Router pages
 │   ├── api/                 # API routes
 │   │   ├── auth/           # Authentication endpoints
@@ -115,7 +115,7 @@ fakomame/
 ### 1. Clone & Install
 ```bash
 git clone <repository-url>
-cd fakomame
+cd amenade
 npm install
 ```
 
@@ -223,6 +223,6 @@ Visit `http://localhost:3000` to see the application.
 
 ---
 
-**Made with ❤️ by the Fakomame Team**
+**Made with ❤️ by the Amenade Team**
 
 *Connecting communities, one package at a time.*

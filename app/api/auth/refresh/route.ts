@@ -1,4 +1,4 @@
-// Fakomame Platform - Token Refresh API
+// Amenade Platform - Token Refresh API
 import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { verifyToken, createAccessToken } from '@/lib/auth'

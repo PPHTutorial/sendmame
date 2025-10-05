@@ -46,7 +46,7 @@ export default function LoginPage() {
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-white mb-2">Fakomame</h1>
+              <h1 className="text-2xl font-bold text-white mb-2">Amenade</h1>
             </div>
 
             {/* Login Card */}

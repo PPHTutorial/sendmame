@@ -1,4 +1,4 @@
-// Fakomame Platform - Email Service
+// Amenade Platform - Email Service
 import nodemailer from 'nodemailer'
 
 // Create transporter using SMTP credentials from .env

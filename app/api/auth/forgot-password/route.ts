@@ -1,4 +1,4 @@
-// Fakomame Platform - Forgot Password API
+// Amenade Platform - Forgot Password API
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'

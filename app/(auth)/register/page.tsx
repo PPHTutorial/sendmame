@@ -44,13 +44,13 @@ export default function RegisterPage() {
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                 </svg>
               </div>
-              <h1 className="text-2xl font-bold text-white mb-2">Fakomame</h1>
+              <h1 className="text-2xl font-bold text-white mb-2">Amenade</h1>
             </div>
 
             {/* Register Card */}
             <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-8">
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-white mb-2">Join Fakomame</h2>
+                <h2 className="text-3xl font-bold text-white mb-2">Join Amenade</h2>
                 <p className="text-teal-100">Connect with travelers worldwide</p>
               </div>
 

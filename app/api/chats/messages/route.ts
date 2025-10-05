@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const userPayload = await requireAuth(request)
     const userId = userPayload.userId
 
-    const { chatId, content } = await request.json()
+    const { chatId, content, attachments, type } = await request.json()
 
     if (!chatId || !content) {
       return NextResponse.json(
@@ -38,6 +38,8 @@ export async function POST(request: NextRequest) {
     const message = await prisma.message.create({
       data: {
         content,
+        attachments: attachments || [],
+        messageType: type || 'text',
         senderId: userId,
         chatId: chatId
       },

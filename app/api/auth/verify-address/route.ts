@@ -1,4 +1,4 @@
-// Fakomame Platform - Address Verification API
+// Amenade Platform - Address Verification API
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAuth } from '@/lib/auth'

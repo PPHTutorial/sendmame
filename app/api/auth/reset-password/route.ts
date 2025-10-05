@@ -1,4 +1,4 @@
-// Fakomame Platform - Reset Password API
+// Amenade Platform - Reset Password API
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'

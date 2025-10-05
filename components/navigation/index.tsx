@@ -1,4 +1,4 @@
-// Fakomame Platform - Navigation Header
+// Amenade Platform - Navigation Header
 'use client'
 
 import React, { useState } from 'react'
@@ -27,7 +27,7 @@ export function NavigationHeader() {
                     <div className="flex-shrink-0">
                         <Link href="/" className="flex items-center space-x-2">
                             <span className="text-xl font-bold text-white">
-                                Fakomame
+                                Amenade
                             </span>
                         </Link>
                     </div>
@@ -157,7 +157,7 @@ export function Footer() {
                                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
                                 </svg>
                             </div>
-                            <span className="text-xl font-bold">Fakomame</span>
+                            <span className="text-xl font-bold">Amenade</span>
                         </div>
                         <p className="text-gray-300 mb-6 max-w-md leading-relaxed">
                             Revolutionizing package delivery by connecting senders with travelers worldwide.
@@ -216,7 +216,7 @@ export function Footer() {
                 <div className="border-t border-gray-800 mt-12 pt-8">
                     <div className="flex flex-col md:flex-row justify-between items-center">
                         <div className="text-gray-400 text-sm">
-                            © 2025 Fakomame. All rights reserved.
+                            © 2025 Amenade. All rights reserved.
                         </div>
                         <div className="flex space-x-6 mt-4 md:mt-0">
                             <a href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors">

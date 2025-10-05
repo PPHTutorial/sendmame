@@ -137,7 +137,7 @@ export function AdvancedImageUploader({
           ctx.shadowOffsetY = 2
           
           // Draw watermark in the center
-          ctx.fillText('SendMame', canvas.width / 2, canvas.height / 2)
+          ctx.fillText('Amenade', canvas.width / 2, canvas.height / 2)
           
           // Reset shadow
           ctx.shadowColor = 'transparent'
@@ -759,7 +759,7 @@ export function AdvancedImageUploader({
         ctx.shadowOffsetY = 3
         
         // Draw watermark in the center
-        ctx.fillText('SendMame', bannerWidth / 2, bannerHeight / 2)
+        ctx.fillText('Amenade', bannerWidth / 2, bannerHeight / 2)
         
         // Reset shadow
         ctx.shadowColor = 'transparent'

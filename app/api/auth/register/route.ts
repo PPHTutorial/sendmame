@@ -1,4 +1,4 @@
-// Fakomame Platform - User Registration API
+// Amenade Platform - User Registration API
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import {

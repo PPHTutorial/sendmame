@@ -343,7 +343,7 @@ function DashboardSidebar({
             </div>
             {(!collapsed || isMobile) && (
               <div className="flex flex-col">
-                <span className="text-lg font-bold text-gray-900">Fakomame</span>
+                <span className="text-lg font-bold text-gray-900">Amenade</span>
                 <span className="text-xs text-gray-500">Admin Portal</span>
               </div>
             )}

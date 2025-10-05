@@ -1,4 +1,4 @@
-// Fakomame Platform - Chat Components
+// Amenade Platform - Chat Components
 'use client'
 
 import { useState, useRef, useEffect } from 'react'

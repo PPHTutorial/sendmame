@@ -200,7 +200,7 @@ const SidebarContent = ({
     return (
         <>
             {/* Tab Navigation */}
-            <div className="flex items-center space-x-8 mb-4">
+            <div className="flex items-center space-x-4 mb-4">
                 <button
                     onClick={() => handleTabChange('packages')}
                     className={`pb-2 border-b-2 transition-colors ${activeTab === 'packages'

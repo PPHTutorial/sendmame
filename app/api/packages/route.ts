@@ -1,4 +1,4 @@
-// Fakomame Platform - Packages API Route
+// Amenade Platform - Packages API Route
 import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import {
@@ -87,8 +87,23 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 // POST /api/packages - Create a new package
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const userPayload = await requireAuth(request)
+  
+  // Check subscription status before allowing post creation
+  const { canUserPost } = await import('@/lib/subscription');
+  const postStatus = await canUserPost(userPayload.userId);
+  
+  if (!postStatus.canPost) {
+    const { NextResponse } = await import('next/server');
+    return NextResponse.json({
+      success: false,
+      message: postStatus.message || 'Subscription required to post packages.',
+      remainingPosts: postStatus.remainingPosts || 0,
+      currentTier: postStatus.currentTier,
+      needsSubscription: true
+    }, { status: 403 });
+  }
+  
   const data = await parseRequestBody(request, createPackageSchema)
-
 
   // Create package
   const packageData = await prisma.package.create({

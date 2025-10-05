@@ -1,4 +1,4 @@
-// Fakomame Platform - Trips API Route
+// Amenade Platform - Trips API Route
 import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import { 
@@ -79,6 +79,22 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
 // POST /api/trips - Create a new trip
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const userPayload = await requireAuth(request)
+  
+  // Check subscription status before allowing trip creation
+  const { canUserPost } = await import('@/lib/subscription');
+  const postStatus = await canUserPost(userPayload.userId);
+  
+  if (!postStatus.canPost) {
+    const { NextResponse } = await import('next/server');
+    return NextResponse.json({
+      success: false,
+      message: postStatus.message || 'Subscription required to post trips.',
+      remainingPosts: postStatus.remainingPosts || 0,
+      currentTier: postStatus.currentTier,
+      needsSubscription: true
+    }, { status: 403 });
+  }
+  
   const data = await parseRequestBody(request, createTripSchema)
   
   // Create trip

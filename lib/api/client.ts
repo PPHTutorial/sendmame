@@ -1,4 +1,4 @@
-// Fakomame Platform - API Client
+// Amenade Platform - API Client
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
 import type { ApiResponse } from '@/lib/types'
 

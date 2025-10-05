@@ -1,7 +1,8 @@
-// Fakomame Platform - API Hooks
+// Amenade Platform - API Hooks
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import apiClient, { authApi, userApi, packageApi, tripApi, chatApi, paymentApi, notificationApi } from '@/lib/api/client'
 import { toast } from 'react-hot-toast'
+import { AttachmentData } from '../types'
 
 // Auth hooks
 export function useLogin() {
@@ -523,7 +524,7 @@ export function useSendMessage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ chatId, data }: { chatId: string; data: { content: string; type?: string , chatId: string } }) =>
+    mutationFn: ({ chatId, data }: { chatId: string; data: { content: string; type?: string , chatId: string, attachments?: AttachmentData[] } }) =>
       chatApi.sendMessage(chatId, data),
     
     onMutate: async ({ chatId, data }) => {
@@ -538,13 +539,15 @@ export function useSendMessage() {
         if (!old) return old
         const currentUser = queryClient.getQueryData(['user']) as any;
 
+        console.log('Optimistically adding message with attachments:', data);
+
         const newMessage = {
           id: `temp-${Date.now()}`, // Temporary ID
           content: data.content,
           senderId: currentUser?.id || 'optimistic-user-id',
           createdAt: new Date().toISOString(),
           messageType: data.type || 'text',
-          attachments: [],
+          attachments: data.attachments || [],
           isEdited: false,
         };
 

@@ -1,4 +1,4 @@
-// Fakomame Platform - Authentication Utilities
+// Amenade Platform - Authentication Utilities
 import { SignJWT, jwtVerify } from 'jose'
 import bcrypt from 'bcryptjs'
 import { cookies } from 'next/headers'
@@ -9,11 +9,11 @@ import type { JwtPayload, AuthUser } from '@/lib/types'
 import prisma from './prisma'
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'fakomame-super-secret-key-change-in-production'
+  process.env.JWT_SECRET || 'amenade-super-secret-key-change-in-production'
 )
 
-const JWT_ISSUER = 'fakomame'
-const JWT_AUDIENCE = 'fakomame-users'
+const JWT_ISSUER = 'amenade'
+const JWT_AUDIENCE = 'amenade-users'
 
 // Token expiration times
 const ACCESS_TOKEN_EXPIRY = '7d'

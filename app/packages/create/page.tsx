@@ -1,6 +1,8 @@
 'use client'
 
 import dynamic from 'next/dynamic'
+import { NavHeader, FloatingActionButton } from '@/components/shared'
+import { useAuth } from '@/lib/hooks/api'
 
 const AuthGuard = dynamic(
   () => import('@/components/auth').then(mod => ({ default: mod.AuthGuard })),
@@ -13,17 +15,19 @@ const PackageForm = dynamic(
 )
 
 export default function CreatePackagePage() {
+
+  const { getCurrentUser } = useAuth()
+  const { data: currentUser } = getCurrentUser
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <header className="bg-gradient-to-r from-green-50 to-white border-b border-green-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-6">
-              <h1 className="text-3xl font-bold text-green-800">Send Package</h1>
-            </div>
-          </div>
-        </header>
+      <div className="min-h-screen bg-white">
+        {/* Sticky Header */}
+        <NavHeader
+          title="Send Package"
+          showCreatePackage={false}
+          name={`${currentUser?.firstName} ${currentUser?.lastName}`}
+          email={currentUser?.email || ''}
+        />
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -31,6 +35,9 @@ export default function CreatePackagePage() {
             <PackageForm />
           </div>
         </main>
+
+        {/* Floating Action Button for Mobile */}
+        <FloatingActionButton />
       </div>
     </AuthGuard>
   )

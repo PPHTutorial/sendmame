@@ -1509,12 +1509,12 @@ async function main() {
     },
     {
       title: "🏆 Q4 Community Awards & Recognition",
-      message: "Celebrating our amazing community! This quarter's top performers: 🥇 Sarah Chen (500+ successful deliveries), 🥈 Marcus Rodriguez (Perfect 5.0 rating), 🥉 Lisa Thompson (Community Helper Award). Thank you to all 10,000+ active members who make SendMame the most trusted delivery network. Keep up the excellent work!",
+      message: "Celebrating our amazing community! This quarter's top performers: 🥇 Sarah Chen (500+ successful deliveries), 🥈 Marcus Rodriguez (Perfect 5.0 rating), 🥉 Lisa Thompson (Community Helper Award). Thank you to all 10,000+ active members who make Amenade the most trusted delivery network. Keep up the excellent work!",
       type: NotificationType.SYSTEM_ALERT
     },
     {
       title: "📱 Mobile App Update 3.2.1 Available",
-      message: "Update now for the best SendMame experience! New features: Dark mode, Push notification customization, Enhanced chat interface with photo sharing, Improved search filters, Bug fixes and performance improvements. Download from your app store today. Older versions will be deprecated in 60 days.",
+      message: "Update now for the best Amenade experience! New features: Dark mode, Push notification customization, Enhanced chat interface with photo sharing, Improved search filters, Bug fixes and performance improvements. Download from your app store today. Older versions will be deprecated in 60 days.",
       type: NotificationType.SYSTEM_ALERT
     },
     {
@@ -1529,7 +1529,7 @@ async function main() {
     },
     {
       title: "🌍 Expanding to 15 New Cities!",
-      message: "We're growing! SendMame is now available in Atlanta, Denver, Seattle, Miami, Boston, Austin, Portland, Nashville, Charlotte, San Antonio, Orlando, Pittsburgh, Cincinnati, Kansas City, and Las Vegas! More routes mean more opportunities for both travelers and senders. Start exploring new delivery possibilities today!",
+      message: "We're growing! Amenade is now available in Atlanta, Denver, Seattle, Miami, Boston, Austin, Portland, Nashville, Charlotte, San Antonio, Orlando, Pittsburgh, Cincinnati, Kansas City, and Las Vegas! More routes mean more opportunities for both travelers and senders. Start exploring new delivery possibilities today!",
       type: NotificationType.SYSTEM_ALERT
     },
     {
@@ -1576,7 +1576,7 @@ async function main() {
   
   const personalizedAdminNotifications = [
     {
-      title: "🎉 Welcome to SendMame!",
+      title: "🎉 Welcome to Amenade!",
       message: "Hi {userName}! Welcome to our trusted delivery community. We're excited to have you aboard! To get started: ✅ Complete your profile verification, 📋 Read our safety guidelines, 💬 Join our community chat for tips and support. Our team is here to help if you have any questions. Happy deliveries!",
       condition: (_user: any) => Math.random() > 0.8, // New user onboarding
       type: NotificationType.SYSTEM_ALERT

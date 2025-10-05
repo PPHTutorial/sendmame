@@ -62,7 +62,7 @@ export default function DashboardLayout({
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 text-white">
               <span className="text-xs font-bold">F</span>
             </div>
-            <span className="text-lg font-bold text-gray-900">Fakomame</span>
+            <span className="text-lg font-bold text-gray-900">Amenade</span>
           </div>
           <div className="w-8" />
         </div>

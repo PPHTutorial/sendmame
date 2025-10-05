@@ -9,7 +9,10 @@ import {
     ArrowRight,
     Home,
     Package,
-    MessageSquare
+    MessageSquare,
+    Shield,
+    Clock,
+    Zap
 } from 'lucide-react'
 
 export default function SubscriptionSuccessPage() {
@@ -21,42 +24,66 @@ export default function SubscriptionSuccessPage() {
         const urlParams = new URLSearchParams(window.location.search)
         const session = urlParams.get('session_id')
         setSessionId(session)
-        setIsLoading(false)
+        
+        // Verify the payment and update user's subscription status if needed
+        const verifyPayment = async (sessionId: string) => {
+            try {
+                const response = await fetch('/api/verify-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ sessionId }),
+                });
+                
+                if (!response.ok) {
+                    console.error('Failed to verify payment');
+                }
+            } catch (error) {
+                console.error('Error verifying payment:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        if (session) {
+            verifyPayment(session);
+        } else {
+            setIsLoading(false);
+        }
     }, [])
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50 flex items-center justify-center">
+            <div className="min-h-screen bg-white flex items-center justify-center">
                 <div className="text-center">
-                    <div className="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-                    </div>
-                    <p className="text-gray-600">Verifying your subscription...</p>
+                    <div className="w-16 h-16 border-4 border-teal-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+                    <p className="text-gray-700 font-medium">Verifying your payment...</p>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-teal-50 to-blue-50">
+        <div className="min-h-screen bg-white">
             {/* Success Header */}
-            <div className="bg-gradient-to-r from-green-500 to-teal-600 text-white">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="bg-white border-b border-neutral-200">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                     <div className="text-center">
-                        <div className="flex justify-center mb-6">
-                            <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-xl">
-                                <CheckCircle className="w-12 h-12 text-white" />
+                        <div className="flex justify-center mb-8">
+                            <div className="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center shadow-sm">
+                                <CheckCircle className="w-14 h-14 text-teal-600" />
                             </div>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                            Welcome to SendMame Premium!
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
+                            Payment Successful
                         </h1>
-                        <p className="text-xl text-white/90 max-w-2xl mx-auto">
-                            Your subscription has been activated successfully. You now have access to all premium features.
+                        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                            Thank you for your purchase! Your premium features are now active.
                         </p>
                         {sessionId && (
-                            <p className="text-sm text-white/70 mt-4">
-                                Session ID: {sessionId}
+                            <p className="text-sm text-gray-500 mt-4">
+                                Transaction ID: {sessionId.substring(0, 8)}...{sessionId.substring(sessionId.length - 8)}
                             </p>
                         )}
                     </div>
@@ -64,58 +91,66 @@ export default function SubscriptionSuccessPage() {
             </div>
 
             {/* Success Content */}
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
                 {/* What's Next */}
-                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                    <div className="text-center mb-8">
-                        <Crown className="w-12 h-12 text-teal-500 mx-auto mb-4" />
-                        <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                            You&apos;re All Set!
+                <div className="mb-16">
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl font-bold text-gray-900 mb-3">
+                            Get Started with Your Premium Account
                         </h2>
-                        <p className="text-gray-600">
-                            Here are some things you can do to get started with your premium account
+                        <p className="text-gray-600 max-w-2xl mx-auto">
+                            Your premium membership unlocks all features. Here are some ways to make the most of your subscription.
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Link href="/packages/create">
-                            <div className="group p-6 bg-gradient-to-br from-teal-50 to-blue-50 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer">
-                                <div className="w-12 h-12 bg-gradient-to-r from-teal-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Package className="w-6 h-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Send Your First Package</h3>
-                                <p className="text-gray-600 text-sm">Create and send packages with premium features</p>
-                                <div className="flex items-center text-teal-600 mt-3 group-hover:text-teal-700">
-                                    <span className="text-sm font-medium">Get Started</span>
-                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                                </div>
-                            </div>
-                        </Link>
-
-                        <Link href="/trips/create">
-                            <div className="group p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer">
-                                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Crown className="w-6 h-6 text-white" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Create a Trip</h3>
-                                <p className="text-gray-600 text-sm">Offer your travel services to senders worldwide</p>
-                                <div className="flex items-center text-purple-600 mt-3 group-hover:text-purple-700">
-                                    <span className="text-sm font-medium">Create Trip</span>
-                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <Link href="/packages/create" className="block">
+                            <div className="group h-full bg-white border border-gray-200 rounded-xl hover:border-teal-300 hover:shadow-lg transition-all duration-200 overflow-hidden">
+                                <div className="h-2 bg-teal-600"></div>
+                                <div className="p-6">
+                                    <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-200 transition-colors">
+                                        <Package className="w-6 h-6 text-teal-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Create Package</h3>
+                                    <p className="text-gray-600 mb-5">Post unlimited packages with premium visibility and priority matching.</p>
+                                    <div className="flex items-center text-teal-600 group-hover:text-teal-700">
+                                        <span className="font-medium">Get Started</span>
+                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </div>
                                 </div>
                             </div>
                         </Link>
 
-                        <Link href="/dashboard">
-                            <div className="group p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl hover:shadow-lg transition-all duration-200 cursor-pointer">
-                                <div className="w-12 h-12 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Home className="w-6 h-6 text-white" />
+                        <Link href="/trips/create" className="block">
+                            <div className="group h-full bg-white border border-gray-200 rounded-xl hover:border-teal-300 hover:shadow-lg transition-all duration-200 overflow-hidden">
+                                <div className="h-2 bg-teal-600"></div>
+                                <div className="p-6">
+                                    <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-200 transition-colors">
+                                        <Crown className="w-6 h-6 text-teal-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">Create Trip</h3>
+                                    <p className="text-gray-600 mb-5">Offer your travel services globally with premium verification badge.</p>
+                                    <div className="flex items-center text-teal-600 group-hover:text-teal-700">
+                                        <span className="font-medium">Create Trip</span>
+                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">Explore Dashboard</h3>
-                                <p className="text-gray-600 text-sm">View analytics and manage your account</p>
-                                <div className="flex items-center text-amber-600 mt-3 group-hover:text-amber-700">
-                                    <span className="text-sm font-medium">Go to Dashboard</span>
-                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </Link>
+
+                        <Link href="/dashboard" className="block">
+                            <div className="group h-full bg-white border border-gray-200 rounded-xl hover:border-teal-300 hover:shadow-lg transition-all duration-200 overflow-hidden">
+                                <div className="h-2 bg-teal-600"></div>
+                                <div className="p-6">
+                                    <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4 group-hover:bg-teal-200 transition-colors">
+                                        <Home className="w-6 h-6 text-teal-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-3">View Dashboard</h3>
+                                    <p className="text-gray-600 mb-5">Access detailed analytics and manage all your premium features.</p>
+                                    <div className="flex items-center text-teal-600 group-hover:text-teal-700">
+                                        <span className="font-medium">Go to Dashboard</span>
+                                        <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                    </div>
                                 </div>
                             </div>
                         </Link>
@@ -123,54 +158,62 @@ export default function SubscriptionSuccessPage() {
                 </div>
 
                 {/* Premium Features */}
-                <div className="bg-gradient-to-r from-teal-500 to-blue-600 rounded-2xl p-8 text-white mb-8">
-                    <div className="text-center mb-6">
-                        <h2 className="text-2xl font-bold mb-2">
+                <div className="bg-gray-50 border border-gray-200 rounded-xl p-10 mb-12">
+                    <div className="text-center mb-8">
+                        <h2 className="text-2xl font-bold mb-3 text-gray-900">
                             Your Premium Benefits
                         </h2>
-                        <p className="text-white/90">
-                            Enjoy these exclusive features with your subscription
+                        <p className="text-gray-600 max-w-2xl mx-auto">
+                            You now have access to these exclusive premium features
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="text-center">
-                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mx-auto mb-2">
-                                <Package className="w-5 h-5" />
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+                            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
+                                <Package className="w-5 h-5 text-teal-600" />
                             </div>
-                            <p className="text-sm font-medium">Unlimited Packages</p>
+                            <p className="font-medium text-gray-900">Unlimited Posts</p>
+                            <p className="text-sm text-gray-600 mt-1">Post packages & trips without limitations</p>
                         </div>
-                        <div className="text-center">
-                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mx-auto mb-2">
-                                <CheckCircle className="w-5 h-5" />
+                        
+                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+                            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
+                                <CheckCircle className="w-5 h-5 text-teal-600" />
                             </div>
-                            <p className="text-sm font-medium">Priority Support</p>
+                            <p className="font-medium text-gray-900">Priority Matching</p>
+                            <p className="text-sm text-gray-600 mt-1">Get matched with trusted partners first</p>
                         </div>
-                        <div className="text-center">
-                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mx-auto mb-2">
-                                <Crown className="w-5 h-5" />
+                        
+                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+                            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
+                                <Crown className="w-5 h-5 text-teal-600" />
                             </div>
-                            <p className="text-sm font-medium">Premium Features</p>
+                            <p className="font-medium text-gray-900">Premium Badge</p>
+                            <p className="text-sm text-gray-600 mt-1">Stand out with verified premium status</p>
                         </div>
-                        <div className="text-center">
-                            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mx-auto mb-2">
-                                <MessageSquare className="w-5 h-5" />
+                        
+                        <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
+                            <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
+                                <MessageSquare className="w-5 h-5 text-teal-600" />
                             </div>
-                            <p className="text-sm font-medium">24/7 Support</p>
+                            <p className="font-medium text-gray-900">Priority Support</p>
+                            <p className="text-sm text-gray-600 mt-1">Get help from our team 24/7</p>
                         </div>
                     </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="text-center">
+                <div className="text-center border-t border-gray-200 pt-12">
+                    <h3 className="text-xl font-bold mb-6 text-gray-900">Ready to get started?</h3>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link href="/dashboard">
-                            <Button className="bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200">
+                            <Button className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-4 rounded-lg font-medium shadow-sm hover:shadow transition-all duration-200 min-w-[180px]">
                                 Go to Dashboard
                             </Button>
                         </Link>
                         <Link href="/packages">
-                            <Button variant="outline" className="border-teal-200 text-teal-700 hover:bg-teal-50 px-8 py-3 rounded-xl font-semibold transition-all duration-200">
+                            <Button variant="outline" className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-4 rounded-lg font-medium transition-all duration-200 min-w-[180px]">
                                 Browse Packages
                             </Button>
                         </Link>

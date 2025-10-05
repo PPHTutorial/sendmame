@@ -1,4 +1,4 @@
-// Fakomame Platform - Logout API Route
+// Amenade Platform - Logout API Route
 import { 
   createSuccessResponse, 
   withErrorHandling

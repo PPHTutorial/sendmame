@@ -1,4 +1,4 @@
-// Fakomame Platform - TanStack Query Provider
+// Amenade Platform - TanStack Query Provider
 'use client'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'

@@ -1,4 +1,4 @@
-// Fakomame Platform - Verification Utilities
+// Amenade Platform - Verification Utilities
 import prisma from '@/lib/prisma'
 
 /**

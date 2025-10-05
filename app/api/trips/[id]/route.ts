@@ -1,4 +1,4 @@
-// Fakomame Platform - Individual Trip API Route
+// Amenade Platform - Individual Trip API Route
 import { NextRequest } from 'next/server'
 import prisma from '@/lib/prisma'
 import { 

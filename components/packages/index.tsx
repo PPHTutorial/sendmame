@@ -1,4 +1,4 @@
-// Fakomame Platform - Package Creation Form
+// Amenade Platform - Package Creation Form
 'use client'
 
 import React, { useState } from 'react'

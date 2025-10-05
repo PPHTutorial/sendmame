@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type */
-// Fakomame Platform - Core Type Definitions
+// Amenade Platform - Core Type Definitions
 import { 
   User, 
   UserProfile, 
@@ -197,6 +197,12 @@ export interface CreateChatData {
   packageId?: string
   tripId?: string
   participantIds: string[]
+}
+
+export interface AttachmentData {
+  name: string;
+  data: string; 
+  type: string;
 }
 
 export interface SendMessageData {

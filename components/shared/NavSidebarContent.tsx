@@ -49,7 +49,7 @@ export function NavSidebarContent({ user, onLinkClick }: NavSidebarContentProps)
                         <Package className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-bold text-gray-900">SendMame</h1>
+                        <h1 className="text-lg font-bold text-gray-900">Amenade</h1>
                         <p className="text-xs text-gray-500">Global Delivery</p>
                     </div>
                 </div>

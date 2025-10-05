@@ -1,4 +1,4 @@
-// Fakomame Platform - Verification Progress API
+// Amenade Platform - Verification Progress API
 import { NextRequest, NextResponse } from 'next/server'
 import { getVerificationProgress } from '@/lib/verification-utils'
 import { getServerSession } from 'next-auth'

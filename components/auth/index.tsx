@@ -1,4 +1,4 @@
-// Fakomame Platform - Authentication Components
+// Amenade Platform - Authentication Components
 'use client'
 
 import React, { useState } from 'react'

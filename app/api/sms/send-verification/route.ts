@@ -6,7 +6,7 @@ import { storeVerificationCode } from '@/lib/sms-verification'
 // Nalo Solutions SMS API configuration
 const NALO_API_BASE_URL = 'https://sms.nalosolutions.com/smsbackend/clientapi/Resl_Nalo/send-message/'
 const NALO_API_KEY = process.env.NALO_API_KEY
-const NALO_SENDER_ID = process.env.NALO_SENDER_ID || 'SendMame'
+const NALO_SENDER_ID = process.env.NALO_SENDER_ID || 'Amenade'
 
 interface SMSVerificationRequest {
     phoneNumber: string
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         storeVerificationCode(phoneNumber, verificationCode, userId)
 
         // Prepare SMS message
-        const message = `Your SendMame verification code is: ${verificationCode}. This code will expire in 5 minutes. Do not share this code with anyone.`
+        const message = `Your Amenade verification code is: ${verificationCode}. This code will expire in 5 minutes. Do not share this code with anyone.`
 
         // Clean and format phone number for Nalo Solutions
         // Remove all non-digit characters except +

@@ -13,6 +13,7 @@ import { toast } from 'react-hot-toast'
 import Link from 'next/link'
 import { ArrowLeft, Calendar, MapPin, Package, DollarSign } from 'lucide-react'
 import type { LocationDetails } from '@/lib/types/places'
+import { NavHeader, FloatingActionButton } from '@/components/shared'
 
 export default function CreateTripPage() {
   const router = useRouter()
@@ -135,15 +136,23 @@ export default function CreateTripPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/trips" className="inline-flex items-center text-teal-600 hover:text-teal-700 mb-4">
+    <div className="min-h-screen bg-gray-50">
+      {/* Sticky Header */}
+      <NavHeader 
+        title="Create Trip" 
+        showCreateTrip={false}
+      />
+      
+      {/* Floating Action Button for Mobile */}
+      <FloatingActionButton />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+        {/* Back Navigation */}
+        <div className="mb-6 mt-4">
+          <Link href="/trips" className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Trips
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Post a Trip</h1>
           <p className="mt-2 text-gray-600">
             Share your travel plans and earn money by delivering packages
           </p>

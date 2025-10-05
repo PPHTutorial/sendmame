@@ -1,4 +1,4 @@
-// Fakomame Platform - Professional Email Templates
+// Amenade Platform - Professional Email Templates
 
 interface EmailVerificationData {
   firstName: string

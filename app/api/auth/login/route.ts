@@ -1,4 +1,4 @@
-// Fakomame Platform - Login API Route
+// Amenade Platform - Login API Route
 import { NextRequest } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { 

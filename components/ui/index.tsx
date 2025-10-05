@@ -1,4 +1,4 @@
-// Fakomame Platform - Reusable UI Components
+// Amenade Platform - Reusable UI Components
 import React from 'react'
 import { clsx } from 'clsx'
 

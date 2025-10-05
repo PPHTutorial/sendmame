@@ -6,8 +6,8 @@ import { Metadata } from "next"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
-  title: "Enhanced Analytics Dashboard - SendMame",
-  description: "Comprehensive analytics dashboard with real-time insights, interactive charts, and data-driven metrics for SendMame platform.",
+  title: "Enhanced Analytics Dashboard - Amenade",
+  description: "Comprehensive analytics dashboard with real-time insights, interactive charts, and data-driven metrics for Amenade platform.",
 }
 
 function DashboardSkeleton() {
@@ -86,7 +86,7 @@ export default function DashboardPage() {
     <div className="flex-1 space-y-6 p-8 pt-6">
       <DashboardHeader 
         title="Analytics Dashboard"
-        description="Real-time insights and comprehensive metrics for your SendMame platform"
+        description="Real-time insights and comprehensive metrics for your Amenade platform"
       />
       
       <Suspense fallback={<DashboardSkeleton />}>

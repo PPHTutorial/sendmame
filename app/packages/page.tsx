@@ -8,6 +8,13 @@ import { PackageCard } from '@/components/packages/PackageCard'
 import { TripCard } from '@/components/trips/TripCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
+
+// Define AttachmentData interface
+interface AttachmentData {
+  name: string;
+  data: string; // base64 data
+  type: string;
+}
 import { Pagination } from '@/components/shared/Pagination'
 import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
 import { MessagingInterface } from '@/components/shared/MessagingInterface'
@@ -102,7 +109,6 @@ function PackagesPageContent() {
     const { getCurrentUser } = useAuth()
     const { data: user } = getCurrentUser
 
-    console.log('Current User:', user)
     const findOrCreateChat = useFindOrCreateChat()
     const sendMessage = useSendMessage()
 
@@ -339,11 +345,16 @@ function PackagesPageContent() {
         }
     }
 
-    const handleSendMessage = async (content: string, type?: string) => {
+    const handleSendMessage = async (content: string, type?: string, attachments?: AttachmentData[]) => {
         if (!selectedChatItem) return;
         sendMessage.mutate({
             chatId: selectedChatItem.id,
-            data: { content, type: type || 'TEXT', chatId: selectedChatItem.id }
+            data: { 
+                content, 
+                type: type || 'TEXT', 
+                chatId: selectedChatItem.id,
+                attachments
+            }
         }, {
             onSuccess: (data) => {
                 console.log('Message sent successfully:', data);
@@ -354,14 +365,12 @@ function PackagesPageContent() {
                 console.error('Failed to send message:', error);
             }
         });
-
-
     }
 
     return (
-        <div className="max-w-[96rem] min-h-screen bg-white mx-auto">
+        <div className="flex flex-col items-center max-w-[96rem] min-h-screen bg-white mx-auto">
             {/* Header */}
-            <header className="flex items-center justify-between gap-4 w-full p-4 bg-white sticky top-0 z-30 mx-4">
+            <header className="flex items-center justify-between gap-4 w-full py-4 px-2 bg-white sticky top-0 z-30 ">
                 <div className="flex items-center gap-4">
                     <Button
                         variant="ghost"
@@ -370,7 +379,7 @@ function PackagesPageContent() {
                     >
                         <Menu className="h-6 w-6" />
                     </Button>
-                    <h1 className="text-2xl font-bold text-gray-900 uppercase hidden sm:block">Pauggage</h1>
+                    <h1 className="text-2xl font-bold text-gray-900 uppercase hidden sm:block">Amenade</h1>
                 </div>
 
                 {/* <div className="hidden lg:flex flex-grow justify-center">
@@ -465,7 +474,7 @@ function PackagesPageContent() {
 
                 {/* Desktop filter sidebar */}
                 {!currentQuery.isLoading && (
-                    <div className="hidden lg:block sticky top-[81px] h-[calc(100vh-81px)] overflow-y-auto p-8 w-96 bg-white border-x border-gray-200">
+                    <div className="hidden lg:block sticky top-[81px] h-[calc(100vh-81px)] overflow-y-auto p-4 w-90 bg-white border-l border-gray-200">
                         <SidebarContent
                             activeTab={activeTab}
                             packageFilters={packageFilters}
