@@ -5,31 +5,139 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui'
-import { usePackage } from '@/lib/hooks/api'
+import { usePackage, useAuth, useTrips, useFindOrCreateChat, useSendMessage } from '@/lib/hooks/api'
 import Link from 'next/link'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
-import { MapPin, Calendar, Star, MessageCircle, Edit, Package2, Phone, Weight, AlertTriangle, Shield, Luggage } from 'lucide-react'
+import { MapPin, Calendar, Star, MessageCircle, Edit, Package2, Phone, Weight, AlertTriangle, Shield, Luggage, Video } from 'lucide-react'
 import { authApi } from '@/lib/api/client'
 import { ImageGallery } from '@/components/shared/ImageGallery'
+import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
+import { MessagingInterface } from '@/components/shared/MessagingInterface'
+import { AttachmentData } from '@/lib/types'
+import { NavHeader } from '@/components/shared/NavHeader'
+import { Footer } from '@/components/navigation'
 
 export default function PackageDetailsPage() {
     const params = useParams()
     const router = useRouter()
     const packageId = params.id as string
     const [isMyPost, setIsMyPost] = useState(false)
-
+    
+    // Dialog states
+    const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
+    const [isMessagingOpen, setIsMessagingOpen] = useState(false)
+    const [selectedChatItem, setSelectedChatItem] = useState<any>(null)
+    
+    // API hooks
     const { data: packageData, isLoading, error } = usePackage(packageId)
+    const { getCurrentUser } = useAuth()
+    const { data: user } = getCurrentUser
+    const tripsQuery = useTrips({ 
+        page: 1, 
+        limit: 100,
+        searchQuery: '',
+        filterParams: {}
+    })
+    const findOrCreateChat = useFindOrCreateChat()
+    const sendMessage = useSendMessage()
 
     const pkg = packageData
 
     useEffect(() => {
         const checkIsMyPost = async () => {
             const currentUser = await authApi.getCurrentUser()
-            const isMine = (currentUser?.id === pkg.senderId);
+            const isMine = (currentUser?.id === pkg?.senderId);
             setIsMyPost(isMine);
         };
-        checkIsMyPost();
+        if (pkg) {
+            checkIsMyPost();
+        }
     }, [pkg]);
+
+    // Handler functions
+    const handleSendMessage = async (content: string, type?: string, attachments?: AttachmentData[]) => {
+        if (!selectedChatItem) return;
+        sendMessage.mutate({
+            chatId: selectedChatItem.id,
+            data: { 
+                content, 
+                type: type || 'TEXT', 
+                chatId: selectedChatItem.id,
+                attachments: attachments || []
+            }
+        }, {
+            onSuccess: (data) => {
+                console.log('Message sent successfully:', data);
+                selectedChatItem.messages.push(data);
+                setSelectedChatItem({ ...selectedChatItem });
+            },
+            onError: (error) => {
+                console.error('Failed to send message:', error);
+            }
+        });
+    }
+
+    const handleContactSender = async () => {
+        if (!user?.id) {
+            alert('Please log in to send messages')
+            return
+        }
+
+        const participantId = pkg.senderId;
+        if (!participantId) {
+            alert('Could not determine the sender.');
+            return;
+        }
+
+        findOrCreateChat.mutate({
+            participantId: participantId,
+            itemType: 'package',
+            itemId: pkg.id,
+        }, {
+            onSuccess: (chatData) => {
+                setSelectedChatItem(chatData);
+                setIsMessagingOpen(true);
+            },
+            onError: (error) => {
+                console.error('Failed to create chat:', error);
+                alert('Failed to create chat. Please try again.');
+            }
+        });
+    }
+
+    const handleAddToLuggage = () => {
+        if (!user?.id) {
+            alert('Please log in to add packages to trips')
+            return
+        }
+        setIsAssignmentDialogOpen(true)
+    }
+
+    const handleCallSender = () => {
+        if (pkg?.sender?.phone) {
+            window.open(`tel:${pkg.sender.phone}`, '_self')
+        } else {
+            alert('Phone number not available')
+        }
+    }
+
+    const handleVideoCallSender = () => {
+        // For now, we'll just show an alert. In a real app, you'd integrate with a video calling service
+        alert('Video calling feature will be implemented with a video service integration')
+    }
+
+    const handleAssign = async (assignmentData: any) => {
+        try {
+            console.log('Assignment:', assignmentData)
+            setIsAssignmentDialogOpen(false)
+            // Refresh the data
+            // In a real app, you'd make an API call to assign the package to a trip
+            alert('Package assignment functionality will be implemented with backend integration')
+        } catch (error) {
+            console.error('Assignment failed:', error)
+            alert('Failed to assign package')
+        }
+    }
 
 
     if (isLoading) {
@@ -87,10 +195,11 @@ export default function PackageDetailsPage() {
 
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
+             <NavHeader title='Amenade' email={user?.email} name={`${user?.firstName} ${user?.lastName}`} showMenuItems={true} />
             {/* Header */}
-            <div className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-white ">
+                <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-0">
                     <div className="flex items-center justify-between py-6">
                         <div className="flex items-center space-x-4">
                             {/* <Button
@@ -121,7 +230,7 @@ export default function PackageDetailsPage() {
                                     <span className='hidden lg:block ml-2'>Edit Package</span>
                                 </Button>
                             </Link>}
-                            {!isMyPost && <Button className="flex items-center">
+                            {!isMyPost && <Button className="flex items-center" onClick={handleContactSender}>
                                 <MessageCircle className="w-4 h-4" />
                                 <span className='hidden lg:block ml-2'>Contact Sender</span>
                             </Button>}
@@ -132,7 +241,7 @@ export default function PackageDetailsPage() {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
@@ -313,19 +422,26 @@ export default function PackageDetailsPage() {
                                     </div>
                                 </Link>
                                 <div className="space-y-3">
-                                    <Button className="w-full flex items-center justify-center space-x-2">
-                                        <MessageCircle className="w-4 h-4" />
-                                        <span>Send Message</span>
-                                    </Button>
-                                    <Button variant="outline" className="w-full flex items-center justify-center space-x-2">
-                                        <Phone className="w-4 h-4" />
-                                        <span>Call Sender</span>
-                                    </Button>
-                                    <Button className='w-full flex items-center justify-center space-x-2'
-                                        onClick={() => { }}>
-                                        <Luggage className="size-4" />
-                                        <span >Add to my Luggage</span>
-                                    </Button>
+                                    {!isMyPost && (
+                                        <>
+                                            <Button className="w-full flex items-center justify-center space-x-2" onClick={handleContactSender}>
+                                                <MessageCircle className="w-4 h-4" />
+                                                <span>Send Message</span>
+                                            </Button>
+                                            <Button variant="outline" className="w-full flex items-center justify-center space-x-2" onClick={handleCallSender}>
+                                                <Phone className="w-4 h-4" />
+                                                <span>Call Sender</span>
+                                            </Button>
+                                            <Button variant="outline" className="w-full flex items-center justify-center space-x-2" onClick={handleVideoCallSender}>
+                                                <Video className="w-4 h-4" />
+                                                <span>Video Call</span>
+                                            </Button>
+                                            <Button className='w-full flex items-center justify-center space-x-2' onClick={handleAddToLuggage}>
+                                                <Luggage className="size-4" />
+                                                <span>Add to my Luggage</span>
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -362,6 +478,34 @@ export default function PackageDetailsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Assignment Dialog */}
+            {isAssignmentDialogOpen && (
+                <AssignmentDialog
+                    isOpen={isAssignmentDialogOpen}
+                    onClose={() => setIsAssignmentDialogOpen(false)}
+                    type="package-to-trip"
+                    currentItem={pkg}
+                    availableItems={tripsQuery.data?.data || []}
+                    onAssign={handleAssign}
+                    isLoading={false}
+                />
+            )}
+
+            {/* Messaging Interface */}
+            {isMessagingOpen && selectedChatItem && (
+                <MessagingInterface
+                    isOpen={isMessagingOpen}
+                    onClose={() => {
+                        setIsMessagingOpen(false)
+                        setSelectedChatItem(null)
+                    }}
+                    chat={selectedChatItem}
+                    currentUserId={user?.id || ''}
+                    onSendMessage={handleSendMessage}
+                />
+            )}
+            <Footer />
         </div>
     )
 }

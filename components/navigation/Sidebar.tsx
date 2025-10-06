@@ -159,7 +159,7 @@ export function Sidebar({ children }: SidebarProps) {
                 <span className="text-white font-bold text-sm">F</span>
               </div>
               {isExpanded && (
-                <div>
+                <div className='slect-none cursor-pointer'>
                   <h1 className="text-xl font-bold text-gray-900">Amenade</h1>
                   <p className="text-xs text-gray-500">Package Delivery</p>
                 </div>

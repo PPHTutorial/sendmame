@@ -4,17 +4,17 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/lib/hooks/api'
 import { useParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { Button, Input } from '@/components/ui'
+import { Button, Input, Modal } from '@/components/ui'
 import Link from 'next/link'
 import Image from 'next/image'
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Edit3, 
-  Save, 
-  X, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Edit3,
+  Save,
+  X,
   Camera,
   Settings,
   Package,
@@ -33,6 +33,10 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
+import { NavHeader } from '@/components/shared'
+import { Footer } from '@/components/navigation'
+import { PhoneVerification } from '@/components/verification/PhoneVerification'
+import moment from 'moment'
 
 const AuthGuard = dynamic(
   () => import('@/components/auth').then(mod => ({ default: mod.AuthGuard })),
@@ -65,7 +69,7 @@ interface Activity {
 }
 
 // Profile Header Component with real user data
-function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: any) {
+function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats, onSave }: any) {
   const getVerificationBadge = () => {
     switch (stats?.verificationStatus) {
       case 'VERIFIED':
@@ -99,16 +103,16 @@ function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: a
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-black bg-opacity-20 rounded-xl"></div>
       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-10 transform skew-x-12"></div>
-      
+
       <div className="relative z-10">
         <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-6 lg:space-y-0 lg:space-x-8">
           {/* Profile Picture */}
           <div className="relative">
             <div className="w-28 h-28 lg:w-36 lg:h-36 bg-neutral-500 bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm border-4 border-white border-opacity-30">
               {user?.avatar ? (
-                <Image 
-                  src={user.avatar} 
-                  alt="Profile" 
+                <Image
+                  src={user.avatar}
+                  alt="Profile"
                   width={144}
                   height={144}
                   className="w-full h-full rounded-full object-cover"
@@ -128,21 +132,21 @@ function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: a
           <div className="flex-1">
             <div className="flex items-center space-x-3 mb-2">
               <h1 className="text-3xl lg:text-4xl font-bold">
-                {user?.firstName} {user?.lastName}
+                {user?.firstName} {user?.otherName} {user?.lastName}
               </h1>
               {getVerificationBadge()}
             </div>
-            
+
             <p className="text-white text-opacity-90 mb-2 text-lg">
               @{user?.username || 'username'}
             </p>
-            
+
             {user?.profile?.bio && (
               <p className="text-white text-opacity-80 mb-4 max-w-2xl">
                 {user.profile.bio}
               </p>
             )}
-            
+
             {/* Enhanced Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
               <div className="flex items-center space-x-2">
@@ -165,7 +169,15 @@ function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: a
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-col space-y-3">
+          <div className="flex space-x-3">
+            {isOwnProfile && (
+              <Link href="/account/settings">
+                <Button variant="outline" size="sm">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </Button>
+              </Link>
+            )}
             {isOwnProfile ? (
               !isEditing ? (
                 <Button
@@ -178,7 +190,7 @@ function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: a
               ) : (
                 <div className="flex space-x-2">
                   <Button
-                    onClick={() => setIsEditing(false)}
+                    onClick={onSave}
                     className="bg-green-500 hover:bg-green-600 text-white"
                   >
                     <Save className="w-4 h-4 mr-2" />
@@ -213,26 +225,7 @@ function ProfileHeader({ user, isOwnProfile, isEditing, setIsEditing, stats }: a
 }
 
 // Enhanced Profile Information Component
-function ProfileInformation({ user, isOwnProfile, isEditing }: any) {
-  const [editData, setEditData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    bio: user?.profile?.bio || '',
-    occupation: user?.profile?.occupation || '',
-    currentCity: user?.profile?.currentCity || '',
-    currentCountry: user?.profile?.currentCountry || '',
-    languages: user?.profile?.languages || []
-  })
-
-  const handleInputChange = (field: string, value: string) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }))
-  }
-
+function ProfileInformation({ user, isOwnProfile, isEditing, editData, handleInputChange, onSave, setIsEditing }: any) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
       <div className="flex items-center justify-between mb-6">
@@ -249,7 +242,22 @@ function ProfileInformation({ user, isOwnProfile, isEditing }: any) {
         {/* Personal Information */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Personal Details</h3>
-          
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">User Name</label>
+            {isEditing && isOwnProfile ? (
+              <Input
+                value={editData.username}
+                onChange={(e) => handleInputChange('username', e.target.value)}
+                placeholder="Enter user name"
+              />
+            ) : (
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-900">{user?.username || 'Not provided'}</span>
+              </div>
+            )}
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
             {isEditing && isOwnProfile ? (
@@ -283,10 +291,28 @@ function ProfileInformation({ user, isOwnProfile, isEditing }: any) {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Other Names</label>
+            {isEditing && isOwnProfile ? (
+              <Input
+                value={editData.otherName}
+                onChange={(e) => handleInputChange('otherName', e.target.value)}
+                placeholder="Enter other names"
+              />
+            ) : (
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-900">{user?.otherName || 'Not provided'}</span>
+              </div>
+            )}
+          </div>
+
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
             {isEditing && isOwnProfile ? (
               <Input
                 type="email"
+                disabled
                 value={editData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Enter email address"
@@ -320,7 +346,23 @@ function ProfileInformation({ user, isOwnProfile, isEditing }: any) {
         {/* Professional Information */}
         <div className="space-y-4">
           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Professional Info</h3>
-          
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+            {isEditing && isOwnProfile ? (
+              <Input
+                type='date'
+                value={moment(editData.dateOfBirth).format('YYYY-MM-DD')}
+                onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                placeholder="Enter your date of birth"
+              />
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <span className="text-gray-900">{moment(user?.dateOfBirth).format('dddd, DD [of] MMMM, YYYY') || 'Not provided'}</span>
+              </div>
+            )}  
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
             {isEditing && isOwnProfile ? (
@@ -356,8 +398,8 @@ function ProfileInformation({ user, isOwnProfile, isEditing }: any) {
               <div className="flex items-center space-x-2">
                 <MapPin className="w-4 h-4 text-gray-400" />
                 <span className="text-gray-900">
-                  {user?.profile?.currentCity && user?.profile?.currentCountry 
-                    ? `${user.profile.currentCity}, ${user.profile.currentCountry}` 
+                  {user?.profile?.currentCity && user?.profile?.currentCountry
+                    ? `${user.profile.currentCity}, ${user.profile.currentCountry}`
                     : 'Not provided'}
                 </span>
               </div>
@@ -369,18 +411,18 @@ function ProfileInformation({ user, isOwnProfile, isEditing }: any) {
             {isEditing && isOwnProfile ? (
               <Input
                 value={editData.languages.join(', ')}
-                onChange={(e) => setEditData(prev => ({
-                  ...prev,
-                  languages: e.target.value.split(', ').filter(lang => lang.trim() !== '')
-                }))}
+                onChange={(e) => handleInputChange(
+                  'languages',
+                  e.target.value.split(', ').filter(lang => lang.trim() !== '')
+                )}
                 placeholder="English, Spanish, French..."
               />
             ) : (
               <div className="flex items-center space-x-2">
                 <Globe className="w-4 h-4 text-gray-400" />
                 <span className="text-gray-900">
-                  {user?.profile?.languages?.length > 0 
-                    ? user.profile.languages.join(', ') 
+                  {user?.profile?.languages?.length > 0
+                    ? user.profile.languages.join(', ')
                     : 'Not provided'}
                 </span>
               </div>
@@ -394,7 +436,7 @@ function ProfileInformation({ user, isOwnProfile, isEditing }: any) {
                 value={editData.bio}
                 onChange={(e) => handleInputChange('bio', e.target.value)}
                 placeholder="Tell us about yourself..."
-                rows={4}
+                rows={6}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none focus:border-transparent resize-none"
               />
             ) : (
@@ -405,6 +447,25 @@ function ProfileInformation({ user, isOwnProfile, isEditing }: any) {
           </div>
         </div>
       </div>
+      {isEditing && isOwnProfile && (
+        <div className="flex space-x-2 my-4 w-full justify-end">
+          <Button
+            onClick={onSave}
+            className="bg-green-500 hover:bg-green-600 text-white"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Save
+          </Button>
+          <Button
+            onClick={() => setIsEditing(false)}
+            className="bg-red-500 hover:bg-red-600 text-white"
+          >
+            <X className="w-4 h-4 mr-2" />
+            Cancel
+          </Button>
+        </div>
+      )}
+
     </div>
   )
 }
@@ -451,7 +512,7 @@ function ActivityStats({ stats }: { stats: UserStats }) {
           <span>Performance metrics</span>
         </div>
       </div>
-      
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
         {statItems.map((stat, index) => (
           <div key={index} className="text-center">
@@ -500,14 +561,13 @@ function RecentActivity({ activities, isLoading }: { activities: Activity[], isL
           </Button>
         </Link>
       </div>
-      
+
       <div className="grid grid-cols-2 space-y-4">
         {activities && activities.length > 0 ? (
           activities.map((activity) => (
             <div key={activity.id} className="flex items-start space-x-4 p-4 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className={`w-2 h-2 rounded-full mt-2 ${
-                activity.status === 'completed' || activity.status === 'delivered' ? 'bg-green-500' : 'bg-blue-500'
-              }`}></div>
+              <div className={`w-2 h-2 rounded-full mt-2 ${activity.status === 'completed' || activity.status === 'delivered' ? 'bg-green-500' : 'bg-blue-500'
+                }`}></div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="font-medium text-gray-900">{activity.title}</p>
@@ -534,9 +594,23 @@ export default function ProfilePage() {
   const { getCurrentUser } = useAuth()
   const { data: currentUser } = getCurrentUser
   const params = useParams()
-  
+
   const [isEditing, setIsEditing] = useState(false)
   const [profileUser, setProfileUser] = useState<any>(null)
+  const [editData, setEditData] = useState({
+    firstName: '',
+    lastName: '',
+    otherName: '',
+    username: '',
+    email: '',
+    phone: '',
+    bio: '',
+    dateOfBirth: '',
+    occupation: '',
+    currentCity: '',
+    currentCountry: '',
+    languages: []
+  })
   const [userStats, setUserStats] = useState<UserStats>({
     totalPackagesSent: 0,
     totalTripsCompleted: 0,
@@ -551,10 +625,62 @@ export default function ProfilePage() {
   })
   const [activities, setActivities] = useState<Activity[]>([])
   const [isActivityLoading, setIsActivityLoading] = useState(true)
-  
+  const [isVerifyingPhone, setIsVerifyingPhone] = useState(false)
+
   // Determine if viewing own profile or another user's profile
   const userId = params?.id
   const isOwnProfile = !userId || userId === currentUser?.id
+
+  const handleInputChange = (field: string, value: any) => {
+    setEditData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleSave = async () => {
+    if (!profileUser) return
+
+    const phoneChanged = editData.phone !== profileUser.phone
+
+    console.log(phoneChanged, 'Profile user:', profileUser.phone, "Edited phone", editData.phone)
+
+    console.log('Saving profile with data:', editData)
+
+    setIsVerifyingPhone(phoneChanged)
+
+    try {
+      const response = await fetch(`/api/users/${profileUser.id}/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editData)
+      })
+
+      if (response.ok) {
+        const updatedUser = await response.json()
+        setProfileUser(updatedUser)
+        setIsEditing(false)
+        // TODO: Show success toast
+
+        if (phoneChanged) {
+          // Trigger phone verification flow
+          await fetch('/api/auth/send-phone-verification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: editData.phone })
+          })
+          setIsVerifyingPhone(true)
+        }
+      } else {
+        // TODO: Show error toast
+        console.error('Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error)
+    }
+  }
 
   const fetchUserStats = useCallback(async (userId: string) => {
     try {
@@ -574,6 +700,20 @@ export default function ProfilePage() {
       if (response.ok) {
         const profile = await response.json()
         setProfileUser(profile)
+        setEditData({
+          firstName: profile?.firstName || '',
+          lastName: profile?.lastName || '',
+          otherName: profile?.otherName || '',
+          username: profile?.username || '',
+          dateOfBirth: profile?.dateOfBirth || '',
+          email: profile?.email || '',
+          phone: profile?.phone || '',
+          bio: profile?.profile?.bio || '',
+          occupation: profile?.profile?.occupation || '',
+          currentCity: profile?.profile?.currentCity || '',
+          currentCountry: profile?.profile?.currentCountry || '',
+          languages: profile?.profile?.languages || [],
+        })
       }
     } catch (error) {
       console.error('Failed to fetch user profile:', error)
@@ -606,6 +746,20 @@ export default function ProfilePage() {
     if (isOwnProfile && currentUser) {
       setProfileUser(currentUser)
       loadUserData(currentUser.id)
+      setEditData({
+        firstName: currentUser?.firstName || '',
+        lastName: currentUser?.lastName || '',
+        otherName: currentUser?.otherName || '',
+        username: currentUser?.username || '',
+        email: currentUser?.email || '',
+        dateOfBirth: currentUser?.dateOfBirth || '',
+        phone: currentUser?.phone || '',
+        bio: currentUser?.profile?.bio || '',
+        occupation: currentUser?.profile?.occupation || '',
+        currentCity: currentUser?.profile?.currentCity || '',
+        currentCountry: currentUser?.profile?.currentCountry || '',
+        languages: currentUser?.profile?.languages || [],
+      })
     } else if (userId && typeof userId === 'string') {
       fetchUserProfile(userId)
       loadUserData(userId)
@@ -628,9 +782,10 @@ export default function ProfilePage() {
   return (
     <AuthGuard>
       <div className="min-h-screen bg-gray-50">
+        <NavHeader title='Amenade' email={profileUser?.email} name={`${profileUser?.firstName} ${profileUser?.lastName}`} showMenuItems={true} />
         {/* Header */}
-        <header className="bg-white border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/*  <header className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-4">
               <div className="flex items-center space-x-4">
                 <Link href="/" className="text-blue-600 hover:text-blue-700 flex items-center">
@@ -653,28 +808,45 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-        </header>
+        </header> */}
 
         {/* Main Content */}
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <ProfileHeader 
-            user={profileUser} 
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-8">
+          <ProfileHeader
+            user={profileUser}
             isOwnProfile={isOwnProfile}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
             stats={userStats}
+            onSave={handleSave}
           />
-          
-          <ProfileInformation 
-            user={profileUser} 
+
+          <ProfileInformation
+            user={profileUser}
             isOwnProfile={isOwnProfile}
             isEditing={isEditing}
+            editData={editData}
+            handleInputChange={handleInputChange}
+            onSave={handleSave}
+            setIsEditing={setIsEditing}
           />
-          
+
           <ActivityStats stats={userStats} />
-          
+
           <RecentActivity activities={activities} isLoading={isActivityLoading} />
+
+          {isVerifyingPhone && (
+            <Modal
+              isOpen={true}
+              onClose={() => setIsVerifyingPhone(false)}
+              title="Phone Verification"
+              size="lg"
+            >
+              <PhoneVerification onClose={() => setIsVerifyingPhone(false)} />
+            </Modal>
+          )}
         </main>
+        <Footer />
       </div>
     </AuthGuard>
   )

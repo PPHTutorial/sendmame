@@ -52,10 +52,13 @@ interface PackageCardProps {
     }
     onAddToLuggage?: (packageData: any) => void
     onSendMessage?: (packageData: any) => void
+    onCallSender?: (packageData: any) => void
+    onVideoCallSender?: (packageData: any) => void
+    onContactSender?: (packageData: any) => void
     currentUserId?: string
 }
 
-export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, currentUserId }: PackageCardProps) {
+export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, onCallSender, onVideoCallSender, onContactSender, currentUserId }: PackageCardProps) {
     const router = useRouter()
 
     const getStatusColor = (status: string) => {
@@ -114,6 +117,36 @@ export function PackageCard({ package: pkg, onAddToLuggage, onSendMessage, curre
         }
         if (onAddToLuggage) {
             onAddToLuggage(pkg)
+        }
+    }
+
+    const handleCallSender = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if(!currentUserId){
+            router.push(`/login`)
+        }
+        if (onCallSender) {
+            onCallSender(pkg)
+        }
+    }
+
+    const handleVideoCallSender = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if(!currentUserId){
+            router.push(`/login`)
+        }
+        if (onVideoCallSender) {
+            onVideoCallSender(pkg)
+        }
+    }
+
+    const handleContactSender = async (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if(!currentUserId){
+            router.push(`/login`)
+        }
+        if (onContactSender) {
+            onContactSender(pkg)
         }
     }
 

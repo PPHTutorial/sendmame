@@ -23,6 +23,8 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react'
+import { Footer } from '@/components/navigation'
+import { NavHeader } from '@/components/shared'
 
 const AuthGuard = dynamic(
   () => import('@/components/auth').then(mod => ({ default: mod.AuthGuard })),
@@ -60,7 +62,7 @@ function PersonalInfoSettings({ user }: any) {
   const handleSave = async () => {
     try {
       // API call to update user information
-      const response = await fetch('/api/users/update', {
+      const response = await fetch(`/api/users/${user.id}/profile`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -726,7 +728,7 @@ export default function AccountSettingsPage() {
   if (!currentUser) {
     return (
       <AuthGuard>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-white flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading settings...</p>
@@ -738,34 +740,19 @@ export default function AccountSettingsPage() {
 
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center space-x-4">
-                <Link href="/account/profile" className="text-neutral-600 hover:text-neutral-700 flex items-center">
-                  <ArrowLeft className="w-6 h-6 mr-2" />
-                 
-                </Link>
-                <span className="text-gray-300">|</span>
-                <h1 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <Settings className="w-5 h-5 mr-2" />
-                  Account Settings
-                </h1>
-              </div>
-            </div>
-          </div>
-        </header>
+        <NavHeader title='Amenade' email={currentUser?.email} name={`${currentUser?.firstName} ${currentUser?.lastName}`} showMenuItems={true} />
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-8">
           <PersonalInfoSettings user={currentUser} />
           <SecuritySettings />
           <NotificationSettings />
           <PrivacySettings />
           <AccountManagement />
         </main>
+        <Footer />
       </div>
     </AuthGuard>
   )

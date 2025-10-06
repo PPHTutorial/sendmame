@@ -23,13 +23,48 @@ export async function POST(request: NextRequest) {
 
         // Retrieve the session from Stripe
         const session = await stripe.checkout.sessions.retrieve(sessionId);
-
+        
         // If the session is not completed, return an error
         if (session.status !== 'complete') {
             return NextResponse.json(
                 { error: 'Payment not completed' },
                 { status: 400 }
             );
+        }
+
+        // Check if this payment has already been processed to prevent duplicates
+        const existingTransaction = await prisma.transaction.findFirst({
+            where: {
+                gatewayId: session.payment_intent as string,
+                status: 'COMPLETED',
+                userId: userPayload.userId
+            }
+        });
+
+        if (existingTransaction) {
+            return NextResponse.json({
+                success: true,
+                message: 'Payment already verified and processed'
+            });
+        }
+
+        // Also check by session ID in metadata to catch any edge cases
+        const existingBySessionId = await prisma.transaction.findFirst({
+            where: {
+                userId: userPayload.userId,
+                status: 'COMPLETED',
+                metadata: {
+                    path: ['sessionId'],
+                    equals: sessionId
+                }
+            }
+        });
+
+        if (existingBySessionId) {
+            return NextResponse.json({
+                success: true,
+                message: 'Payment already verified and processed'
+            });
         }
 
         // Map plan IDs to subscription tiers - matching the plans in subscription/page.tsx
@@ -66,14 +101,14 @@ export async function POST(request: NextRequest) {
         const paymentDetails = await stripe.paymentIntents.retrieve(paymentIntent);
         const amount = paymentDetails.amount / 100; // Convert from cents to dollars/pounds
 
-    
+
         try {
             await prisma.transaction.create({
                 data: {
                     userId: userPayload.userId,
                     type: 'PAYMENT',
                     amount: amount,
-                    currency: session.currency?.toUpperCase() || 'GBP',
+                    currency: session.currency?.toUpperCase() || 'USD',
                     status: 'COMPLETED',
                     description: `Subscription payment for ${subscriptionTier} plan`,
                     gatewayId: paymentIntent,

@@ -75,8 +75,8 @@ enum DisputeStatus {
 }
 
 enum ChatType {
-  PACKAGE_NEGOTIATION
-  TRIP_COORDINATION
+  NOTIFICATION
+  CHAT
   SUPPORT
 }
 
@@ -88,6 +88,8 @@ model User {
   password           String?
   firstName          String
   lastName           String
+  otherName          String?
+  username           String?            @unique
   avatar             String?
   dateOfBirth        DateTime?
   role               UserRole           @default(SENDER)
@@ -339,7 +341,7 @@ model Trip {
 
 model Chat {
   id   String   @id @default(cuid())
-  type ChatType @default(PACKAGE_NEGOTIATION)
+  type ChatType @default(CHAT)
 
   // Related entities
   packageId String?
@@ -384,8 +386,8 @@ model Message {
   sender   User   @relation("MessageSender", fields: [senderId], references: [id])
 
   content     String
-  messageType String   @default("text") // text, image, file, location, system
-  attachments Json[]  @default([])
+  messageType String @default("text") // text, image, file, location, system
+  attachments Json[] @default([])
 
   isEdited  Boolean @default(false)
   isDeleted Boolean @default(false)

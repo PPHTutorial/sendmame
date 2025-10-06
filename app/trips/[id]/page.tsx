@@ -5,19 +5,40 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui'
-import { useTrip } from '@/lib/hooks/api'
+import { useTrip, useAuth, usePackages, useFindOrCreateChat, useSendMessage } from '@/lib/hooks/api'
 import Link from 'next/link'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
-import { Calendar, Star, MessageCircle, Edit, Package2, Weight, AlertTriangle, Truck, Clock, Route } from 'lucide-react'
+import { Calendar, Star, MessageCircle, Edit, Package2, Weight, AlertTriangle, Truck, Clock, Route, Phone, Video } from 'lucide-react'
 import { authApi } from '@/lib/api/client'
 import { ImageGallery } from '@/components/shared/ImageGallery'
+import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
+import { MessagingInterface } from '@/components/shared/MessagingInterface'
+import { AttachmentData } from '@/lib/types'
+import { NavHeader } from '@/components/shared/NavHeader'
+import { Footer } from '@/components/navigation'
 
 export default function TripDetailsPage() {
     const params = useParams()
     const tripId = params.id as string
     const [isMyPost, setIsMyPost] = useState(false)
 
+    // Dialog states
+    const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
+    const [isMessagingOpen, setIsMessagingOpen] = useState(false)
+    const [selectedChatItem, setSelectedChatItem] = useState<any>(null)
+
+    // API hooks
     const { data: tripData, isLoading, error } = useTrip(tripId)
+    const { getCurrentUser } = useAuth()
+    const { data: user } = getCurrentUser
+    const packagesQuery = usePackages({
+        page: 1,
+        limit: 100,
+        searchQuery: '',
+        filterParams: {}
+    })
+    const findOrCreateChat = useFindOrCreateChat()
+    const sendMessage = useSendMessage()
 
     const trip = tripData
 
@@ -27,11 +48,96 @@ export default function TripDetailsPage() {
             const isMine = (currentUser?.id === trip?.travelerId);
             setIsMyPost(isMine);
         };
-        
+
         if (trip) {
             checkIsMyPost();
         }
     }, [trip]);
+
+    // Handler functions
+    const handleSendMessage = async (content: string, type?: string, attachments?: AttachmentData[]) => {
+        if (!selectedChatItem) return;
+        sendMessage.mutate({
+            chatId: selectedChatItem.id,
+            data: {
+                content,
+                type: type || 'TEXT',
+                chatId: selectedChatItem.id,
+                attachments: attachments || []
+            }
+        }, {
+            onSuccess: (data) => {
+                console.log('Message sent successfully:', data);
+                selectedChatItem.messages.push(data);
+                setSelectedChatItem({ ...selectedChatItem });
+            },
+            onError: (error) => {
+                console.error('Failed to send message:', error);
+            }
+        });
+    }
+
+    const handleContactTraveler = async () => {
+        if (!user?.id) {
+            alert('Please log in to send messages')
+            return
+        }
+
+        const participantId = trip.travelerId;
+        if (!participantId) {
+            alert('Could not determine the traveler.');
+            return;
+        }
+
+        findOrCreateChat.mutate({
+            participantId: participantId,
+            itemType: 'trip',
+            itemId: trip.id,
+        }, {
+            onSuccess: (chatData) => {
+                setSelectedChatItem(chatData);
+                setIsMessagingOpen(true);
+            },
+            onError: (error) => {
+                console.error('Failed to create chat:', error);
+                alert('Failed to create chat. Please try again.');
+            }
+        });
+    }
+
+    const handleRequestDelivery = () => {
+        if (!user?.id) {
+            alert('Please log in to request delivery')
+            return
+        }
+        setIsAssignmentDialogOpen(true)
+    }
+
+    const handleCallTraveler = () => {
+        if (trip?.traveler?.phone) {
+            window.open(`tel:${trip.traveler.phone}`, '_self')
+        } else {
+            alert('Phone number not available')
+        }
+    }
+
+    const handleVideoCallTraveler = () => {
+        // For now, we'll just show an alert. In a real app, you'd integrate with a video calling service
+        alert('Video calling feature will be implemented with a video service integration')
+    }
+
+    const handleAssign = async (assignmentData: any) => {
+        try {
+            console.log('Assignment:', assignmentData)
+            setIsAssignmentDialogOpen(false)
+            // Refresh the data
+            // In a real app, you'd make an API call to assign packages to the trip
+            alert('Package assignment functionality will be implemented with backend integration')
+        } catch (error) {
+            console.error('Assignment failed:', error)
+            alert('Failed to assign package')
+        }
+    }
 
     if (isLoading) {
         return (
@@ -114,7 +220,7 @@ export default function TripDetailsPage() {
             const diffMs = arrival.getTime() - departure.getTime()
             const hours = Math.floor(diffMs / (1000 * 60 * 60))
             const days = Math.floor(hours / 24)
-            
+
             if (days > 0) {
                 return `${days} day${days > 1 ? 's' : ''} ${hours % 24}h`
             }
@@ -124,11 +230,12 @@ export default function TripDetailsPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-white">
+            <NavHeader title='Amenade' email={user?.email} name={`${user?.firstName} ${user?.lastName}`} showMenuItems={true} />
             {/* Header */}
-            <div className="bg-white border-b border-gray-200">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between py-6">
+            <div className="bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0">
+                    <div className="flex items-center justify-between py-2">
                         <div className="flex items-center space-x-4">
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900">
@@ -154,7 +261,7 @@ export default function TripDetailsPage() {
                                 </Link>
                             )}
                             {!isMyPost && (
-                                <Button className="flex items-center">
+                                <Button className="flex items-center" onClick={handleContactTraveler}>
                                     <MessageCircle className="w-4 h-4" />
                                     <span className='hidden lg:block ml-2'>Contact Traveler</span>
                                 </Button>
@@ -165,7 +272,7 @@ export default function TripDetailsPage() {
             </div>
 
             {/* Main Content */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-0 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
@@ -295,7 +402,7 @@ export default function TripDetailsPage() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 sticky top-6">
                             <div className="p-6">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Pricing</h2>
-                                
+
                                 <div className="space-y-4">
                                     {trip.pricePerKg && (
                                         <div className="text-center">
@@ -325,7 +432,11 @@ export default function TripDetailsPage() {
                                     )}
 
                                     <div className="pt-4">
-                                        <Button className="w-full" disabled={isMyPost}>
+                                        <Button
+                                            className="w-full"
+                                            disabled={isMyPost}
+                                            onClick={!isMyPost ? handleRequestDelivery : undefined}
+                                        >
                                             {isMyPost ? 'Your Trip' : 'Request Delivery'}
                                         </Button>
                                     </div>
@@ -337,7 +448,7 @@ export default function TripDetailsPage() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                             <div className="p-6">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Traveler</h2>
-                                
+
                                 <div className="flex items-center space-x-3 mb-4">
                                     <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
                                         {trip.traveler?.avatar ? (
@@ -369,13 +480,13 @@ export default function TripDetailsPage() {
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-gray-500">Member since</span>
                                         <span className="text-gray-900">
-                                            {new Date(trip.traveler?.createdAt || trip.createdAt).toLocaleDateString('en-US', { 
-                                                year: 'numeric', 
-                                                month: 'long' 
+                                            {new Date(trip.traveler?.createdAt || trip.createdAt).toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'long'
                                             })}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="flex items-center justify-between text-sm">
                                         <span className="text-gray-500">Active packages</span>
                                         <span className="text-gray-900">{trip._count?.packages || 0}</span>
@@ -383,10 +494,18 @@ export default function TripDetailsPage() {
                                 </div>
 
                                 {!isMyPost && (
-                                    <div className="mt-4 pt-4 border-t border-gray-200">
-                                        <Button variant="outline" className="w-full">
+                                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
+                                        <Button variant="outline" className="w-full" onClick={handleContactTraveler}>
                                             <MessageCircle className="w-4 h-4 mr-2" />
                                             Message Traveler
+                                        </Button>
+                                        <Button variant="outline" className="w-full" onClick={handleCallTraveler}>
+                                            <Phone className="w-4 h-4 mr-2" />
+                                            Call Traveler
+                                        </Button>
+                                        <Button variant="outline" className="w-full" onClick={handleVideoCallTraveler}>
+                                            <Video className="w-4 h-4 mr-2" />
+                                            Video Call
                                         </Button>
                                     </div>
                                 )}
@@ -397,7 +516,7 @@ export default function TripDetailsPage() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                             <div className="p-6">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Trip Stats</h2>
-                                
+
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-2">
@@ -408,7 +527,7 @@ export default function TripDetailsPage() {
                                             {trip._count?.packages || 0} booked
                                         </span>
                                     </div>
-                                    
+
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-2">
                                             <MessageCircle className="w-4 h-4 text-gray-400" />
@@ -418,7 +537,7 @@ export default function TripDetailsPage() {
                                             {trip._count?.chats || 0} conversations
                                         </span>
                                     </div>
-                                    
+
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center space-x-2">
                                             <Clock className="w-4 h-4 text-gray-400" />
@@ -434,6 +553,35 @@ export default function TripDetailsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Assignment Dialog */}
+            {isAssignmentDialogOpen && (
+                <AssignmentDialog
+                    isOpen={isAssignmentDialogOpen}
+                    onClose={() => setIsAssignmentDialogOpen(false)}
+                    type="trip-to-package"
+                    currentItem={trip}
+                    availableItems={packagesQuery.data?.data || []}
+                    onAssign={handleAssign}
+                    isLoading={false}
+                />
+            )}
+
+            {/* Messaging Interface */}
+            {isMessagingOpen && selectedChatItem && (
+                <MessagingInterface
+                    isOpen={isMessagingOpen}
+                    onClose={() => {
+                        setIsMessagingOpen(false)
+                        setSelectedChatItem(null)
+                    }}
+                    chat={selectedChatItem}
+                    currentUserId={user?.id || ''}
+                    onSendMessage={handleSendMessage}
+                />
+            )}
+
+            <Footer />
         </div>
     )
 }

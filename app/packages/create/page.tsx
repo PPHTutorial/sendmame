@@ -27,6 +27,7 @@ export default function CreatePackagePage() {
           showCreatePackage={false}
           name={`${currentUser?.firstName} ${currentUser?.lastName}`}
           email={currentUser?.email || ''}
+          showMenuItems={false}
         />
 
         {/* Main Content */}

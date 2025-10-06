@@ -1,19 +1,19 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  Menu, 
-  X, 
-  User, 
-  Package, 
-  Map, 
-  Bell, 
-  ChevronDown, 
-  LogOut, 
-  Settings, 
-  CreditCard, 
+import {
+  Menu,
+  X,
+  User,
+  Package,
+  Map,
+  Bell,
+  ChevronDown,
+  LogOut,
+  Settings,
+  CreditCard,
   HelpCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui'
@@ -22,23 +22,27 @@ interface NavHeaderProps {
   title: string
   showCreateTrip?: boolean
   showCreatePackage?: boolean
+  showMenuItems: boolean
   transparent?: boolean
   name?: string
   email?: string
 }
 
-export const NavHeader: React.FC<NavHeaderProps> = ({ 
-  title, 
-  showCreateTrip = true, 
+export const NavHeader: React.FC<NavHeaderProps> = ({
+  title,
+  showCreateTrip = true,
   showCreatePackage = true,
   transparent = false,
-  name, email
+  name,
+  email,
+  showMenuItems = true
 }) => {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const pathname = usePathname()
-  
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
   // Handle scroll events to apply styling to header
   useEffect(() => {
     const handleScroll = () => {
@@ -48,22 +52,56 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
         setIsScrolled(false)
       }
     }
-    
+
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const headerClass = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-    isScrolled || !transparent
-      ? 'bg-white shadow shadow-neutral-100 py-3'
-      : 'bg-transparent py-5'
-  }`
-  
+  // Handle click outside to close user menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false)
+      }
+    }
+
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isUserMenuOpen])
+
+  // Handle escape key to close user menu
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsUserMenuOpen(false)
+        setIsMobileMenuOpen(false)
+      }
+    }
+
+    if (isUserMenuOpen || isMobileMenuOpen) {
+      document.addEventListener('keydown', handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isUserMenuOpen, isMobileMenuOpen])
+
+  const headerClass = `fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || !transparent
+    ? 'bg-white shadow shadow-neutral-100 py-3'
+    : 'bg-transparent py-5'
+    }`
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
     setIsUserMenuOpen(false)
   }
-  
+
   const toggleUserMenu = () => {
     setIsUserMenuOpen(!isUserMenuOpen)
     setIsMobileMenuOpen(false)
@@ -72,32 +110,35 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
   return (
     <>
       <header className={headerClass}>
-        <div className="max-w-7xl mx-auto px-8">
+        <div className="max-w-7xl mx-auto px-4 lg:px-0">
           <div className="flex justify-between items-center">
             {/* Left side */}
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-teal-600 hidden md:block">{title}</h1>
-              <h1 className="text-xl font-bold text-teal-600 block md:hidden">{title}</h1>
-            </div>
-            
+            <Link href="/" className="flex items-center space-x-2"  >
+              <div className="flex items-center space-x-4 select-none cursor-pointer">
+                <h1 className="text-2xl font-bold text-teal-600 hidden md:block">{title}</h1>
+                <h1 className="text-xl font-bold text-teal-600 block md:hidden">{title}</h1>
+              </div>
+            </Link>
+
             {/* Center - Navigation for medium-large screens */}
-            <nav className="hidden md:flex items-center space-x-6">
-              <Link href="/account/profile" className={`text-sm font-medium ${pathname === '/dashboard' ? 'text-teal-600' : 'text-gray-700 hover:text-teal-600'}`}>
+            {showMenuItems && (<nav className="hidden md:flex items-center space-x-6">
+              <Link href="/subscription" className={`text-sm font-medium ${pathname === '/subscription' ? 'text-teal-600' : 'text-gray-700 hover:text-teal-600'}`}>
+                Pricing Plans
+              </Link>
+              <Link href="/account/profile" className={`text-sm font-medium ${pathname.includes('/account') ? 'text-teal-600' : 'text-gray-700 hover:text-teal-600'}`}>
                 Dashboard
               </Link>
               <Link href="/packages" className={`text-sm font-medium ${pathname.startsWith('/packages') ? 'text-teal-600' : 'text-gray-700 hover:text-teal-600'}`}>
                 Packages
               </Link>
-              <Link href="/trips" className={`text-sm font-medium ${pathname.startsWith('/trips') ? 'text-teal-600' : 'text-gray-700 hover:text-teal-600'}`}>
+              <Link href="/packages?tab=trips" className={`text-sm font-medium ${pathname.startsWith('/trips') ? 'text-teal-600' : 'text-gray-700 hover:text-teal-600'}`}>
                 Trips
               </Link>
-              <Link href="/messages" className={`text-sm font-medium ${pathname.startsWith('/messages') ? 'text-teal-600' : 'text-gray-700 hover:text-teal-600'}`}>
-                Messages
-              </Link>
-            </nav>
-            
+
+            </nav>)}
+
             {/* Right side - Actions */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
               {/* Create buttons for medium-large screens */}
               <div className="hidden md:flex items-center space-x-3">
                 {showCreatePackage && (
@@ -117,15 +158,15 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
                   </Link>
                 )}
               </div>
-              
+
               {/* Notifications */}
               <button className="p-2 text-gray-700 hover:text-teal-600 rounded-full hover:bg-gray-100">
                 <Bell className="w-5 h-5" />
               </button>
-              
+
               {/* User menu */}
-              <div className="relative">
-                <button 
+              <div className="relative" ref={userMenuRef}>
+                <button
                   onClick={toggleUserMenu}
                   className="flex items-center space-x-1 rounded-full p-1 hover:bg-gray-100"
                 >
@@ -134,7 +175,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
                   </div>
                   <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 {/* User dropdown menu */}
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
@@ -142,7 +183,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
                       <p className="text-sm font-medium">{name}</p>
                       <p className="text-xs text-gray-500">{email}</p>
                     </div>
-                    
+
                     <div className="py-1">
                       <Link href="/account/profile" className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                         <User className="w-4 h-4 mr-2" />
@@ -161,7 +202,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
                         Help Center
                       </Link>
                     </div>
-                    
+
                     <div className="border-t border-gray-100 pt-1">
                       <button className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
                         <LogOut className="w-4 h-4 mr-2" />
@@ -171,9 +212,9 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
                   </div>
                 )}
               </div>
-              
+
               {/* Mobile menu button */}
-              <button 
+              <button
                 className="md:hidden p-2 text-gray-700 hover:text-teal-600 rounded-full hover:bg-gray-100"
                 onClick={toggleMobileMenu}
               >
@@ -183,7 +224,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
           </div>
         </div>
       </header>
-      
+
       {/* Mobile menu */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-40 bg-white pt-20 pb-6 px-6 flex flex-col">
@@ -201,7 +242,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
               <span className="text-lg font-medium">Messages</span>
             </Link>
           </nav>
-          
+
           <div className="mt-auto space-y-4">
             {showCreatePackage && (
               <Link href="/packages/create" className="w-full">
@@ -222,7 +263,7 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Spacer for fixed header */}
       <div className="h-16 md:h-20"></div>
     </>

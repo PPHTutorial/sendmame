@@ -23,7 +23,7 @@ CREATE TYPE "public"."NotificationType" AS ENUM ('PACKAGE_MATCH', 'TRIP_REQUEST'
 CREATE TYPE "public"."DisputeStatus" AS ENUM ('OPEN', 'IN_REVIEW', 'RESOLVED', 'CLOSED');
 
 -- CreateEnum
-CREATE TYPE "public"."ChatType" AS ENUM ('PACKAGE_NEGOTIATION', 'TRIP_COORDINATION', 'SUPPORT');
+CREATE TYPE "public"."ChatType" AS ENUM ('NOTIFICATION', 'CHAT', 'SUPPORT');
 
 -- CreateTable
 CREATE TABLE "public"."users" (
@@ -33,6 +33,8 @@ CREATE TABLE "public"."users" (
     "password" TEXT,
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
+    "otherName" TEXT,
+    "username" TEXT,
     "avatar" TEXT,
     "dateOfBirth" TIMESTAMP(3),
     "role" "public"."UserRole" NOT NULL DEFAULT 'SENDER',
@@ -40,11 +42,19 @@ CREATE TABLE "public"."users" (
     "isVerified" BOOLEAN NOT NULL DEFAULT false,
     "isPhoneVerified" BOOLEAN NOT NULL DEFAULT false,
     "isEmailVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isIDVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isFacialVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isAddressVerified" BOOLEAN NOT NULL DEFAULT false,
     "verificationStatus" "public"."VerificationStatus" NOT NULL DEFAULT 'PENDING',
     "twoFactorEnabled" BOOLEAN NOT NULL DEFAULT false,
     "lastLoginAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "subscriptionTier" TEXT DEFAULT 'FREE',
+    "subscriptionStatus" TEXT DEFAULT 'INACTIVE',
+    "stripeCustomerId" TEXT,
+    "subscriptionId" TEXT,
+    "lastPaymentDate" TIMESTAMP(3),
     "referralCode" TEXT,
     "referredById" TEXT,
 
@@ -85,8 +95,10 @@ CREATE TABLE "public"."verification_documents" (
     "userId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "documentUrl" TEXT NOT NULL,
+    "backDocumentUrl" TEXT,
     "status" "public"."VerificationStatus" NOT NULL DEFAULT 'PENDING',
     "rejectionReason" TEXT,
+    "metadata" JSONB,
     "verifiedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -141,6 +153,7 @@ CREATE TABLE "public"."trips" (
     "destinationAddress" JSONB NOT NULL,
     "destinationLatitude" DOUBLE PRECISION NOT NULL,
     "destinationLongitude" DOUBLE PRECISION NOT NULL,
+    "images" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "departureDate" TIMESTAMP(3) NOT NULL,
     "arrivalDate" TIMESTAMP(3) NOT NULL,
     "flexibleDates" BOOLEAN NOT NULL DEFAULT false,
@@ -164,7 +177,7 @@ CREATE TABLE "public"."trips" (
 -- CreateTable
 CREATE TABLE "public"."chats" (
     "id" TEXT NOT NULL,
-    "type" "public"."ChatType" NOT NULL DEFAULT 'PACKAGE_NEGOTIATION',
+    "type" "public"."ChatType" NOT NULL DEFAULT 'CHAT',
     "packageId" TEXT,
     "tripId" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -194,7 +207,7 @@ CREATE TABLE "public"."messages" (
     "senderId" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "messageType" TEXT NOT NULL DEFAULT 'text',
-    "attachments" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "attachments" JSONB[] DEFAULT ARRAY[]::JSONB[],
     "isEdited" BOOLEAN NOT NULL DEFAULT false,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "readBy" JSONB NOT NULL DEFAULT '{}',
@@ -262,6 +275,29 @@ CREATE TABLE "public"."transactions" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "transactions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."subscription_payments" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "subscriptionTier" TEXT NOT NULL,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "paymentPeriod" INTEGER NOT NULL DEFAULT 1,
+    "startDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endDate" TIMESTAMP(3) NOT NULL,
+    "status" "public"."PaymentStatus" NOT NULL DEFAULT 'COMPLETED',
+    "stripeSessionId" TEXT,
+    "stripeCustomerId" TEXT,
+    "stripePaymentIntentId" TEXT,
+    "transactionId" TEXT,
+    "description" TEXT,
+    "metadata" JSONB NOT NULL DEFAULT '{}',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "subscription_payments_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -341,6 +377,21 @@ CREATE TABLE "public"."disputes" (
 );
 
 -- CreateTable
+CREATE TABLE "public"."safety_confirmations" (
+    "id" TEXT NOT NULL,
+    "packageId" TEXT NOT NULL,
+    "tripId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "confirmationType" TEXT NOT NULL,
+    "confirmations" JSONB NOT NULL,
+    "notes" TEXT,
+    "confirmedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "safety_confirmations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "public"."accounts" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -373,6 +424,44 @@ CREATE TABLE "public"."verification_tokens" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "expires" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "public"."password_resets" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "used" BOOLEAN NOT NULL DEFAULT false,
+    "usedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "password_resets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."email_verifications" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "email_verifications_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "public"."phone_verifications" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "phoneNumber" TEXT NOT NULL,
+    "code" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "attempts" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "phone_verifications_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -409,6 +498,15 @@ CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
 CREATE UNIQUE INDEX "users_phone_key" ON "public"."users"("phone");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "users_username_key" ON "public"."users"("username");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_stripeCustomerId_key" ON "public"."users"("stripeCustomerId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_subscriptionId_key" ON "public"."users"("subscriptionId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_referralCode_key" ON "public"."users"("referralCode");
 
 -- CreateIndex
@@ -427,6 +525,15 @@ CREATE UNIQUE INDEX "reviews_giverId_receiverId_packageId_key" ON "public"."revi
 CREATE UNIQUE INDEX "wallets_userId_key" ON "public"."wallets"("userId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "subscription_payments_stripeSessionId_key" ON "public"."subscription_payments"("stripeSessionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "subscription_payments_stripePaymentIntentId_key" ON "public"."subscription_payments"("stripePaymentIntentId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "subscription_payments_transactionId_key" ON "public"."subscription_payments"("transactionId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "accounts_provider_providerAccountId_key" ON "public"."accounts"("provider", "providerAccountId");
 
 -- CreateIndex
@@ -437,6 +544,15 @@ CREATE UNIQUE INDEX "verification_tokens_token_key" ON "public"."verification_to
 
 -- CreateIndex
 CREATE UNIQUE INDEX "verification_tokens_identifier_token_key" ON "public"."verification_tokens"("identifier", "token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "password_resets_token_key" ON "public"."password_resets"("token");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "email_verifications_userId_key" ON "public"."email_verifications"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "phone_verifications_userId_key" ON "public"."phone_verifications"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "system_config_key_key" ON "public"."system_config"("key");
@@ -499,6 +615,12 @@ ALTER TABLE "public"."transactions" ADD CONSTRAINT "transactions_walletId_fkey" 
 ALTER TABLE "public"."transactions" ADD CONSTRAINT "transactions_paymentMethodId_fkey" FOREIGN KEY ("paymentMethodId") REFERENCES "public"."payment_methods"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "public"."subscription_payments" ADD CONSTRAINT "subscription_payments_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."subscription_payments" ADD CONSTRAINT "subscription_payments_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "public"."transactions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "public"."payment_methods" ADD CONSTRAINT "payment_methods_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -514,7 +636,19 @@ ALTER TABLE "public"."disputes" ADD CONSTRAINT "disputes_reporterId_fkey" FOREIG
 ALTER TABLE "public"."disputes" ADD CONSTRAINT "disputes_involvedId_fkey" FOREIGN KEY ("involvedId") REFERENCES "public"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "public"."safety_confirmations" ADD CONSTRAINT "safety_confirmations_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "public"."accounts" ADD CONSTRAINT "accounts_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "public"."sessions" ADD CONSTRAINT "sessions_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."password_resets" ADD CONSTRAINT "password_resets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."email_verifications" ADD CONSTRAINT "email_verifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "public"."phone_verifications" ADD CONSTRAINT "phone_verifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."users"("id") ON DELETE CASCADE ON UPDATE CASCADE;

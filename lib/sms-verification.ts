@@ -54,7 +54,7 @@ export async function getStoredCode(phoneNumber: string): Promise<{ code: string
 export async function verifyCode(phoneNumber: string, code: string, userId: string): Promise<boolean> {
     const stored = await getStoredCode(phoneNumber)
 
-    console.log('Verifying code for:', phoneNumber, 'User:', userId, 'Stored:', stored)
+    //console.log('Verifying code for:', phoneNumber, 'User:', userId, 'Stored:', stored)
 
     if (!stored) {
         return false

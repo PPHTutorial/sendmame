@@ -48,10 +48,13 @@ interface TripCardProps {
   }
   onAddPackage?: (trip: TripCardProps['trip']) => void
   onSendMessage?: (trip: TripCardProps['trip']) => void
+  onCallTraveler?: (trip: TripCardProps['trip']) => void
+  onVideoCallTraveler?: (trip: TripCardProps['trip']) => void
+  onContactTraveler?: (trip: TripCardProps['trip']) => void
   currentUserId?: string
 }
 
-export function TripCard({ trip, onAddPackage, onSendMessage, currentUserId }: TripCardProps) {
+export function TripCard({ trip, onAddPackage, onSendMessage, onCallTraveler, onVideoCallTraveler, onContactTraveler, currentUserId }: TripCardProps) {
   const router = useRouter()
 
   const getStatusColor = (status: string) => {
@@ -132,6 +135,39 @@ export function TripCard({ trip, onAddPackage, onSendMessage, currentUserId }: T
     e.stopPropagation()
     if (onAddPackage) {
       onAddPackage(trip)
+    }
+  }
+
+  const handleCallTraveler = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if(!currentUserId){
+      router.push(`/login`)
+      return
+    }
+    if (onCallTraveler) {
+      onCallTraveler(trip)
+    }
+  }
+
+  const handleVideoCallTraveler = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if(!currentUserId){
+      router.push(`/login`)
+      return
+    }
+    if (onVideoCallTraveler) {
+      onVideoCallTraveler(trip)
+    }
+  }
+
+  const handleContactTraveler = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if(!currentUserId){
+      router.push(`/login`)
+      return
+    }
+    if (onContactTraveler) {
+      onContactTraveler(trip)
     }
   }
 

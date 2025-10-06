@@ -141,6 +141,7 @@ export default function CreateTripPage() {
       <NavHeader 
         title="Create Trip" 
         showCreateTrip={false}
+        showMenuItems={false}
       />
       
       {/* Floating Action Button for Mobile */}

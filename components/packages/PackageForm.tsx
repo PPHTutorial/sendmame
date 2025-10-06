@@ -351,7 +351,7 @@ export function PackageForm({ initialData, isEdit = false, packageId }: PackageF
                 <option value="USD">USD</option>
                 <option value="GHS">GHS</option>
                 <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
+                <option value="USD">USD</option>
                 <option value="NGN">NGN</option>
               </select>
             </div>

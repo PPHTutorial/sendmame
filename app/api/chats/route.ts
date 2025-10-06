@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
     // Create new chat
     const newChat = await prisma.chat.create({
       data: {
-        type: itemType === 'package' ? 'PACKAGE_NEGOTIATION' : 'TRIP_COORDINATION',
+        type: itemType,
         packageId: itemType === 'package' ? itemId : null,
         tripId: itemType === 'trip' ? itemId : null,
         participants: {

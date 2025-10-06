@@ -14,17 +14,22 @@ import {
     Clock,
     Zap
 } from 'lucide-react'
+import { NavHeader } from '@/components/shared/NavHeader'
+import { useAuth } from '@/lib/hooks/api'
+import { Footer } from '@/components/navigation'
 
 export default function SubscriptionSuccessPage() {
     const [sessionId, setSessionId] = useState<string | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const { getCurrentUser } = useAuth()
+    const { data: user } = getCurrentUser
 
     useEffect(() => {
         // Get session_id from URL parameters
         const urlParams = new URLSearchParams(window.location.search)
         const session = urlParams.get('session_id')
         setSessionId(session)
-        
+
         // Verify the payment and update user's subscription status if needed
         const verifyPayment = async (sessionId: string) => {
             try {
@@ -35,7 +40,7 @@ export default function SubscriptionSuccessPage() {
                     },
                     body: JSON.stringify({ sessionId }),
                 });
-                
+
                 if (!response.ok) {
                     console.error('Failed to verify payment');
                 }
@@ -45,7 +50,7 @@ export default function SubscriptionSuccessPage() {
                 setIsLoading(false);
             }
         };
-        
+
         if (session) {
             verifyPayment(session);
         } else {
@@ -66,6 +71,7 @@ export default function SubscriptionSuccessPage() {
 
     return (
         <div className="min-h-screen bg-white">
+            <NavHeader title='Amenade' email={user?.email} name={`${user?.firstName} ${user?.lastName}`} showMenuItems={false} />
             {/* Success Header */}
             <div className="bg-white border-b border-neutral-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -176,7 +182,7 @@ export default function SubscriptionSuccessPage() {
                             <p className="font-medium text-gray-900">Unlimited Posts</p>
                             <p className="text-sm text-gray-600 mt-1">Post packages & trips without limitations</p>
                         </div>
-                        
+
                         <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
                             <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
                                 <CheckCircle className="w-5 h-5 text-teal-600" />
@@ -184,7 +190,7 @@ export default function SubscriptionSuccessPage() {
                             <p className="font-medium text-gray-900">Priority Matching</p>
                             <p className="text-sm text-gray-600 mt-1">Get matched with trusted partners first</p>
                         </div>
-                        
+
                         <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
                             <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
                                 <Crown className="w-5 h-5 text-teal-600" />
@@ -192,7 +198,7 @@ export default function SubscriptionSuccessPage() {
                             <p className="font-medium text-gray-900">Premium Badge</p>
                             <p className="text-sm text-gray-600 mt-1">Stand out with verified premium status</p>
                         </div>
-                        
+
                         <div className="bg-white p-5 rounded-lg border border-gray-100 shadow-sm">
                             <div className="w-10 h-10 bg-teal-100 rounded-lg flex items-center justify-center mb-3">
                                 <MessageSquare className="w-5 h-5 text-teal-600" />
@@ -220,6 +226,7 @@ export default function SubscriptionSuccessPage() {
                     </div>
                 </div>
             </div>
+            <Footer />
         </div>
     )
 }

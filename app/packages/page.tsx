@@ -282,6 +282,38 @@ function PackagesPageContent() {
         });
     }
 
+    const handleCallSender = (packageData: any) => {
+        if (packageData?.sender?.phone) {
+            window.open(`tel:${packageData.sender.phone}`, '_self')
+        } else {
+            alert('Phone number not available')
+        }
+    }
+
+    const handleVideoCallSender = () => {
+        alert('Video calling feature will be implemented with a video service integration')
+    }
+
+    const handleContactSender = async (packageData: any) => {
+        await handleMessage(packageData)
+    }
+
+    const handleCallTraveler = (tripData: any) => {
+        if (tripData?.traveler?.phone) {
+            window.open(`tel:${tripData.traveler.phone}`, '_self')
+        } else {
+            alert('Phone number not available')
+        }
+    }
+
+    const handleVideoCallTraveler = () => {
+        alert('Video calling feature will be implemented with a video service integration')
+    }
+
+    const handleContactTraveler = async (tripData: any) => {
+        await handleMessage(tripData)
+    }
+
     // Helper function to get current query and page based on active tab
     const getCurrentQuery = () => activeTab === 'packages' ? packagesQuery : tripsQuery
     const currentQuery = getCurrentQuery()
@@ -528,6 +560,9 @@ function PackagesPageContent() {
                                                     package={item}
                                                     onAddToLuggage={handlePackageAction}
                                                     onSendMessage={handleMessage}
+                                                    onCallSender={handleCallSender}
+                                                    onVideoCallSender={handleVideoCallSender}
+                                                    onContactSender={handleContactSender}
                                                     currentUserId={user?.id}
                                                 />
                                             ) : (
@@ -535,6 +570,9 @@ function PackagesPageContent() {
                                                     trip={item}
                                                     onAddPackage={handleTripAction}
                                                     onSendMessage={handleMessage}
+                                                    onCallTraveler={handleCallTraveler}
+                                                    onVideoCallTraveler={handleVideoCallTraveler}
+                                                    onContactTraveler={handleContactTraveler}
                                                     currentUserId={user?.id}
                                                 />
                                             )}
