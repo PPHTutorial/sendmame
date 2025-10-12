@@ -11,7 +11,6 @@ import {
 } from '@/lib/api/utils'
 import { requireAuth } from '@/lib/auth'
 import { createTripSchema, tripSearchSchema } from '@/lib/validations'
-import type { CreateTripInput } from '@/lib/validations'
 
 // GET /api/trips - List trips with search and pagination
 export const GET = withErrorHandling(async (request: NextRequest) => {

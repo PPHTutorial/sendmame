@@ -128,7 +128,7 @@ cp .env.example .env.local
 Required environment variables:
 ```bash
 # Database
-DATABASE_URL="postgresql://username:password@localhost:5432/sendmame"
+DATABASE_URL="postgresql://username:password@localhost:5432/amenade"
 
 # NextAuth
 NEXTAUTH_SECRET="your_nextauth_secret"

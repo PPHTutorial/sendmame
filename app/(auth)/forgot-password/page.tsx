@@ -192,7 +192,7 @@ export default function ForgotPasswordPage() {
                 Still having trouble?
               </p>
               <Link
-                href="mailto:support@sendmame.com"
+                href="mailto:support@amenade.com"
                 className="text-blue-600 hover:text-blue-500 font-medium text-sm"
               >
                 Contact Support

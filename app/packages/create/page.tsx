@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic'
 import { NavHeader, FloatingActionButton } from '@/components/shared'
 import { useAuth } from '@/lib/hooks/api'
+import { Footer } from '@/components/navigation'
 
 const AuthGuard = dynamic(
   () => import('@/components/auth').then(mod => ({ default: mod.AuthGuard })),
@@ -20,10 +21,10 @@ export default function CreatePackagePage() {
   const { data: currentUser } = getCurrentUser
   return (
     <AuthGuard>
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen ">
         {/* Sticky Header */}
         <NavHeader
-          title="Send Package"
+          title="AMENADE"
           showCreatePackage={false}
           name={`${currentUser?.firstName} ${currentUser?.lastName}`}
           email={currentUser?.email || ''}
@@ -31,8 +32,8 @@ export default function CreatePackagePage() {
         />
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
+        <main className="max-w-7xl mx-auto">
+          <div className="px-4 sm:px-0">
             <PackageForm />
           </div>
         </main>
@@ -40,6 +41,7 @@ export default function CreatePackagePage() {
         {/* Floating Action Button for Mobile */}
         <FloatingActionButton />
       </div>
+      <Footer />
     </AuthGuard>
   )
 }

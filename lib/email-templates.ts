@@ -146,14 +146,14 @@ export function createEmailVerificationTemplate(data: EmailVerificationData) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Verify Your SendMaMe Account</title>
+      <title>Verify Your amenade Account</title>
       <style>${baseStyles}</style>
     </head>
     <body>
       <div class="email-container">
         <!-- Header -->
         <div class="header">
-          <h1 class="logo">SendMaMe</h1>
+          <h1 class="logo">amenade</h1>
           <p class="tagline">Connecting Senders & Travelers Worldwide</p>
         </div>
         
@@ -162,7 +162,7 @@ export function createEmailVerificationTemplate(data: EmailVerificationData) {
           <h2 class="greeting">Welcome, ${data.firstName}! 👋</h2>
           
           <p class="message">
-            Thank you for joining SendMaMe! We're excited to have you as part of our community. 
+            Thank you for joining amenade! We're excited to have you as part of our community. 
             To complete your account setup and start connecting with travelers and senders, 
             please verify your email address using the verification code below.
           </p>
@@ -180,12 +180,12 @@ export function createEmailVerificationTemplate(data: EmailVerificationData) {
           <div class="security-notice">
             <p class="security-text">
               🔒 <strong>Security Reminder:</strong> Never share this verification code with anyone. 
-              SendMaMe will never ask for your verification code via phone or email.
+              amenade will never ask for your verification code via phone or email.
             </p>
           </div>
           
           <p class="message">
-            If you didn't create a SendMaMe account, please ignore this email. 
+            If you didn't create a amenade account, please ignore this email. 
             Your email address will not be added to our system.
           </p>
         </div>
@@ -194,7 +194,7 @@ export function createEmailVerificationTemplate(data: EmailVerificationData) {
         <div class="footer">
           <p class="footer-text">
             <strong>Need help?</strong> If you're having trouble with verification, 
-            contact our support team at <a href="mailto:support@sendmame.com" style="color: #3b82f6;">support@sendmame.com</a>
+            contact our support team at <a href="mailto:support@amenade.com" style="color: #3b82f6;">support@amenade.com</a>
           </p>
           
           <p class="footer-text">
@@ -209,7 +209,7 @@ export function createEmailVerificationTemplate(data: EmailVerificationData) {
           </div>
           
           <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 20px;">
-            © 2025 SendMaMe. All rights reserved.
+            © 2025 amenade. All rights reserved.
           </p>
         </div>
       </div>
@@ -218,7 +218,7 @@ export function createEmailVerificationTemplate(data: EmailVerificationData) {
   `
 
   const text = `
-Welcome to SendMaMe, ${data.firstName}!
+Welcome to amenade, ${data.firstName}!
 
 Thank you for joining our community. To complete your account setup, please verify your email address.
 
@@ -226,18 +226,18 @@ Your verification code: ${data.verificationCode}
 
 Enter this 6-digit code in the verification screen to activate your account. This code will expire in 15 minutes.
 
-Security Reminder: Never share this verification code with anyone. SendMaMe will never ask for your verification code via phone or email.
+Security Reminder: Never share this verification code with anyone. amenade will never ask for your verification code via phone or email.
 
-If you didn't create a SendMaMe account, please ignore this email.
+If you didn't create a amenade account, please ignore this email.
 
-Need help? Contact our support team at support@sendmame.com
+Need help? Contact our support team at support@amenade.com
 
 Best regards,
-The SendMaMe Team
+The amenade Team
   `
 
   return {
-    subject: 'Verify Your SendMaMe Account - Welcome to Our Community!',
+    subject: 'Verify Your amenade Account - Welcome to Our Community!',
     html,
     text
   }
@@ -252,14 +252,14 @@ export function createPasswordResetTemplate(data: PasswordResetData) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Reset Your SendMaMe Password</title>
+      <title>Reset Your amenade Password</title>
       <style>${baseStyles}</style>
     </head>
     <body>
       <div class="email-container">
         <!-- Header -->
         <div class="header">
-          <h1 class="logo">SendMaMe</h1>
+          <h1 class="logo">amenade</h1>
           <p class="tagline">Connecting Senders & Travelers Worldwide</p>
         </div>
         
@@ -272,7 +272,7 @@ export function createPasswordResetTemplate(data: PasswordResetData) {
           </p>
           
           <p class="message">
-            We received a request to reset the password for your SendMaMe account associated with 
+            We received a request to reset the password for your amenade account associated with 
             <strong>${data.email}</strong>. If you made this request, click the button below to 
             create a new password.
           </p>
@@ -310,7 +310,7 @@ export function createPasswordResetTemplate(data: PasswordResetData) {
             <strong>Account Security Tips:</strong>
           </p>
           <ul style="color: #6b7280; font-size: 14px; margin: 0; padding-left: 20px;">
-            <li>Use a strong, unique password for your SendMaMe account</li>
+            <li>Use a strong, unique password for your amenade account</li>
             <li>Never share your login credentials with others</li>
             <li>Enable two-factor authentication when available</li>
             <li>Contact support immediately if you notice suspicious activity</li>
@@ -318,7 +318,7 @@ export function createPasswordResetTemplate(data: PasswordResetData) {
           
           <p class="footer-text" style="margin-top: 20px;">
             <strong>Need help?</strong> Contact our support team at 
-            <a href="mailto:support@sendmame.com" style="color: #3b82f6;">support@sendmame.com</a>
+            <a href="mailto:support@amenade.com" style="color: #3b82f6;">support@amenade.com</a>
           </p>
           
           <div class="social-links">
@@ -328,7 +328,7 @@ export function createPasswordResetTemplate(data: PasswordResetData) {
           </div>
           
           <p style="text-align: center; color: #9ca3af; font-size: 12px; margin-top: 20px;">
-            © 2025 SendMaMe. All rights reserved.
+            © 2025 amenade. All rights reserved.
           </p>
         </div>
       </div>
@@ -337,11 +337,11 @@ export function createPasswordResetTemplate(data: PasswordResetData) {
   `
 
   const text = `
-Password Reset Request - SendMaMe
+Password Reset Request - amenade
 
 Hello ${data.firstName},
 
-We received a request to reset the password for your SendMaMe account (${data.email}).
+We received a request to reset the password for your amenade account (${data.email}).
 
 If you made this request, use the following link to reset your password:
 ${resetUrl}
@@ -358,14 +358,14 @@ Account Security Tips:
 - Enable two-factor authentication when available
 - Contact support if you notice suspicious activity
 
-Need help? Contact our support team at support@sendmame.com
+Need help? Contact our support team at support@amenade.com
 
 Best regards,
-The SendMaMe Team
+The amenade Team
   `
 
   return {
-    subject: 'Reset Your SendMaMe Password - Security Request',
+    subject: 'Reset Your amenade Password - Security Request',
     html,
     text
   }

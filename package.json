@@ -1,12 +1,12 @@
 {
-  "name": "sendmame",
+  "name": "amenade",
   "version": "5.0.0",
   "private": true,
   "main": "electron/main.js",
   "type": "module",
-  "description": "SendMaMe - A is a digital platform designed to bridge the gap between individuals looking to send packages and travellers headed in the same direction. This model offers a reliable, cost-effective, and fast alternative to traditional shipping services. The project harnesses the power of community-driven logistics to create an ecosystem where senders and travelers mutually benefit through shared trust and technology.",
+  "description": "Amenade - A is a digital platform designed to bridge the gap between individuals looking to send packages and travellers headed in the same direction. This model offers a reliable, cost-effective, and fast alternative to traditional shipping services. The project harnesses the power of community-driven logistics to create an ecosystem where senders and travelers mutually benefit through shared trust and technology.",
   "keywords": [
-    "Sendmame"
+    "amenade", "delivery", "travel", "logistics", "peer-to-peer", "shipping", "packages", "community", "trust", "technology"
   ],
   "license": "MIT",
   "homepage": "https://puggage.com",
@@ -15,8 +15,8 @@
     "url": ""
   },
   "author": {
-    "name": "SendMaMe Team",
-    "email": "info@sendmame.com"
+    "name": "Amenade Team",
+    "email": "info@amenade.com"
   },
   "scripts": {
     "dev": "next dev --turbopack",

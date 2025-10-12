@@ -39,7 +39,7 @@ export async function sendEmail(
 ) {
   try {
     const info = await transporter.sendMail({
-      from: `"SendMaMe" <${process.env.SMTP_USER}>`,
+      from: `"amenade" <${process.env.SMTP_USER}>`,
       to,
       subject: template.subject,
       text: template.text,

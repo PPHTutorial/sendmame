@@ -6,13 +6,13 @@ import { createErrorResponse, createSuccessResponse } from '@/lib/api/utils'
 // GET /api/chats/[id] - Get specific chat with messages
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const userPayload = await requireAuth(request)
     const userId = userPayload.userId
 
-    const chatId = params.id
+    const { id: chatId } = await params
 
     // Verify user is participant in the chat and get chat details
     const chat = await prisma.chat.findFirst({

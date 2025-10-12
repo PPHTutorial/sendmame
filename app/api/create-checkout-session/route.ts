@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
                         product_data: {
                             name: planName,
                             description: planDescription,
-                            images: ['https://sendmame.com/logo.png'],
+                            images: ['https://amenade.com/logo.png'],
                         },
                         unit_amount: planPrice,
                         // recurring: {

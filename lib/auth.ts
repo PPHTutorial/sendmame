@@ -144,7 +144,7 @@ export async function requireAuth(request: Request): Promise<JwtPayload> {
     console.log('No auth token provided, using test user for development')
     return {
       userId: 'admin_001', // Use the admin user created by seed script
-      email: 'admin@sendmame.com',
+      email: 'admin@amenade.com',
       role: 'ADMIN' as const,
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60), // 7 days

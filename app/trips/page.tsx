@@ -14,6 +14,7 @@ import { MessagingInterface } from '@/components/shared/MessagingInterface'
 import Link from 'next/link'
 import { Plus, Search, SortAsc, SortDesc } from 'lucide-react'
 import { FaFilter } from 'react-icons/fa6'
+import { redirect } from 'next/navigation'
 
 // Types
 type TripSortBy = 'title' | 'createdAt' | 'updatedAt' | 'departureDate' | 'arrivalDate' | 'pricePerKg'
@@ -48,7 +49,9 @@ interface TripQueryParams {
   destination?: string
 }
 
+redirect("/packages?tab=trips")
 export default function TripsPage() {
+  
   const { getCurrentUser } = useAuth()
   const { data: user } = getCurrentUser
   const findOrCreateChat = useFindOrCreateChat()
@@ -141,6 +144,7 @@ export default function TripsPage() {
       participantId: tripData.travelerId,
       itemType: 'trip',
       itemId: tripData.id,
+      chatType: 'CHAT'
     }, {
       onSuccess: (chatData) => {
         setSelectedChatTrip(chatData);

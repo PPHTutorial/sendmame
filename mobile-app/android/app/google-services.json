@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "684897263043",
+    "project_id": "ameade-1ac2f",
+    "storage_bucket": "ameade-1ac2f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:684897263043:android:e278e1ac6bd4e766f2f176",
+        "android_client_info": {
+          "package_name": "com.codeinktechnologies.amenade"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaoDUzbrZ4RexhV034fsfJtajNOj1uZZA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

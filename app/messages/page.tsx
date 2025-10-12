@@ -5,13 +5,12 @@ import React, { useState, useEffect, useRef, useMemo } from 'react'
 import {
     useAuth,
     useChats,
+    useChat,
     useNotifications,
-    useMessages,
     useSendMessage,
     useMarkNotificationAsRead,
     useMarkAllNotificationsAsRead
 } from '@/lib/hooks/api'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { MessagingInterface } from '@/components/shared/MessagingInterface'
@@ -34,20 +33,29 @@ import { NavHeader } from '@/components/shared'
 import { Footer } from '@/components/navigation'
 import { cn } from '@/lib/utils'
 import { toast } from 'react-hot-toast'
+import { MessageChats } from '@/components/shared/MessageChats'
 
 // Types for the messaging system (matching API response)
 interface ApiChat {
     id: string
-    type: 'PACKAGE_NEGOTIATION' | 'TRIP_COORDINATION' | 'SUPPORT'
+    type: 'NOTIFICATION' | 'CHAT' | 'SUPPORT'
+    packageId?: string
+    tripId?: string
     participants: Array<{
         id: string
+        chatId: string
         userId: string
         user: {
             id: string
             firstName: string
             lastName: string
             avatar: string | null
+            email: string
+            phone?: string
         }
+        joinedAt: string
+        lastReadAt: string | null
+        isAdmin: boolean
     }>
     messages: Array<{
         id: string
@@ -62,6 +70,9 @@ interface ApiChat {
             lastName: string
             avatar: string | null
         }
+        isEdited: boolean
+        isDeleted: boolean
+        readBy: any
     }>
     package?: {
         id: string
@@ -75,6 +86,8 @@ interface ApiChat {
     }
     lastMessageAt: string | null
     createdAt: string
+    updatedAt: string
+    isActive: boolean
 }
 
 interface Notification {
@@ -125,17 +138,32 @@ const getNotificationIcon = (type: string) => {
 
 // Convert ApiChat to the format expected by MessagingInterface
 const convertApiChatToMessagingInterface = (apiChat: ApiChat) => {
+    const getChatType = (type: string): 'NOTIFICATION' | 'CHAT' | 'SUPPORT' => {
+        switch (type) {
+            case 'NOTIFICATION':
+                return 'NOTIFICATION'
+            case 'CHAT':
+                return 'CHAT'
+            case 'SUPPORT':
+                return 'SUPPORT'
+            default:
+                return 'CHAT' 
+        }
+    }
+
     return {
         id: apiChat.id,
-        type: apiChat.type,
-        packageId: apiChat.package?.id,
-        tripId: apiChat.trip?.id,
-        lastMessageAt: apiChat.lastMessageAt || undefined, // Convert null to undefined
+        type: getChatType(apiChat.type),
+        packageId: apiChat.packageId,
+        tripId: apiChat.tripId,
+        lastMessageAt: apiChat.lastMessageAt || undefined,
         participants: apiChat.participants.map(p => ({
             ...p,
             user: {
                 ...p.user,
-                avatar: p.user.avatar || undefined // Convert null to undefined
+                email: p.user.email || undefined,
+                phone: p.user.phone || undefined,
+                avatar: p.user.avatar || undefined
             }
         })),
         messages: apiChat.messages.map(m => ({
@@ -145,7 +173,7 @@ const convertApiChatToMessagingInterface = (apiChat: ApiChat) => {
             messageType: m.messageType as 'text' | 'image' | 'file' | 'location' | 'system',
             attachments: m.attachments || [],
             createdAt: m.createdAt,
-            isEdited: false // Default value, could be enhanced with actual edit status
+            isEdited: m.isEdited || false 
         })),
         package: apiChat.package ? {
             id: apiChat.package.id,
@@ -161,41 +189,53 @@ const convertApiChatToMessagingInterface = (apiChat: ApiChat) => {
 }
 
 export default function MessagesPage() {
-    const router = useRouter()
     const { getCurrentUser } = useAuth()
     const { data: user, isLoading: authLoading } = getCurrentUser
 
     // API hooks
-    const { data: chatsData, isLoading: chatsLoading, error: chatsError, refetch: refetchChats } = useChats()
-    const { data: notificationsData, isLoading: notificationsLoading, error: notificationsError, refetch: refetchNotifications } = useNotifications()
+    const { data: chatsData, isLoading: chatsLoading, refetch: refetchChats } = useChats()
+    const { data: notificationsData, isLoading: notificationsLoading, refetch: refetchNotifications } = useNotifications()
     const markNotificationAsRead = useMarkNotificationAsRead()
     const _markAllNotificationsAsRead = useMarkAllNotificationsAsRead()
     const sendMessageMutation = useSendMessage()
 
-    
+
     const [selectedItem, setSelectedItem] = useState<ConversationItem | null>(null)
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [activeTab, setActiveTab] = useState<'all' | 'messages' | 'notifications'>('all')
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-    const [isMobileView, setIsMobileView] = useState(false)
+    const [isMobileView, setIsMobileView] = useState(false) // TODO: Implement mobile detection
     const [showMobileSidebar, setShowMobileSidebar] = useState(true)
     const [filteredItems, setFilteredItems] = useState<ConversationItem[]>([])
 
-    // Refs
     const sidebarRef = useRef<HTMLDivElement>(null)
 
-    // Get messages for selected chat
-    const { data: _messagesData, isLoading: messagesLoading } = useMessages(
-        selectedChatId || '',
-        { enabled: !!selectedChatId }
-    )
+    // Mobile detection
+    useEffect(() => {
+        const checkMobileView = () => {
+            setIsMobileView(window.innerWidth < 1024) // lg breakpoint (1024px)
+        }
 
-    const chats: ApiChat[] = useMemo(() => chatsData?.data || [], [chatsData])
-    const notifications: Notification[] = useMemo(() => notificationsData?.data?.notifications || [], [notificationsData])
+        // Check on mount
+        checkMobileView()
+
+        // Add resize listener
+        window.addEventListener('resize', checkMobileView)
+
+        // Cleanup
+        return () => window.removeEventListener('resize', checkMobileView)
+    }, [])
+
+    // Get selected chat data with all messages
+    const { data: selectedChatData, isLoading: selectedChatLoading } = useChat(selectedChatId || '')
+
+    const chats: ApiChat[] = useMemo(() => chatsData || [], [chatsData])
+    const notifications: Notification[] = useMemo(() => notificationsData?.notifications || [], [notificationsData])
 
     const allItems: ConversationItem[] = useMemo(() => [
         ...chats.map(chat => ({ type: 'chat' as const, data: chat })),
+
         ...notifications.map(notification => ({ type: 'notification' as const, data: notification }))
     ].sort((a, b) => {
         const aTime = a.type === 'chat'
@@ -207,9 +247,12 @@ export default function MessagesPage() {
         return bTime.getTime() - aTime.getTime()
     }), [chats, notifications])
 
+
+
+
     useEffect(() => {
         const filtered = allItems.filter(item => {
-            if (activeTab === 'messages' && item.type.toLowerCase() !== 'chat') return false
+            if (activeTab === 'messages' && item.type.toLowerCase() !== 'chat' && item.type.toLowerCase() !== 'support') return false
             if (activeTab === 'notifications' && item.type.toLowerCase() !== 'notification') return false
 
             if (!searchQuery) return true
@@ -311,14 +354,14 @@ export default function MessagesPage() {
         <div className="min-h-screen bg-white">
             <NavHeader title="Amenade" showMenuItems={true} />
 
-            <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto">
+            <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto pl-4 lg:pl-0">
                 {/* Left Sidebar - Messages & Notifications List */}
                 <div
                     ref={sidebarRef}
                     className={cn(
                         "bg-white border-r border-gray-200 flex flex-col transition-all duration-300",
                         isMobileView
-                            ? showMobileSidebar
+                            ? showMobileSidebar && !selectedItem
                                 ? "w-full absolute inset-y-0 left-0 z-10"
                                 : "w-0 overflow-hidden"
                             : isSidebarCollapsed
@@ -327,7 +370,7 @@ export default function MessagesPage() {
                     )}
                 >
                     {/* Header */}
-                    <div className="py-8 border-b border-gray-200 pr-4">
+                    <div className="py-8 border-b border-gray-200  pr-4">
                         <div className="flex items-center justify-between mb-4">
                             <h1 className={cn(
                                 "text-xl font-semibold text-gray-900",
@@ -370,7 +413,7 @@ export default function MessagesPage() {
                                     placeholder="Search conversations..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                    className="w-full pl-10 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                                 />
                             </div>
                         )}
@@ -378,12 +421,12 @@ export default function MessagesPage() {
 
                     {/* Tabs */}
                     {(!isSidebarCollapsed || isMobileView) && (
-                        <div className="py-2 border-b border-gray-200 pr-4">
+                        <div className="py-2 border-b border-gray-200 px-4 ">
                             <div className="flex space-x-1 bg-gray-100 rounded-lg p-1">
                                 {[
                                     { key: 'all', label: 'All', count: allItems.length },
                                     { key: 'messages', label: 'Chats', count: chats.length },
-                                    { key: 'notifications', label: 'Notifications', count: notifications.filter(n => !n.isRead).length }
+                                    { key: 'notifications', label: 'Nots', count: notifications.filter(n => !n.isRead).length }
                                 ].map((tab) => (
                                     <button
                                         key={tab.key}
@@ -433,7 +476,7 @@ export default function MessagesPage() {
                             <div className="space-y-1">
                                 {filteredItems.map((item) => (
                                     <ConversationItem
-                                        key={item.type === 'chat' ? item.data.id : item.data.id}
+                                        key={item.data.id}
                                         item={item}
                                         isSelected={selectedItem?.type === item.type &&
                                             (item.type === 'chat' ? selectedItem.data.id === item.data.id : selectedItem.data.id === item.data.id)}
@@ -452,18 +495,19 @@ export default function MessagesPage() {
                 <div className="flex-1 flex flex-col">
                     {selectedItem ? (
                         selectedItem.type === 'chat' ? (
-                            <MessagingInterface
+                            <MessageChats
                                 isOpen={true}
-                                onClose={() => setSelectedItem(null)}
-                                chat={convertApiChatToMessagingInterface(selectedItem.data)}
+                                onClose={() => { setSelectedItem(null); setShowMobileSidebar(true) }}
+                                chat={selectedChatData ? convertApiChatToMessagingInterface(selectedChatData) : null}
                                 currentUserId={user?.id || ''}
                                 onSendMessage={handleSendMessage}
-                                isLoading={messagesLoading}
+                                isLoading={selectedChatLoading}
                             />
                         ) : (
                             <NotificationDetail
                                 notification={selectedItem.data}
                                 onAction={handleNotificationAction}
+                                onClose={() => { setSelectedItem(null); setShowMobileSidebar(true) }}
                             />
                         )
                     ) : (
@@ -641,13 +685,24 @@ function ConversationItem({
 interface NotificationDetailProps {
     notification: Notification
     onAction: (notification: Notification, action: string) => void
+    onClose: () => void
 }
 
-function NotificationDetail({ notification, onAction }: NotificationDetailProps) {
+function NotificationDetail({ notification, onAction, onClose }: NotificationDetailProps) {
     const Icon = getNotificationIcon(notification.type)
 
     return (
-        <div className="flex-1 flex flex-col">
+        <div className="relative flex-1 flex flex-col">
+          
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onClose}
+                    className="absolute right-2 top-2 p-2"
+                >
+                    <X className="w-5 h-5" />
+                </Button>
+           
             <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center space-x-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">

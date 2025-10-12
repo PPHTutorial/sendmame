@@ -107,7 +107,7 @@ const quickHelpLinks = [
     title: 'Community Forum',
     description: 'Get help from other users',
     icon: MessageCircle,
-    href: 'https://community.sendmame.com',
+    href: 'https://community.amenade.com',
     external: true
   },
   {
@@ -135,7 +135,7 @@ const supportOptions = [
     icon: Mail,
     availability: 'Response within 24 hours',
     action: 'Send Email',
-    href: 'mailto:support@sendmame.com'
+    href: 'mailto:support@amenade.com'
   },
   {
     title: 'Phone Support',
@@ -143,7 +143,7 @@ const supportOptions = [
     icon: Phone,
     availability: 'Mon-Fri 9AM-6PM GMT',
     action: 'Call Now',
-    href: 'tel:+1-555-SENDMAME'
+    href: 'tel:+1-555-amenade'
   }
 ]
 
@@ -187,7 +187,7 @@ export default function HelpPage() {
               <HelpCircle className="w-8 h-8 text-teal-600" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">Help & Support</h1>
-                <p className="text-sm text-gray-600">Find answers and get help with SendMaMe</p>
+                <p className="text-sm text-gray-600">Find answers and get help with amenade</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -352,7 +352,7 @@ export default function HelpPage() {
               <h3 className="font-semibold text-gray-900 mb-4">Popular Articles</h3>
               <div className="space-y-3">
                 <Link href="/help/getting-started" className="block text-sm text-teal-600 hover:text-teal-800">
-                  → Getting started with SendMaMe
+                  → Getting started with amenade
                 </Link>
                 <Link href="/help/safety" className="block text-sm text-teal-600 hover:text-teal-800">
                   → Safety tips for package delivery

@@ -273,6 +273,7 @@ function PackagesPageContent() {
             participantId: participantId,
             itemType: activeTab === 'packages' ? 'package' : 'trip',
             itemId: itemData.id,
+            chatType: 'CHAT'
         }, {
             onSuccess: (chatData) => {
                 setSelectedChatItem(chatData);
@@ -400,7 +401,7 @@ function PackagesPageContent() {
     }
 
     return (
-        <div className="flex flex-col items-center max-w-[96rem] min-h-screen bg-white mx-auto">
+        <div className="flex flex-col w-full items-center max-w-[96rem] min-h-screen bg-white mx-auto">
             {/* Header */}
             <header className="flex items-center justify-between gap-4 w-full py-4 px-2 bg-white sticky top-0 z-30 ">
                 <div className="flex items-center gap-4">
@@ -460,7 +461,7 @@ function PackagesPageContent() {
             </header>
 
             {/* Sidebars */}
-            <div className="flex items-start">
+            <div className="flex items-start w-full h-full px-2 gap-8">
                 {/* Mobile Navigation sidebar */}
                 {isNavSidebarOpen && (
                     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 " onClick={() => setIsNavSidebarOpen(false)}>
@@ -505,7 +506,7 @@ function PackagesPageContent() {
                 )}
 
                 {/* Desktop filter sidebar */}
-                {!currentQuery.isLoading && (
+                {!currentQuery.isLoading && paginatedResult.data.length > 0 && (
                     <div className="hidden lg:block sticky top-[81px] h-[calc(100vh-81px)] overflow-y-auto p-4 w-90 bg-white border-l border-gray-200">
                         <SidebarContent
                             activeTab={activeTab}
@@ -535,7 +536,7 @@ function PackagesPageContent() {
                         />
                     </div>)}
 
-                <div className="flex-1 mx-auto py-8">
+                <div className="flex justify-center items-center h-full m-auto py-8">
                     {/* Content */}
                     <div className="">
                         {currentQuery.isLoading ? (

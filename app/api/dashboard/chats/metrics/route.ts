@@ -36,12 +36,12 @@ export async function GET() {
       
       // Package negotiation chats
       prisma.chat.count({
-        where: { type: 'PACKAGE_NEGOTIATION' }
+        where: { type: 'NOTIFICATION' }
       }),
       
       // Trip coordination chats
       prisma.chat.count({
-        where: { type: 'TRIP_COORDINATION' }
+        where: { type: 'NOTIFICATION' }
       }),
       
       // Support chats

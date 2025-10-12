@@ -16,7 +16,7 @@ import {
 
 const navLinks = [
     { href: '/packages', label: 'Posts', icon: Package },
-    { href: '/subscription', label: 'Payment Plans', icon: Crown },
+    { href: '/subscription', label: 'Pricing Plans', icon: Crown },
     { href: '/messages', label: 'Messages', icon: MessageSquare },
     { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
     { href: '/contact', label: 'Contact Info', icon: Info },

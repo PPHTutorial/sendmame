@@ -8,17 +8,9 @@ import {
     Check,
     X,
     CreditCard,
-    ShieldCheck,
-    Globe,
-    Zap,
     Package,
     Star,
-    ArrowRight,
-    ChevronRight,
-    Users,
-    Clock,
-    Sparkles
-} from 'lucide-react'
+    ArrowRight} from 'lucide-react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { NavHeader } from '@/components/shared'
@@ -56,7 +48,7 @@ export const pricingPlans: PricingPlan[] = [
     {
         id: 'standard',
         title: 'Premium',
-        price: 9.99,
+        price: 6.99,
         description: 'Enhanced features for regular senders and travelers often transact more within a month',
         badge: 'Most Popular',
         buttonText: 'Subscribe Now',
@@ -68,7 +60,7 @@ export const pricingPlans: PricingPlan[] = [
     {
         id: 'premium',
         title: 'Enterprise',
-        price: 24.99,
+        price: 15.99,
         description: 'Advanced solutions for businesses with tracking needs and premium support',
         badge: 'Best Value',
         buttonText: 'Subscribe Now',
@@ -192,7 +184,7 @@ export default function SubscriptionPage() {
                 <div className="max-w-7xl mx-auto py-16 px-8">
                     <div className="text-center mb-12">
                         <h1 className="text-4xl font-extrabold text-gray-900">Choose Your Plan</h1>
-                        <p className="mt-4 text-lg text-gray-600">Simplemonthly payment plans to suit your package delivery needs.</p>
+                        <p className="mt-4 text-lg text-gray-600">Simple monthly pricing plans to suit your package delivery needs.</p>
                     </div>
 
                     <div className="grid gap-8 lg:grid-cols-3 md:grid-cols-2 sm:grid-cols-1">

@@ -80,6 +80,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     {
       user: userWithoutPassword,
       accessToken, // Include access token in response
+      refreshToken, // Include refresh token in response
     },
     'Login successful'
   )

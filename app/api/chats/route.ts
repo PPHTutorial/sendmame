@@ -83,10 +83,10 @@ export async function POST(request: NextRequest) {
       return createErrorResponse('Unauthorized', 401)
     }
 
-    const { participantId, itemType, itemId } = await request.json()
+    const { participantId, itemType, chatType, itemId } = await request.json()
 
-    if (!participantId || !itemType || !itemId) {
-      return createErrorResponse('Missing required fields: participantId, itemType, itemId', 400)
+    if (!participantId || !itemType || !chatType || !itemId) {
+      return createErrorResponse('Missing required fields: participantId, itemType, chatType, itemId', 400)
     }
 
     // Check if chat already exists
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
     // Create new chat
     const newChat = await prisma.chat.create({
       data: {
-        type: itemType,
+        type: chatType,
         packageId: itemType === 'package' ? itemId : null,
         tripId: itemType === 'trip' ? itemId : null,
         participants: {

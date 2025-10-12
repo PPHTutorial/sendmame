@@ -2,8 +2,8 @@
 echo Starting setup for payment records implementation...
 
 echo 1. Replacing API route files...
-move /y "e:\Projects\NextJs\sendmame\app\api\verify-payment\route.ts.new" "e:\Projects\NextJs\sendmame\app\api\verify-payment\route.ts"
-move /y "e:\Projects\NextJs\sendmame\app\api\stripe\webhook\route.ts.new" "e:\Projects\NextJs\sendmame\app\api\stripe\webhook\route.ts"
+move /y "e:\Projects\NextJs\amenade\app\api\verify-payment\route.ts.new" "e:\Projects\NextJs\amenade\app\api\verify-payment\route.ts"
+move /y "e:\Projects\NextJs\amenade\app\api\stripe\webhook\route.ts.new" "e:\Projects\NextJs\amenade\app\api\stripe\webhook\route.ts"
 
 echo 2. Running Prisma database push...
 npx prisma db push

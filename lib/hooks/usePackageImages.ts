@@ -25,7 +25,7 @@ export function usePackageImages(): UsePackageImagesReturn {
         // Create form data
         const formData = new FormData()
         formData.append('file', blob, 'image.jpg')
-        formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'sendmame')
+        formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'amenade')
 
         // Upload to Cloudinary
         const cloudinaryResponse = await fetch(

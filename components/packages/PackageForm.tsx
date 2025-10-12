@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
@@ -284,9 +285,12 @@ export function PackageForm({ initialData, isEdit = false, packageId }: PackageF
   }
 
   return (
-    <Card className="max-w-7xl mx-auto p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Create New Package</h2>
+    <Card className="max-w-7xl mx-auto px-4 lg:px-0 border-0 !shadow-none !bg-transparent">
+      <h1 className="text-4xl font-extrabold text-gray-900 mb-2">Create Package</h1>
 
+      <p className="mt-2 text-gray-600 mb-8">
+        Post your package details and find travelers heading your way to deliver it for you.
+      </p>
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <div className="grid grid-cols-1 gap-6">
@@ -428,15 +432,15 @@ export function PackageForm({ initialData, isEdit = false, packageId }: PackageF
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Street Name or Address
-              </label>             
-                <AddressInput
-                  //label="Pickup Location"
-                  placeholder="Enter pickup address with Google Places autocomplete..."
-                  value={formData.pickupAddress.street}
-                  onChange={handlePickupAddressChange}
-                  showCurrentLocationButton={true}
-                  required
-                />                
+              </label>
+              <AddressInput
+                //label="Pickup Location"
+                placeholder="Enter pickup address with Google Places autocomplete..."
+                value={formData.pickupAddress.street}
+                onChange={handlePickupAddressChange}
+                showCurrentLocationButton={true}
+                required
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -541,14 +545,14 @@ export function PackageForm({ initialData, isEdit = false, packageId }: PackageF
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Street Name orAddress
               </label>
-               <AddressInput
-                  //label="Pickup Location"
-                  placeholder="Enter delivery address with Google Places autocomplete..."
-                  value={formData.deliveryAddress.street}
-                  onChange={handleDeliveryAddressChange}
-                  showCurrentLocationButton={true}
-                  required
-                />
+              <AddressInput
+                //label="Pickup Location"
+                placeholder="Enter delivery address with Google Places autocomplete..."
+                value={formData.deliveryAddress.street}
+                onChange={handleDeliveryAddressChange}
+                showCurrentLocationButton={true}
+                required
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

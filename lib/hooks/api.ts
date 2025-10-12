@@ -12,10 +12,10 @@ export function useLogin() {
     mutationFn: authApi.login,
     onSuccess: (data) => {
       queryClient.setQueryData(['user'], data)
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -27,10 +27,10 @@ export function useRegister() {
     mutationFn: authApi.register,
     onSuccess: (data) => {
       queryClient.setQueryData(['user'], data)
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -43,10 +43,10 @@ export function useLogout() {
     onSuccess: () => {
       queryClient.clear()
       localStorage.removeItem('accessToken')
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -97,7 +97,7 @@ export function useVerifyEmail() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ email, code }: { email: string; code: string }) => 
+    mutationFn: ({ email, code }: { email: string; code: string }) =>
       authApi.verifyEmail(email, code),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
@@ -127,7 +127,7 @@ export function useVerifyPhone() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ phone, code }: { phone: string; code: string }) => 
+    mutationFn: ({ phone, code }: { phone: string; code: string }) =>
       authApi.verifyPhone(phone, code),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
@@ -147,8 +147,8 @@ export function useUploadIDDocument() {
       authApi.uploadIDDocument(file1, file2, type),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
-      toast.success('ID document uploaded successfully!',{
-        style:{
+      toast.success('ID document uploaded successfully!', {
+        style: {
           background: '#d1fae5',
           color: '#065f46',
           fontSize: '14px',
@@ -193,7 +193,7 @@ export function useIDVerificationStatus() {
     queryKey: ['idVerificationStatus'],
     queryFn: async () => {
       try {
-        const result = await authApi.getIDVerificationStatus()        
+        const result = await authApi.getIDVerificationStatus()
         return result
       } catch (error) {
         throw error
@@ -212,7 +212,7 @@ export function useFacialVerificationStatus() {
     queryKey: ['facialVerificationStatus'],
     queryFn: async () => {
       try {
-        const result = await authApi.getFacialVerificationStatus()       
+        const result = await authApi.getFacialVerificationStatus()
         return result
       } catch (error) {
         throw error
@@ -229,8 +229,8 @@ export function useUploadAddressDocument() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ file, documentType, address }: { 
-      file: File; 
+    mutationFn: ({ file, documentType, address }: {
+      file: File;
       address: {
         street: string;
         city: string;
@@ -295,10 +295,10 @@ export function useUploadAvatar() {
     mutationFn: userApi.uploadAvatar,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -336,10 +336,10 @@ export function useCreatePackage() {
     mutationFn: packageApi.createPackage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -352,10 +352,10 @@ export function useUpdatePackage() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['package', id] })
       queryClient.invalidateQueries({ queryKey: ['packages'] })
-      
+
     },
     onError: (_error: Error) => {
-      
+
     },
   })
 }
@@ -367,10 +367,10 @@ export function useDeletePackage() {
     mutationFn: packageApi.deletePackage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['packages'] })
-      
+
     },
     onError: (_error: Error) => {
-      
+
     },
   })
 }
@@ -423,10 +423,10 @@ export function useCreateTrip() {
     mutationFn: tripApi.createTrip,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -439,10 +439,10 @@ export function useUpdateTrip() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['trip', id] })
       queryClient.invalidateQueries({ queryKey: ['trips'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -454,10 +454,10 @@ export function useDeleteTrip() {
     mutationFn: tripApi.deleteTrip,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -485,7 +485,7 @@ export function useChat(id: string) {
     queryKey: ['chat', id],
     queryFn: () => chatApi.getChat(id),
     enabled: !!id,
-    refetchInterval: 5000, 
+    refetchInterval: 5000,
   })
 }
 
@@ -493,7 +493,7 @@ export function useFindOrCreateChat() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: { participantId: string; itemType: 'package' | 'trip'; itemId: string }) =>
+    mutationFn: (data: { participantId: string; itemType: 'package' | 'trip'; itemId: string, chatType: string }) =>
       chatApi.createChat(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['chats'] })
@@ -512,10 +512,10 @@ export function useCreateChat() {
     mutationFn: chatApi.createChat,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chats'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -524,9 +524,9 @@ export function useSendMessage() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ chatId, data }: { chatId: string; data: { content: string; type?: string , chatId: string, attachments?: AttachmentData[] } }) =>
+    mutationFn: ({ chatId, data }: { chatId: string; data: { content: string; type?: string, chatId: string, attachments?: AttachmentData[] } }) =>
       chatApi.sendMessage(chatId, data),
-    
+
     onMutate: async ({ chatId, data }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ['chat', chatId] })
@@ -560,7 +560,7 @@ export function useSendMessage() {
       // Return a context object with the snapshotted value
       return { previousChat }
     },
-    
+
     onError: (err, { chatId }, context) => {
       // Rollback to the previous value on error
       if (context?.previousChat) {
@@ -568,7 +568,7 @@ export function useSendMessage() {
       }
       toast.error('Failed to send message. Please try again.')
     },
-    
+
     onSettled: (data, error, { chatId }) => {
       // Always refetch after error or success to ensure data consistency
       queryClient.invalidateQueries({ queryKey: ['chat', chatId] })
@@ -591,7 +591,7 @@ export function useCreatePaymentIntent() {
   return useMutation({
     mutationFn: paymentApi.createPaymentIntent,
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -604,10 +604,10 @@ export function useConfirmPayment() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] })
       queryClient.invalidateQueries({ queryKey: ['user'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -627,10 +627,10 @@ export function useAddPaymentMethod() {
     mutationFn: paymentApi.addPaymentMethod,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['paymentMethods'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -661,7 +661,7 @@ export function useMarkNotificationAsRead() {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -673,10 +673,10 @@ export function useMarkAllNotificationsAsRead() {
     mutationFn: notificationApi.markAllAsRead,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }
@@ -688,10 +688,10 @@ export function useDeleteNotification() {
     mutationFn: notificationApi.deleteNotification,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] })
-      
+
     },
     onError: (error: Error) => {
-      
+
     },
   })
 }

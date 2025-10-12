@@ -277,7 +277,7 @@ async function main() {
     adminUser = await prisma.user.create({
       data: {
         id: "admin_001",
-        email: "admin@sendmame.com",
+        email: "admin@amenade.com",
         firstName: "Admin",
         lastName: "User",
         role: "ADMIN",
@@ -2016,7 +2016,7 @@ async function main() {
   console.log(`   💰 Transactions: ${summary.transactions}`);
   console.log(`   🔔 Notifications: ${summary.notifications}`);
   console.log(`   🔑 Default password for all users: password123`);
-  console.log(`   🔧 Admin email: admin@sendmame.com`);
+  console.log(`   🔧 Admin email: admin@amenade.com`);
 }
 
 main()
