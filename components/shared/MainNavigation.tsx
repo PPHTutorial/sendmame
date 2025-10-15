@@ -11,13 +11,15 @@ import {
     MapPin,
     MessageSquare,
     BarChart3,
-    Crown
+    Crown,
+    Plane
 } from 'lucide-react'
 
 const navLinks = [
     { href: '/packages', label: 'Posts', icon: Package },
     { href: '/subscription', label: 'Pricing Plans', icon: Crown },
     { href: '/messages', label: 'Messages', icon: MessageSquare },
+    { href: '/account/assignments', label: 'Assignments', icon: Plane },
     { href: '/dashboard', label: 'Dashboard', icon: BarChart3 },
     { href: '/contact', label: 'Contact Info', icon: Info },
     { href: '/about', label: 'About', icon: Info },
@@ -52,7 +54,7 @@ export function MainNavigation({ isMobile = false, isAdmin = false, onLinkClick 
                         href={href}
                         onClick={onLinkClick}
                         className={cn(
-                            'group flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium',
+                            'group flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-200 font-medium',
                             isActive
                                 ? 'bg-teal-50 text-teal-700 border border-teal-200'
                                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',

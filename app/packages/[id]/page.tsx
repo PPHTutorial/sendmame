@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui'
-import { usePackage, useAuth, useTrips, useFindOrCreateChat, useSendMessage } from '@/lib/hooks/api'
+import { usePackage, useAuth, useTrips, useFindOrCreateChat, useSendMessage, useCreateAssignment, usePackages } from '@/lib/hooks/api'
 import Link from 'next/link'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { MapPin, Calendar, Star, MessageCircle, Edit, Package2, Phone, Weight, AlertTriangle, Shield, Luggage, Video } from 'lucide-react'
@@ -13,33 +13,37 @@ import { authApi } from '@/lib/api/client'
 import { ImageGallery } from '@/components/shared/ImageGallery'
 import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
 import { MessagingInterface } from '@/components/shared/MessagingInterface'
-import { AttachmentData } from '@/lib/types'
+import { AttachmentData, PackageQueryParams } from '@/lib/types'
 import { NavHeader } from '@/components/shared/NavHeader'
 import { Footer } from '@/components/navigation'
+import { ContactDialog } from '@/components/shared/ContactDialog'
+import { toastErrorStyle } from '@/lib/utils'
+import toast from 'react-hot-toast'
+
+
 
 export default function PackageDetailsPage() {
     const params = useParams()
     const router = useRouter()
     const packageId = params.id as string
     const [isMyPost, setIsMyPost] = useState(false)
-    
+
     // Dialog states
     const [isAssignmentDialogOpen, setIsAssignmentDialogOpen] = useState(false)
     const [isMessagingOpen, setIsMessagingOpen] = useState(false)
+    const [showContactInfo, setShowContactInfo] = useState(false)
     const [selectedChatItem, setSelectedChatItem] = useState<any>(null)
-    
+    const [selectedItem, setSelectedItem] = useState<any>(null)
+
     // API hooks
     const { data: packageData, isLoading, error } = usePackage(packageId)
     const { getCurrentUser } = useAuth()
     const { data: user } = getCurrentUser
-    const tripsQuery = useTrips({ 
-        page: 1, 
-        limit: 100,
-        searchQuery: '',
-        filterParams: {}
-    })
+    const tripsQuery = useTrips()
     const findOrCreateChat = useFindOrCreateChat()
     const sendMessage = useSendMessage()
+    const createAssignment = useCreateAssignment()
+    const packagesQuery = usePackages()
 
     const pkg = packageData
 
@@ -59,11 +63,11 @@ export default function PackageDetailsPage() {
         if (!selectedChatItem) return;
         sendMessage.mutate({
             chatId: selectedChatItem.id,
-            data: { 
-                content, 
-                type: type || 'TEXT', 
+            data: {
+                content,
+                type: type || 'CHAT',
                 chatId: selectedChatItem.id,
-                attachments: attachments || []
+                attachments
             }
         }, {
             onSuccess: (data) => {
@@ -77,15 +81,15 @@ export default function PackageDetailsPage() {
         });
     }
 
-    const handleContactSender = async () => {
+    const handleMessage = async () => {
         if (!user?.id) {
-            alert('Please log in to send messages')
+            toast.error('Please log in to send messages', toastErrorStyle)
             return
         }
 
-        const participantId = pkg.senderId;
+        const participantId = pkg.senderId
         if (!participantId) {
-            alert('Could not determine the sender.');
+            toast.error('Could not determine the other participant.', toastErrorStyle);
             return;
         }
 
@@ -93,16 +97,24 @@ export default function PackageDetailsPage() {
             participantId: participantId,
             itemType: 'package',
             itemId: pkg.id,
+            chatType: 'CHAT'
         }, {
             onSuccess: (chatData) => {
                 setSelectedChatItem(chatData);
                 setIsMessagingOpen(true);
-            },
-            onError: (error) => {
-                console.error('Failed to create chat:', error);
-                alert('Failed to create chat. Please try again.');
+
             }
         });
+    }
+
+    const handleContactSender = async () => {
+        if (!user?.id) {
+            alert('Please log in to send messages')
+            return
+        }
+        setShowContactInfo(true)
+        setSelectedItem({ id: pkg.sender.id, firstName: pkg.sender.firstName, lastName: pkg.sender.lastName, email: pkg.sender.email, phone: pkg.sender.phone })
+
     }
 
     const handleAddToLuggage = () => {
@@ -110,32 +122,54 @@ export default function PackageDetailsPage() {
             alert('Please log in to add packages to trips')
             return
         }
+        setSelectedItem(pkg)
         setIsAssignmentDialogOpen(true)
     }
 
-    const handleCallSender = () => {
-        if (pkg?.sender?.phone) {
-            window.open(`tel:${pkg.sender.phone}`, '_self')
-        } else {
-            alert('Phone number not available')
-        }
-    }
+    const filteredTrips = tripsQuery.data?.data?.filter((trip: any) => trip.travelerId === user.id) || []
+    //const filteredPackages = packagesQuery.data?.data?.filter((pkg: any) => pkg.senderId === user.id) || []
+
 
     const handleVideoCallSender = () => {
         // For now, we'll just show an alert. In a real app, you'd integrate with a video calling service
         alert('Video calling feature will be implemented with a video service integration')
     }
 
-    const handleAssign = async (assignmentData: any) => {
+    const handleAssign = async (targetId: string, confirmations: any) => {
+        if (!selectedItem || !user?.id) {
+            toast.error('Invalid assignment data', {
+                style: {
+                    fontSize: 14,
+                    backgroundColor: '#fee2e2',
+                    borderColor: '#ef4444',
+                    color: '#dc2626',
+                }
+            })
+            return
+        }
+
         try {
-            console.log('Assignment:', assignmentData)
+            const isPackageToTrip = selectedItem.senderId !== undefined
+            const assignmentData = {
+                packageId: isPackageToTrip ? selectedItem.id : targetId,
+                tripId: isPackageToTrip ? targetId : selectedItem.id,
+                confirmations,
+                confirmationType: 'ASSIGNMENT' as const,
+                notification: isPackageToTrip ? 'TO_TRIP' : 'TO_PACKAGE',
+                userId: user.id
+            }
+
+            console.log('Creating assignment:', assignmentData)
+
+            await createAssignment.mutateAsync(assignmentData)
+
+            // Close the dialog and reset state
             setIsAssignmentDialogOpen(false)
-            // Refresh the data
-            // In a real app, you'd make an API call to assign the package to a trip
-            alert('Package assignment functionality will be implemented with backend integration')
+            setSelectedItem(null)
+
         } catch (error) {
             console.error('Assignment failed:', error)
-            alert('Failed to assign package')
+            // Error handling is done in the hook
         }
     }
 
@@ -196,7 +230,7 @@ export default function PackageDetailsPage() {
 
     return (
         <div className="min-h-screen bg-white">
-             <NavHeader title='Amenade' email={user?.email} name={`${user?.firstName} ${user?.lastName}`} showMenuItems={true} />
+            <NavHeader title='Amenade' email={user?.email} name={`${user?.firstName} ${user?.lastName}`} showMenuItems={true} />
             {/* Header */}
             <div className="bg-white ">
                 <div className="max-w-7xl mx-auto px-4 sm:px-4 lg:px-0">
@@ -424,11 +458,11 @@ export default function PackageDetailsPage() {
                                 <div className="space-y-3">
                                     {!isMyPost && (
                                         <>
-                                            <Button className="w-full flex items-center justify-center space-x-2" onClick={handleContactSender}>
+                                            <Button className="w-full flex items-center justify-center space-x-2" onClick={handleMessage}>
                                                 <MessageCircle className="w-4 h-4" />
                                                 <span>Send Message</span>
                                             </Button>
-                                            <Button variant="outline" className="w-full flex items-center justify-center space-x-2" onClick={handleCallSender}>
+                                            <Button variant="outline" className="w-full flex items-center justify-center space-x-2" onClick={handleContactSender}>
                                                 <Phone className="w-4 h-4" />
                                                 <span>Call Sender</span>
                                             </Button>
@@ -485,10 +519,11 @@ export default function PackageDetailsPage() {
                     isOpen={isAssignmentDialogOpen}
                     onClose={() => setIsAssignmentDialogOpen(false)}
                     type="package-to-trip"
-                    currentItem={pkg}
-                    availableItems={tripsQuery.data?.data || []}
+                    currentItem={selectedItem}
+                    availableItems={filteredTrips || []}
                     onAssign={handleAssign}
                     isLoading={false}
+                    userId={user.id}
                 />
             )}
 
@@ -504,6 +539,17 @@ export default function PackageDetailsPage() {
                     currentUserId={user?.id || ''}
                     onSendMessage={handleSendMessage}
                 />
+            )}
+            {/* Contact Dialog */}
+
+            {showContactInfo && (
+                <ContactDialog contact={{
+                    id: selectedItem.id || '',
+                    firstName: selectedItem.firstName || '',
+                    lastName: selectedItem.lastName || '',
+                    email: selectedItem.email || '',
+                    phone: selectedItem.phone || '',
+                }} isOpen={showContactInfo} onClose={() => setShowContactInfo(false)} />
             )}
             <Footer />
         </div>

@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/prisma'
-import { pickupConfirmationSchema } from '@/lib/validations'
-import { no } from 'zod/v4/locales'
 
 
 const assignmentSchema = z.object({
@@ -61,9 +59,9 @@ export async function POST(request: NextRequest) {
             // Check if trip has enough capacity
             const packageDimensions = packageData.dimensions as any
             const packageWeight = packageDimensions?.weight || 0
-            if (tripData.availableSpace < packageWeight) {
-                throw new Error('Insufficient space on trip')
-            }
+            /* if (tripData.availableSpace < packageWeight) {
+                throw new Error('According to your lauggage weight space, this package cannot be added because it exceeds the required space/dimension')
+            } */
 
             // Update package status and assign to trip
             const updatedPackage = await tx.package.update({
@@ -93,7 +91,7 @@ export async function POST(request: NextRequest) {
                 where: {
                     packageId,
                     tripId,
-                    type: 'PACKAGE_NEGOTIATION'
+                    type: 'NOTIFICATION'
                 },
                 include: {
                     participants: {
@@ -111,7 +109,7 @@ export async function POST(request: NextRequest) {
             if (!chat) {
                 chat = await tx.chat.create({
                     data: {
-                        type: 'PACKAGE_NEGOTIATION',
+                        type: 'NOTIFICATION',
                         packageId,
                         tripId,
                         participants: {

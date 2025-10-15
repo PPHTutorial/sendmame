@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Button, Input } from '@/components/ui'
-import { useAuth, usePackages, useTrips, useFindOrCreateChat, useSendMessage } from '@/lib/hooks/api'
+import { useAuth, usePackages, useTrips, useFindOrCreateChat, useSendMessage, useCreateAssignment } from '@/lib/hooks/api'
 import { PackageCard } from '@/components/packages/PackageCard'
 import { TripCard } from '@/components/trips/TripCard'
 import { EmptyState } from '@/components/shared/EmptyState'
@@ -11,9 +11,9 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 
 // Define AttachmentData interface
 interface AttachmentData {
-  name: string;
-  data: string; // base64 data
-  type: string;
+    name: string;
+    data: string; // base64 data
+    type: string;
 }
 import { Pagination } from '@/components/shared/Pagination'
 import { AssignmentDialog } from '@/components/shared/AssignmentDialog'
@@ -28,79 +28,11 @@ import { NavSidebarContent } from '@/components/shared/NavSidebarContent';
 import { MainNavigation } from '@/components/shared/MainNavigation';
 import { Filter } from 'lucide-react';
 import { Footer } from '@/components/navigation'
-
-// Types
-type ActiveTab = 'packages' | 'trips'
-type PackageSortBy = 'title' | 'createdAt' | 'updatedAt' | 'offeredPrice' | 'finalPrice' | 'value' | 'pickupDate' | 'deliveryDate' | 'category' | 'priority'
-type TripSortBy = 'title' | 'createdAt' | 'updatedAt' | 'departureDate' | 'arrivalDate' | 'pricePerKg' | 'minimumPrice' | 'maximumPrice' | 'maxWeight' | 'availableSpace' | 'transportMode'
-type SortOrder = 'asc' | 'desc'
-
-// Updated Package filter interface - matching Prisma schema
-interface PackageFiltersState {
-    status?: string
-    category?: string
-    offeredPriceMin?: number
-    offeredPriceMax?: number
-    finalPriceMin?: number
-    finalPriceMax?: number
-    valueMin?: number
-    valueMax?: number
-    pickupDateFrom?: string
-    pickupDateTo?: string
-    deliveryDateFrom?: string
-    deliveryDateTo?: string
-    isFragile?: boolean
-    requiresSignature?: boolean
-    priority?: string
-    pickupCity?: string
-    pickupCountry?: string
-    deliveryCity?: string
-    deliveryCountry?: string
-}
-
-// Updated Trip filter interface - matching Prisma schema
-interface TripFiltersState {
-    status?: string
-    transportMode?: string
-    pricePerKgMin?: number
-    pricePerKgMax?: number
-    minimumPriceMin?: number
-    minimumPriceMax?: number
-    maximumPriceMin?: number
-    maximumPriceMax?: number
-    departureDateFrom?: string
-    departureDateTo?: string
-    arrivalDateFrom?: string
-    arrivalDateTo?: string
-    maxWeightMin?: number
-    maxWeightMax?: number
-    availableSpaceMin?: number
-    availableSpaceMax?: number
-    flexibleDates?: boolean
-    originCity?: string
-    originCountry?: string
-    destinationCity?: string
-    destinationCountry?: string
-}
+import toast from 'react-hot-toast'
+import { toastErrorStyle } from '@/lib/utils'
+import { ActiveTab, PackageSortBy, SortOrder, PackageFiltersState, TripSortBy, TripFiltersState, PackageQueryParams, TripQueryParams } from '@/lib/types'
 
 // API Query parameters interface
-interface PackageQueryParams {
-    page: number
-    limit: number
-    sortBy: PackageSortBy
-    sortOrder: SortOrder
-    search?: string
-    [key: string]: any // Allow for dynamic filter keys
-}
-
-interface TripQueryParams {
-    page: number
-    limit: number
-    sortBy: TripSortBy
-    sortOrder: SortOrder
-    search?: string
-    [key: string]: any // Allow for dynamic filter keys
-}
 
 function PackagesPageContent() {
     const searchParams = useSearchParams()
@@ -111,6 +43,7 @@ function PackagesPageContent() {
 
     const findOrCreateChat = useFindOrCreateChat()
     const sendMessage = useSendMessage()
+    const createAssignment = useCreateAssignment()
 
     const [activeTab, setActiveTab] = useState<ActiveTab>(tabFromQuery || 'packages')
     const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false)
@@ -237,7 +170,7 @@ function PackagesPageContent() {
 
     const handlePackageAction = (packageData: any) => {
         if (!user?.id) {
-            alert('Please log in to assign packages to trips')
+            toast.error('Please log in to assign packages to trips', toastErrorStyle)
             return
         }
 
@@ -247,7 +180,7 @@ function PackagesPageContent() {
 
     const handleTripAction = (tripData: any) => {
         if (!user?.id) {
-            alert('Please log in to add packages to trips')
+            toast.error('Please log in to add packages to trips', toastErrorStyle)
             return
         }
 
@@ -257,13 +190,13 @@ function PackagesPageContent() {
 
     const handleMessage = async (itemData: any) => {
         if (!user?.id) {
-            alert('Please log in to send messages')
+            toast.error('Please log in to send messages', toastErrorStyle)
             return
         }
 
         const participantId = activeTab === 'packages' ? itemData.senderId : itemData.travelerId;
         if (!participantId) {
-            alert('Could not determine the other participant.');
+            toast.error('Could not determine the other participant.', toastErrorStyle);
             return;
         }
 
@@ -287,12 +220,12 @@ function PackagesPageContent() {
         if (packageData?.sender?.phone) {
             window.open(`tel:${packageData.sender.phone}`, '_self')
         } else {
-            alert('Phone number not available')
+            toast.error('Phone number not available', toastErrorStyle)
         }
     }
 
     const handleVideoCallSender = () => {
-        alert('Video calling feature will be implemented with a video service integration')
+        toast.error('Video calling feature will be implemented with a video service integration', toastErrorStyle)
     }
 
     const handleContactSender = async (packageData: any) => {
@@ -303,17 +236,23 @@ function PackagesPageContent() {
         if (tripData?.traveler?.phone) {
             window.open(`tel:${tripData.traveler.phone}`, '_self')
         } else {
-            alert('Phone number not available')
+            toast.error('Phone number not available', toastErrorStyle)
         }
     }
 
     const handleVideoCallTraveler = () => {
-        alert('Video calling feature will be implemented with a video service integration')
+        toast.error('Video calling feature will be implemented with a video service integration', toastErrorStyle)
     }
 
     const handleContactTraveler = async (tripData: any) => {
         await handleMessage(tripData)
     }
+
+    // Filter trips/packages based on current user's data
+    const userId = user?.id
+    const filteredTrips = tripsQuery.data?.data?.filter((trip: any) => trip.travelerId === userId) || []
+    const filteredPackages = packagesQuery.data?.data?.filter((pkg: any) => pkg.senderId === userId) || []
+    // Use these filtered lists for assignment dialog and other user-specific actions
 
     // Helper function to get current query and page based on active tab
     const getCurrentQuery = () => activeTab === 'packages' ? packagesQuery : tripsQuery
@@ -359,22 +298,34 @@ function PackagesPageContent() {
 
     const paginatedResult = getPaginatedData()
 
-    const handleAssign = async (_assignmentData: any) => {
-        try {
-            console.log('Assignment:', { activeTab })
+    const handleAssign = async (targetId: string, confirmations: any) => {
+        if (!selectedItem || !user?.id) {
+            toast.error('Invalid assignment data', toastErrorStyle)
+            return
+        }
 
+        try {
+            const isPackageToTrip = selectedItem.senderId !== undefined
+            const assignmentData = {
+                packageId: isPackageToTrip ? selectedItem.id : targetId,
+                tripId: isPackageToTrip ? targetId : selectedItem.id,
+                confirmations,
+                confirmationType: 'ASSIGNMENT' as const,
+                notification: isPackageToTrip ? 'TO_TRIP' : 'TO_PACKAGE',
+                userId: user.id
+            }
+
+            console.log('Creating assignment:', assignmentData)
+
+            await createAssignment.mutateAsync(assignmentData)
+
+            // Close the dialog and reset state
             setIsAssignmentDialogOpen(false)
             setSelectedItem(null)
 
-            // Refresh the data
-            if (activeTab === 'packages') {
-                packagesQuery.refetch()
-            } else {
-                tripsQuery.refetch()
-            }
         } catch (error) {
             console.error('Assignment failed:', error)
-            alert('Failed to create assignment. Please try again.')
+            // Error handling is done in the hook
         }
     }
 
@@ -382,9 +333,9 @@ function PackagesPageContent() {
         if (!selectedChatItem) return;
         sendMessage.mutate({
             chatId: selectedChatItem.id,
-            data: { 
-                content, 
-                type: type || 'TEXT', 
+            data: {
+                content,
+                type: type || 'TEXT',
                 chatId: selectedChatItem.id,
                 attachments
             }
@@ -604,10 +555,12 @@ function PackagesPageContent() {
                                 setIsAssignmentDialogOpen(false)
                                 setSelectedItem(null)
                             }}
-                            type={activeTab === 'packages' ? 'package-to-trip' : 'trip-to-package'}
+                            type={activeTab === 'packages' ? 'trip-to-package' : 'package-to-trip'}
                             currentItem={selectedItem}
-                            availableItems={activeTab === 'packages' ? tripsQuery.data?.data || [] : packagesQuery.data?.data || []}
+                            availableItems={activeTab === 'packages' ? filteredTrips || [] : filteredPackages || []}
                             onAssign={handleAssign}
+                            userId={user.id}
+
                         />
                     )}
 

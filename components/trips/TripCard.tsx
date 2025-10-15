@@ -345,11 +345,11 @@ export function TripCard({ trip, onAddPackage, onSendMessage, onCallTraveler, on
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Message</span>
-                {trip._count && trip._count.chats > 0 && (
+                {/* {trip._count && trip._count.chats > 0 && (
                   <span className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded-full">
                     {trip._count.chats}
                   </span>
-                )}
+                )} */}
               </Button>
               <Button
                 onClick={handleAddPackage}

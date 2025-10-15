@@ -124,6 +124,7 @@ export async function POST(request: NextRequest) {
                 id: true,
                 firstName: true,
                 lastName: true,
+                phone: true,
                 avatar: true,
                 email: true
               }

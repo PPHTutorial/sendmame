@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { AlertTriangle, MapPin, Calendar, Package, Truck, Search, MessageCircle } from 'lucide-react'
+import { AlertTriangle, MapPin, Calendar, Package, Truck, Search, MessageCircle, Home, Plane } from 'lucide-react'
 import { format } from 'date-fns'
 import { Button, Card, Input, Modal, Badge } from '../ui'
 
@@ -41,6 +41,7 @@ interface AssignmentDialogProps {
     availableItems: Trip[] | Package[]
     onAssign: (targetId: string, confirmations: SafetyConfirmations) => void
     isLoading?: boolean
+    userId: string
 }
 
 interface SafetyConfirmations {
@@ -58,7 +59,8 @@ export function AssignmentDialog({
     currentItem: _currentItem,
     availableItems,
     onAssign,
-    isLoading = false
+    isLoading = false,
+    userId
 }: AssignmentDialogProps) {
     const [selectedId, setSelectedId] = useState<string>('')
     const [searchQuery, setSearchQuery] = useState('')
@@ -71,19 +73,76 @@ export function AssignmentDialog({
     })
     const [step, setStep] = useState<'selection' | 'confirmation'>('selection')
 
-    const isPackageToTrip = type === 'package-to-trip'
-    const filteredItems = availableItems.filter((item: any) => {
-        if (!searchQuery) return true
-        const searchStr = searchQuery.toLowerCase()
-        return (
-            item.title.toLowerCase().includes(searchStr) ||
-            item.description?.toLowerCase().includes(searchStr) ||
-            (isPackageToTrip
-                ? item.destinationAddress?.city?.toLowerCase().includes(searchStr)
-                : item.deliveryAddress?.city?.toLowerCase().includes(searchStr)
-            )
-        )
-    })
+    console.log(type)
+
+    const isPackageToTrip = type === 'trip-to-package' ? true : false
+    // Enhanced filter: match by city, state, country, and reasonable distance
+    //const filteredTrips = tripsQuery.data?.data?.filter((trip: any) => trip.travelerId === userId) || []
+    //const filteredPackages = packagesQuery.data?.data?.filter((pkg: any) => pkg.senderId === userId) || []
+
+    console.log(availableItems)
+
+    const filteredItems = availableItems
+            .filter((item: any) => {
+               // if (!searchQuery) return true
+                const searchStr = searchQuery.toLowerCase()
+                //mine data
+
+                // Helper for address matching
+                function addressMatch(addrA: any, addrB: any) {
+                    if (!addrA || !addrB) return false
+                    const cityMatch = addrA.city?.toLowerCase() === addrB.city?.toLowerCase()
+                    const stateMatch = addrA.state?.toLowerCase() === addrB.state?.toLowerCase()
+                    const countryMatch = addrA.country?.toLowerCase() === addrB.country?.toLowerCase()
+
+                    return cityMatch && stateMatch && countryMatch
+                }
+                // Helper for distance (simple Haversine, fallback to city/state/country if no coords)
+                function isReasonableDistance(latA: number, lonA: number, latB: number, lonB: number) {
+                    if (!latA || !lonA || !latB || !lonB) return true // fallback
+                    const toRad = (v: number) => v * Math.PI / 180
+                    const R = 6371 // km
+                    const dLat = toRad(latB - latA)
+                    const dLon = toRad(lonB - lonA)
+                    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(toRad(latA)) * Math.cos(toRad(latB)) * Math.sin(dLon / 2) * Math.sin(dLon / 2)
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+                    const d = R * c
+                    return d <= 500 // 500km is reasonable, adjust as needed
+                }
+
+
+                if (isPackageToTrip) {
+                    // Trip: match package delivery address to trip destination
+                    const deliveryAddr = (_currentItem as Package)?.deliveryAddress
+                    const match = addressMatch(item.destinationAddress, deliveryAddr)
+                    const distanceOk = isReasonableDistance(
+                        item.destinationAddress?.latitude,
+                        item.destinationAddress?.longitude,
+                        deliveryAddr?.latitude,
+                        deliveryAddr?.longitude
+                    )
+                    return (
+                       // item.title.toLowerCase().includes(searchStr) &&
+                       // item.description?.toLowerCase().includes(searchStr) &&
+                        match && distanceOk
+                    )
+                } else {
+                    // Package: match trip origin to package pickup
+                    const deliveryAddr = (_currentItem as Trip)?.destinationAddress
+                    const match = addressMatch(item.pickupAddress, deliveryAddr)
+                    const distanceOk = isReasonableDistance(
+                        item.pickupAddress?.latitude,
+                        item.pickupAddress?.longitude,
+                        deliveryAddr?.latitude,
+                        deliveryAddr?.longitude
+                    )
+                    return (
+                        //item.title.toLowerCase().includes(searchStr) &&
+                        //item.description?.toLowerCase().includes(searchStr) &&
+                        match && distanceOk
+                    )
+                }
+            })
 
     const allConfirmationsChecked = Object.values(confirmations).every(Boolean)
 
@@ -135,11 +194,11 @@ export function AssignmentDialog({
             {filteredItems.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                     <Package className="mx-auto h-12 w-12 mb-4 opacity-50" />
-                    <p>No {isPackageToTrip ? 'trips' : 'packages'} available</p>
+                    <p>No {isPackageToTrip ? 'Trips' : 'Packages'} Match</p>
                     <p className="text-sm mt-2">
                         {isPackageToTrip
-                            ? 'Post a trip to start accepting packages'
-                            : 'Create a package to find available trips'
+                            ? 'Post a matching trip to start accepting packages'
+                            : 'Create a matching package to find available trips'
                         }
                     </p>
                 </div>
@@ -165,6 +224,12 @@ export function AssignmentDialog({
                                     {isPackageToTrip ? (
                                         <>
                                             <div className="flex items-center gap-2">
+                                                <Plane className="h-4 w-4" />
+                                                <span>
+                                                    {item.title}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
                                                 <MapPin className="h-4 w-4" />
                                                 <span>
                                                     {item.originAddress?.city} → {item.destinationAddress?.city}
@@ -185,6 +250,12 @@ export function AssignmentDialog({
                                         </>
                                     ) : (
                                         <>
+                                            <div className="flex items-center gap-2">
+                                                <Home className="h-4 w-4" />
+                                                <span>
+                                                    {item.title}
+                                                </span>
+                                            </div>
                                             <div className="flex items-center gap-2">
                                                 <MapPin className="h-4 w-4" />
                                                 <span>
@@ -211,7 +282,7 @@ export function AssignmentDialog({
                 </div>
             )}
 
-            <div className="flex justify-end gap-2 pt-4 border-t">
+            <div className="flex justify-end gap-2 pt-4 border-t border-neutral-300">
                 <Button variant="outline" onClick={onClose}>Cancel</Button>
                 <Button
                     onClick={() => setStep('confirmation')}
@@ -346,8 +417,8 @@ export function AssignmentDialog({
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={isPackageToTrip ? 'Add Package to Trip' : 'Assign Trip to Package'}
-            size="lg"
+            title={isPackageToTrip ? 'Assign Trip to Package' :'Assign Package to Trip' }
+            size="lg" 
         >
             <div className="space-y-4">
                 <p className="text-sm text-gray-600">

@@ -141,6 +141,7 @@ export interface CreatePackageData {
   pickupDate: string
   deliveryDate: string
   offeredPrice: number
+  finalPrice: number
   currency: string
   specialInstructions?: string
   images?: string[]
@@ -404,4 +405,77 @@ export {
   NotificationType,
   DisputeStatus,
   ChatType
+}
+
+
+// Types
+export type ActiveTab = 'packages' | 'trips'
+export type PackageSortBy = 'title' | 'createdAt' | 'updatedAt' | 'offeredPrice' | 'finalPrice' | 'value' | 'pickupDate' | 'deliveryDate' | 'category' | 'priority'
+export type TripSortBy = 'title' | 'createdAt' | 'updatedAt' | 'departureDate' | 'arrivalDate' | 'pricePerKg' | 'minimumPrice' | 'maximumPrice' | 'maxWeight' | 'availableSpace' | 'transportMode'
+export type SortOrder = 'asc' | 'desc'
+
+// Updated Package filter interface - matching Prisma schema
+export interface PackageFiltersState {
+    status?: string
+    category?: string
+    offeredPriceMin?: number
+    offeredPriceMax?: number
+    finalPriceMin?: number
+    finalPriceMax?: number
+    valueMin?: number
+    valueMax?: number
+    pickupDateFrom?: string
+    pickupDateTo?: string
+    deliveryDateFrom?: string
+    deliveryDateTo?: string
+    isFragile?: boolean
+    requiresSignature?: boolean
+    priority?: string
+    pickupCity?: string
+    pickupCountry?: string
+    deliveryCity?: string
+    deliveryCountry?: string
+}
+
+// Updated Trip filter interface - matching Prisma schema
+export interface TripFiltersState {
+    status?: string
+    transportMode?: string
+    pricePerKgMin?: number
+    pricePerKgMax?: number
+    minimumPriceMin?: number
+    minimumPriceMax?: number
+    maximumPriceMin?: number
+    maximumPriceMax?: number
+    departureDateFrom?: string
+    departureDateTo?: string
+    arrivalDateFrom?: string
+    arrivalDateTo?: string
+    maxWeightMin?: number
+    maxWeightMax?: number
+    availableSpaceMin?: number
+    availableSpaceMax?: number
+    flexibleDates?: boolean
+    originCity?: string
+    originCountry?: string
+    destinationCity?: string
+    destinationCountry?: string
+}
+
+export interface PackageQueryParams {
+    page: number
+    limit: number
+    sortBy: PackageSortBy
+    sortOrder: SortOrder
+    search?: string
+    [key: string]: any // Allow for dynamic filter keys
+}
+
+export interface TripQueryParams {
+    page: number
+    limit: number
+    sortBy: TripSortBy
+    sortOrder: SortOrder
+    search?: string
+    [key: string]: any // Allow for dynamic filter keys
 }

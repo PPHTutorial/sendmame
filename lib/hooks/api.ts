@@ -1,8 +1,9 @@
 // Amenade Platform - API Hooks
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import apiClient, { authApi, userApi, packageApi, tripApi, chatApi, paymentApi, notificationApi } from '@/lib/api/client'
+import apiClient, { authApi, userApi, packageApi, tripApi, chatApi, paymentApi, notificationApi, assignmentApi } from '@/lib/api/client'
 import { toast } from 'react-hot-toast'
 import { AttachmentData } from '../types'
+import { toastErrorStyle, toastSuccessStyle } from '../utils'
 
 // Auth hooks
 export function useLogin() {
@@ -442,7 +443,7 @@ export function useUpdateTrip() {
 
     },
     onError: (error: Error) => {
-
+      
     },
   })
 }
@@ -692,6 +693,100 @@ export function useDeleteNotification() {
     },
     onError: (error: Error) => {
 
+    },
+  })
+}
+
+// Assignment hooks
+export function useCreateAssignment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: assignmentApi.createAssignment,
+    onSuccess: (_data) => {
+      // Invalidate and refetch packages and trips
+      queryClient.invalidateQueries({ queryKey: ['packages'] })
+      queryClient.invalidateQueries({ queryKey: ['trips'] })
+      queryClient.invalidateQueries({ queryKey: ['assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['chats'] })
+
+      /* toast.success('Assignment created successfully!', {
+        style: {
+          fontSize: 14,
+          backgroundColor: '#d1fae5',
+          borderColor: '#10b981',
+          color: '#065f46',
+        }
+      }) */
+    },
+    onError: (_error: Error) => {
+      /* toast.error(_error.message || 'Failed to create assignment', {
+        style: {
+          fontSize: 14,
+          backgroundColor: '#fee2e2',
+          borderColor: '#ef4444',
+          color: '#dc2626',
+        }
+      }) */
+    },
+  })
+}
+
+export function useGetAssignments() {
+  return useQuery({
+    queryKey: ['assignments'],
+    queryFn: () => assignmentApi.getAssignments(),
+  })
+}
+
+export function useConfirmAssignment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: assignmentApi.confirmAssignment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['packages'] })
+      queryClient.invalidateQueries({ queryKey: ['trips'] })
+
+      // toast.success('Assignment confirmed!', toastSuccessStyle)
+    },
+    onError: (error: Error) => {
+      // toast.error(error.message || 'Failed to confirm assignment', toastErrorStyle)
+    },
+  })
+}
+
+export function useCancelAssignment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      assignmentApi.cancelAssignment(id, reason),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['packages'] })
+      queryClient.invalidateQueries({ queryKey: ['trips'] })
+
+      /* toast.success('Assignment cancelled', {
+        style: {
+          fontSize: 14,
+          backgroundColor: '#d1fae5',
+          borderColor: '#10b981',
+          color: '#065f46',
+        }
+      }) */
+    },
+    onError: (error: Error) => {
+      /* toast.error(error.message || 'Failed to cancel assignment', {
+        style: {
+          fontSize: 14,
+          backgroundColor: '#fee2e2',
+          borderColor: '#ef4444',
+          color: '#dc2626',
+        }
+      }) */
     },
   })
 }

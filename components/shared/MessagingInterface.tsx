@@ -16,9 +16,13 @@ import {
   Edit2,
   Trash2,
   Check,
-  MoreVertical as _MoreVertical
+  MoreVertical as _MoreVertical,
+  Copy
 } from 'lucide-react'
 import { format, isToday, isYesterday } from 'date-fns'
+import toast from 'react-hot-toast'
+import { toastErrorStyle, toastSuccessStyle } from '@/lib/utils'
+import { ContactDialog } from './ContactDialog'
 
 interface AttachmentData {
   name: string;
@@ -44,6 +48,8 @@ interface ChatParticipant {
     firstName: string
     lastName: string
     avatar?: string
+    phone?: string
+    email: string
     profile?: {
       profilePicture?: string
     }
@@ -199,8 +205,6 @@ export function MessagingInterface({
     // In a real app, you would call an API to delete the message
     console.log('Deleting message:', messageId)
 
-    // For this example, we'll just log the action and let the developer implement the actual API call
-    // onDeleteMessage(messageId)
 
     setShowMessageActions(null)
   }
@@ -211,15 +215,13 @@ export function MessagingInterface({
 
   // Media button handlers
   const handleCallButton = () => {
-    // In a real app, this would show contact info or initiate a call
+
+
     setShowContactInfo(prevState => !prevState)
-    // Mock implementation - in a real app, you would integrate with a calling service
-    alert(`Call ${otherParticipant?.user.firstName} ${otherParticipant?.user.lastName} at [Contact Number]`)
   }
 
   const handleVideoButton = () => {
-    // In a real app, this would initiate a video call
-    // Mock implementation - in a real app, you would integrate with a video calling service
+
     alert(`Starting video call with ${otherParticipant?.user.firstName} ${otherParticipant?.user.lastName}`)
   }
 
@@ -235,8 +237,7 @@ export function MessagingInterface({
 
   const handleLocationButton = () => {
     setShowLocationPicker(true)
-    // Mock implementation - in a real app, you would integrate with a map service
-    // For now, we'll simulate selecting a location
+
     setTimeout(() => {
       const mockLocation = {
         lat: 37.7749,
@@ -336,66 +337,82 @@ export function MessagingInterface({
   if (!chat) {
     return null
   }
+  const handleCopy = (value?: string | null, label?: string) => {
+    if (!value) {
+      toast.error(`No ${label ?? 'value'} available to copy`, toastErrorStyle)
+      return
+    }
+    navigator.clipboard.writeText(value)
+    toast.success(`${label ?? 'Value'} copied to clipboard`, toastSuccessStyle)
+  }
 
   return (
     <>
       {/* Contact Info Modal */}
       {showContactInfo && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium">Contact Information</h3>
-              <button
-                onClick={() => setShowContactInfo(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="mb-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
-                  <span className="text-teal-600 font-medium">
-                    {otherParticipant?.user.firstName[0]}{otherParticipant?.user.lastName[0]}
-                  </span>
-                </div>
-                <div>
-                  <h4 className="font-medium">
-                    {otherParticipant?.user.firstName} {otherParticipant?.user.lastName}
-                  </h4>
-                  <p className="text-sm text-gray-600">User ID: {otherParticipant?.userId}</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <p className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2 text-gray-600" />
-                  <span>+1 (555) 123-4567</span>
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  This is a mock phone number. In a real app, this would show the user&apos;s actual contact details.
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                className="flex-1"
-                onClick={() => {
-                  alert('Initiating call...');
-                  setShowContactInfo(false);
-                }}
-              >
-                <Phone className="h-4 w-4 mr-2" /> Call
-              </Button>
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowContactInfo(false)}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ContactDialog contact={{
+          id: otherParticipant?.user.id || '',
+          firstName: otherParticipant?.user.firstName || '',
+          lastName: otherParticipant?.user.lastName || '',
+          email: otherParticipant?.user.email || '',
+          phone: otherParticipant?.user.phone || '',
+        }} isOpen={showContactInfo} onClose={() => setShowContactInfo(false)} />
+
+       /*  <div className="fixed inset-0 bg-black/40 bg-opacity-50 flex items-center justify-center z-[999]">
+           <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
+             <div className="flex justify-between items-center mb-4">
+               <h3 className="text-lg font-medium">Contact Information</h3>
+               <button
+                 onClick={() => setShowContactInfo(false)}
+                 className="text-gray-500 hover:text-gray-700"
+               >
+                 <X className="h-5 w-5" />
+               </button>
+             </div>
+             <div className="mb-4">
+               <div className="flex items-center gap-3 mb-3">
+                 <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center">
+                   <span className="text-teal-600 font-medium">
+                     {otherParticipant?.user.firstName[0]}{otherParticipant?.user.lastName[0]}
+                   </span>
+                 </div>
+                 <div>
+                   <h4 className="font-medium">
+                     {otherParticipant?.user.firstName} {otherParticipant?.user.lastName}
+                   </h4>
+                   <p className="text-sm text-gray-600">{otherParticipant?.user?.email}</p>
+                 </div>
+               </div>
+               <div className="space-y-2">
+                 <p className="flex items-center">
+                   <Phone className="h-4 w-4 mr-2 text-gray-600" />
+                   {otherParticipant?.user.phone ? <div className="flex items-center gap-4 justify-between"><span>{otherParticipant?.user.phone} </span> <Copy size={16} className='hover:text-teal-600' onClick={() => handleCopy(otherParticipant?.user.phone, 'phone number')}/></div> : <span>No phone number available. Send Email or Message instead</span>}
+                 </p>
+                 <p className="text-xs text-gray-500 mt-1">
+                   This is a mock phone number. In a real app, this would show the user&apos;s actual contact details.
+                 </p>
+               </div>
+             </div>
+             <div className="flex gap-2">
+               <Button
+                 className="flex-1"
+                 onClick={() => {
+                   alert('Initiating call...');
+                   setShowContactInfo(false);
+                 }}
+               >
+                 <Phone className="h-4 w-4 mr-2" /> Call
+               </Button>
+               <Button
+                 variant="outline"
+                 className="flex-1"
+                 onClick={() => setShowContactInfo(false)}
+               >
+                 Cancel
+               </Button>
+             </div>
+           </div>
+         </div> */
       )}
 
       {/* Location Picker Modal */}
@@ -453,7 +470,7 @@ export function MessagingInterface({
         </div>
       )}
 
-      
+
 
       <Modal
         isOpen={isOpen}

@@ -57,7 +57,7 @@ export function NavSidebarContent({ user, onLinkClick }: NavSidebarContentProps)
 
             {/* Main Navigation */}
             <div className="p-4 flex-grow">
-                <MainNavigation isMobile isAdmin={user?.role === 'admin'} onLinkClick={onLinkClick} />
+                <MainNavigation isMobile isAdmin={user?.role === 'ADMIN'} onLinkClick={onLinkClick} />
 
                 {/* Quick Actions */}
                 <div className="mt-8">
@@ -85,7 +85,7 @@ export function NavSidebarContent({ user, onLinkClick }: NavSidebarContentProps)
                 {user ? (
                     <div className="space">
                         {/* Enhanced User Profile Section */}
-                        <div className="flex items-center justify-between gap-4 bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between gap-4 bg-gray-50 rounded-lg">
                             <Link href="/account/profile" onClick={onLinkClick}>
                                 <div className="flex items-center gap-3 mb-3">
                                     <div className="w-12 h-12  rounded-full flex items-center justify-center">

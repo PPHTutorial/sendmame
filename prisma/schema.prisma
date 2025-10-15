@@ -15,6 +15,8 @@ datasource db {
 enum UserRole {
   SENDER
   TRAVELER
+  RECEIVER
+  COURIER
   ADMIN
 }
 
@@ -32,6 +34,16 @@ enum PackageStatus {
   DELIVERED
   CANCELLED
   DISPUTED
+}
+
+enum EventStatus {
+  MATCHED
+  ASSIGNED
+  PENDING
+  PICKED_UP
+  IN_TRANSIT
+  DELIVERED
+  EXCEPTION
 }
 
 enum TripStatus {
@@ -333,8 +345,9 @@ model Trip {
   // Verification
   verificationCode String? @unique
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  TrackingEvent TrackingEvent[]
 
   @@map("trips")
 }
@@ -564,9 +577,12 @@ model TrackingEvent {
   packageId String
   package   Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
 
-  event       String // "picked_up", "in_transit", "delivered", "exception"
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id])
+
+  event       EventStatus @default(MATCHED)
   description String
-  location    Json? // address and coordinates
+  location    Json? 
 
   timestamp DateTime @default(now())
   metadata  Json     @default("{}")

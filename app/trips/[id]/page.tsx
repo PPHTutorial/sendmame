@@ -563,7 +563,8 @@ export default function TripDetailsPage() {
                     currentItem={trip}
                     availableItems={packagesQuery.data?.data || []}
                     onAssign={handleAssign}
-                    isLoading={false}
+                    isLoading={false}                    
+                    userId = {user.id}
                 />
             )}
 

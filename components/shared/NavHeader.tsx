@@ -17,6 +17,7 @@ import {
   HelpCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui'
+import { useAuth } from '@/lib/hooks/api'
 
 interface NavHeaderProps {
   title: string
@@ -42,6 +43,8 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const pathname = usePathname()
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const { getCurrentUser } = useAuth()
+  const { data: user } = getCurrentUser
 
   // Handle scroll events to apply styling to header
   useEffect(() => {
@@ -180,8 +183,8 @@ export const NavHeader: React.FC<NavHeaderProps> = ({
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
                     <div className="px-4 py-2 border-b border-gray-100">
-                      <p className="text-sm font-medium">{name}</p>
-                      <p className="text-xs text-gray-500">{email}</p>
+                      <p className="text-sm font-medium">{user.firstName} {user.otherName} {user.lastName}</p>
+                      <p className="text-xs text-gray-500">{user.email}</p>
                     </div>
 
                     <div className="py-1">

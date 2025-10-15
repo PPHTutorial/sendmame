@@ -62,6 +62,7 @@ export function PackageForm({ initialData, isEdit = false, packageId }: PackageF
         pickupDate: initialData.pickupDate ? new Date(initialData.pickupDate).toISOString().split('T')[0] : '',
         deliveryDate: initialData.deliveryDate ? new Date(initialData.deliveryDate).toISOString().split('T')[0] : '',
         offeredPrice: initialData.offeredPrice || 0,
+        finalPrice: initialData.finalPrice || 0,
         currency: initialData.currency || 'USD',
         specialInstructions: initialData.specialInstructions || '',
         images: initialData.images || []
@@ -102,6 +103,7 @@ export function PackageForm({ initialData, isEdit = false, packageId }: PackageF
       pickupDate: '',
       deliveryDate: '',
       offeredPrice: 0,
+      finalPrice: 0,
       currency: 'USD',
       specialInstructions: '',
       images: []
@@ -353,10 +355,10 @@ export function PackageForm({ initialData, isEdit = false, packageId }: PackageF
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               >
                 <option value="USD">USD</option>
-                <option value="GHS">GHS</option>
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="NGN">NGN</option>
+                <option disabled value="GHS">GHS</option>
+                <option disabled value="EUR">EUR</option>
+                <option disabled value="USD">USD</option>
+                <option disabled value="NGN">NGN</option>
               </select>
             </div>
           </div>
@@ -693,24 +695,39 @@ export function PackageForm({ initialData, isEdit = false, packageId }: PackageF
               placeholder="Estimated package value"
             />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Offered Price ({formData.currency})
-            </label>
-            <Input
-              type="number"
-              name="offeredPrice"
-              value={formData.offeredPrice}
-              onChange={handleChange}
-              min="0"
-              step="0.01"
-              placeholder="Amount willing to pay for delivery"
-              required
-            />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Offered Price ({formData.currency})
+              </label>
+              <Input
+                type="number"
+                name="offeredPrice"
+                value={formData.offeredPrice}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                placeholder="Min Amount willing to pay for delivery"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Final Price ({formData.currency})
+              </label>
+              <Input
+                type="number"
+                name="finalPrice"
+                value={formData.finalPrice}
+                onChange={handleChange}
+                min="0"
+                step="0.01"
+                placeholder="max Amount willing to pay for delivery"
+                required
+              />
+            </div>
           </div>
         </div>
-
         {/* Additional Options */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
